@@ -5,6 +5,7 @@
 import 'webextension-polyfill';
 
 import { cookieCleanup, validateSettings } from '../redux/Actions';
+import { reduxWebextActions } from '../redux/Store';
 import { checkIfProtected } from '../services/BrowserActionService';
 import AlarmScheduler from '../services/AlarmScheduler';
 import ContextMenuEvents from '../services/ContextMenuEvents';
@@ -163,6 +164,88 @@ if (_runtimeAny['onSuspend']) {
     flushSave();
   });
 }
+
+// --- redux-webext protocol constants (mirrored from node_modules/redux-webext/lib/constants.js) ---
+const REDUX_WEBEXT_CONNECTION = 'redux-webext';
+const REDUX_WEBEXT_DISPATCH = '@@STORE_DISPATCH';
+const REDUX_WEBEXT_UPDATE_STATE = '@@STORE_UPDATE_STATE';
+
+// --- redux-webext message + connection (TOP LEVEL — required for MV3 SW wake) ---
+//
+// createBackgroundStore inside lifecycle.ts ran async inside init(), which
+// meant the listeners were registered too late on a cold SW wake: the popup's
+// first sendMessage/connect arrived before any handler existed, the callback
+// never fired, createUIStore() hung, and React never mounted (empty popup).
+//
+// We re-implement the redux-webext background protocol inline here so that
+// Chrome sees the listeners synchronously at module-load time and wakes the
+// SW correctly. After waking we await ready() so the store is initialised
+// before we touch it.
+
+browser.runtime.onConnect.addListener((port) => {
+  if (port.name !== REDUX_WEBEXT_CONNECTION) return;
+
+  let unsubscribe: (() => void) | null = null;
+
+  (async () => {
+    await ready();
+    const store = getStore();
+    // Push current state immediately so the UI doesn't have to ask separately.
+    port.postMessage({ type: REDUX_WEBEXT_UPDATE_STATE, data: store.getState() });
+    // Forward subsequent store changes over the port.
+    unsubscribe = store.subscribe(() => {
+      try {
+        port.postMessage({ type: REDUX_WEBEXT_UPDATE_STATE, data: store.getState() });
+      } catch {
+        // Port disconnected; clean up.
+        if (unsubscribe) {
+          unsubscribe();
+          unsubscribe = null;
+        }
+      }
+    });
+  })();
+
+  port.onDisconnect.addListener(() => {
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
+  });
+});
+
+browser.runtime.onMessage.addListener((msg: any, _sender: browser.runtime.MessageSender, sendResponse: (response?: any) => void) => {
+  if (!msg || typeof msg !== 'object') return false;
+
+  if (msg.type === REDUX_WEBEXT_UPDATE_STATE) {
+    (async () => {
+      await ready();
+      sendResponse(getStore().getState());
+    })();
+    return true; // keep channel open for async sendResponse
+  }
+
+  if (msg.type === REDUX_WEBEXT_DISPATCH) {
+    (async () => {
+      await ready();
+      const action = msg.action || {};
+      const { type, ...actionData } = action;
+      const actionFn = (reduxWebextActions as any)[type];
+      if (typeof actionFn === 'function') {
+        // Mirror redux-webext's own logic: pass undefined if no extra data,
+        // otherwise pass the remaining fields as the argument.
+        const arg = Object.keys(actionData).length ? actionData : undefined;
+        getStore().dispatch(actionFn(arg));
+      } else {
+        console.warn('[CAD] redux-webext DISPATCH received unknown action type:', type);
+      }
+      sendResponse(undefined);
+    })();
+    return true;
+  }
+
+  return false;
+});
 
 // --- Popup port (live cookie-count updates) ---
 

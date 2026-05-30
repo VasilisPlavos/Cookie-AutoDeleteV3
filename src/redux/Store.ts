@@ -15,7 +15,6 @@
 import { applyMiddleware, createStore } from 'redux';
 // tslint:disable-next-line:import-name
 import thunk from 'redux-thunk';
-import { createBackgroundStore } from 'redux-webext';
 import { ReduxConstants } from '../typings/ReduxConstants';
 import {
   addExpression,
@@ -43,7 +42,12 @@ const consoleMessages = (store: any) => (next: any) => (action: any) => {
   return next(action);
 };
 
-const actions: { [key in ReduxConstants]?: any } = {
+/**
+ * Action-creator map consumed by the redux-webext protocol handler in
+ * src/background/index.ts.  Exported so the top-level SW listeners can
+ * dispatch UI actions without depending on createBackgroundStore.
+ */
+export const reduxWebextActions: { [key in ReduxConstants]?: any } = {
   ADD_EXPRESSION: addExpression,
   CLEAR_ACTIVITY_LOG: clearActivities,
   CLEAR_EXPRESSIONS: clearExpressions,
@@ -59,8 +63,8 @@ const actions: { [key in ReduxConstants]?: any } = {
 };
 
 export default (state = {}): any => {
-  return createBackgroundStore({
-    actions,
-    store: createStore(reducer, state, applyMiddleware(thunk, consoleMessages)),
-  });
+  // The redux-webext message/connection listeners are registered at module
+  // top-level in src/background/index.ts (required for MV3 SW wake). We use
+  // a plain redux store here; index.ts handles the UI-side protocol.
+  return createStore(reducer, state, applyMiddleware(thunk, consoleMessages));
 };
