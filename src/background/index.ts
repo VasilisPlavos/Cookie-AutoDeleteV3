@@ -232,9 +232,13 @@ browser.runtime.onMessage.addListener((msg: any, _sender: browser.runtime.Messag
       const { type, ...actionData } = action;
       const actionFn = (reduxWebextActions as any)[type];
       if (typeof actionFn === 'function') {
-        // Mirror redux-webext's own logic: pass undefined if no extra data,
-        // otherwise pass the remaining fields as the argument.
-        const arg = Object.keys(actionData).length ? actionData : undefined;
+        // Mirror redux-webext's own logic exactly: unwrap `payload` from the
+        // remaining action fields. If the original action had any extra fields,
+        // pass `payload` (defaulting to {}) — otherwise pass undefined. Without
+        // this unwrap, action creators receive `{ payload: {...} }` instead of
+        // `{...}` and reads like `payload.storeId` silently resolve to undefined.
+        const { payload = {} } = actionData as { payload?: unknown };
+        const arg = Object.keys(actionData).length ? payload : undefined;
         getStore().dispatch(actionFn(arg));
       } else {
         console.warn('[CAD] redux-webext DISPATCH received unknown action type:', type);
