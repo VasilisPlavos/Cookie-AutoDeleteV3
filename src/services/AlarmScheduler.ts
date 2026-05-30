@@ -8,7 +8,7 @@ import { cookieCleanup } from '../redux/Actions';
 export const CLEANUP_ALARM_NAME = 'cad_cleanup';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sessionStorage: browser.storage.StorageArea = (browser.storage as any).session;
+const browserSessionStorage: browser.storage.StorageArea = (browser.storage as any).session;
 
 /**
  * Delays below this threshold use setTimeout (which works fine because the
@@ -20,23 +20,22 @@ export const ALARM_THRESHOLD_MS = 25_000;
 
 const SESSION_FLAG_KEY = 'alarmFlag';
 
-type Dispatcher = () => void;
+type Dispatcher = () => Promise<void>;
 
 let _inFlight = false;
 let _dispatcher: Dispatcher | null = null;
 
-function defaultDispatcher(): void {
+async function defaultDispatcher(): Promise<void> {
   // Lazily resolve StoreUser/lifecycle so this module is import-safe in tests.
   // Late import avoids a cycle (lifecycle imports services indirectly).
-  const lifecycle = require('../background/lifecycle') as {
+  const { ready, getStore } = require('../background/lifecycle') as {
     ready: () => Promise<void>;
     getStore: () => { dispatch: (action: unknown) => void };
   };
-  lifecycle.ready().then(() => {
-    lifecycle.getStore().dispatch(
-      cookieCleanup({ greyCleanup: false, ignoreOpenTabs: false }) as unknown,
-    );
-  });
+  await ready();
+  getStore().dispatch(
+    cookieCleanup({ greyCleanup: false, ignoreOpenTabs: false }) as unknown,
+  );
 }
 
 export default class AlarmScheduler {
@@ -49,14 +48,21 @@ export default class AlarmScheduler {
     if (_inFlight) return;
 
     // Cross-SW-restart dedup.
-    const persisted = await sessionStorage.get(SESSION_FLAG_KEY);
+    const persisted = await browserSessionStorage.get(SESSION_FLAG_KEY);
     if ((persisted as { alarmFlag?: boolean }).alarmFlag) {
-      _inFlight = true; // adopt the existing flag for the rest of this SW activation
-      return;
+      // Flag is set. Confirm the alarm is actually still pending — if not, the
+      // previous SW activation died after setting the flag; clear it and re-schedule.
+      const existing = await browser.alarms.get(CLEANUP_ALARM_NAME);
+      if (existing) {
+        _inFlight = true; // adopt the genuinely pending alarm
+        return;
+      }
+      // Stale flag — clear it and fall through to fresh scheduling.
+      await browserSessionStorage.remove(SESSION_FLAG_KEY);
     }
 
     _inFlight = true;
-    await sessionStorage.set({ [SESSION_FLAG_KEY]: true });
+    await browserSessionStorage.set({ [SESSION_FLAG_KEY]: true });
 
     if (delayMs >= ALARM_THRESHOLD_MS) {
       browser.alarms.create(CLEANUP_ALARM_NAME, { when: Date.now() + delayMs });
@@ -68,7 +74,14 @@ export default class AlarmScheduler {
     }
   }
 
-  /** Called from the alarms.onAlarm listener registered in background/index.ts. */
+  /**
+   * Called from the alarms.onAlarm listener registered in background/index.ts.
+   *
+   * NOTE: Until Task 10 of the MV3 migration plan wires
+   * `browser.alarms.onAlarm.addListener(...)` in background/index.ts, the
+   * delayMs >= ALARM_THRESHOLD_MS branch of scheduleCleanup is inert — alarms
+   * fire but no handler runs. Tests cover handleAlarm directly.
+   */
   static async handleAlarm(alarm: {
     name: string;
     scheduledTime: number;
@@ -80,10 +93,10 @@ export default class AlarmScheduler {
   private static async fire(): Promise<void> {
     const dispatcher = _dispatcher || defaultDispatcher;
     try {
-      dispatcher();
+      await dispatcher();
     } finally {
       _inFlight = false;
-      await sessionStorage.remove(SESSION_FLAG_KEY);
+      await browserSessionStorage.remove(SESSION_FLAG_KEY);
     }
   }
 

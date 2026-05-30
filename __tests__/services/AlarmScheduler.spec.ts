@@ -22,7 +22,7 @@ describe('AlarmScheduler', () => {
 
   describe('scheduleCleanup()', () => {
     it('uses setTimeout when delay is below the threshold', async () => {
-      const dispatchSpy = jest.fn();
+      const dispatchSpy = jest.fn().mockResolvedValue(undefined);
       AlarmScheduler._setDispatcher(dispatchSpy);
       await AlarmScheduler.scheduleCleanup(5000);
       expect(global.browser.alarms.create).not.toHaveBeenCalled();
@@ -41,7 +41,7 @@ describe('AlarmScheduler', () => {
     });
 
     it('does not schedule twice while a cleanup is already pending (dedup)', async () => {
-      const dispatchSpy = jest.fn();
+      const dispatchSpy = jest.fn().mockResolvedValue(undefined);
       AlarmScheduler._setDispatcher(dispatchSpy);
       await AlarmScheduler.scheduleCleanup(2000);
       await AlarmScheduler.scheduleCleanup(2000);
@@ -57,6 +57,10 @@ describe('AlarmScheduler', () => {
       when(global.browser.storage.session.get)
         .calledWith('alarmFlag')
         .mockResolvedValue({ alarmFlag: true } as never);
+      // The alarm is still genuinely pending — confirm the adoption path.
+      (global.browser.alarms.get as jest.Mock).mockResolvedValue(
+        { name: CLEANUP_ALARM_NAME, scheduledTime: Date.now() + 60000 } as never,
+      );
       // After reset, a fresh call should NOT create a second alarm.
       await AlarmScheduler.scheduleCleanup(60000);
       expect(global.browser.alarms.create).toHaveBeenCalledTimes(1);
@@ -65,14 +69,14 @@ describe('AlarmScheduler', () => {
 
   describe('handleAlarm()', () => {
     it('dispatches cleanup when invoked with the cad_cleanup alarm', async () => {
-      const dispatchSpy = jest.fn();
+      const dispatchSpy = jest.fn().mockResolvedValue(undefined);
       AlarmScheduler._setDispatcher(dispatchSpy);
       await AlarmScheduler.handleAlarm({ name: CLEANUP_ALARM_NAME, scheduledTime: Date.now() });
       expect(dispatchSpy).toHaveBeenCalledTimes(1);
     });
 
     it('ignores alarms with other names', async () => {
-      const dispatchSpy = jest.fn();
+      const dispatchSpy = jest.fn().mockResolvedValue(undefined);
       AlarmScheduler._setDispatcher(dispatchSpy);
       await AlarmScheduler.handleAlarm({ name: 'other', scheduledTime: Date.now() });
       expect(dispatchSpy).not.toHaveBeenCalled();
