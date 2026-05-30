@@ -76,7 +76,7 @@ Upgrade Cookie AutoDelete to ship a single MV3 manifest for Chrome (≥109), Fir
 
 ### 2.2 Build-time patching
 
-- **Firefox build:** add `browser_specific_settings.gecko = { id: 'CookieAutoDelete@kennydo.com', strict_min_version: '115.0' }`; add `"contextualIdentities"` to `permissions`; remove `minimum_chrome_version`; convert `background.service_worker` → `background.scripts: [...]`. Firefox uses `scripts` (event page).
+- **Firefox build:** add `browser_specific_settings.gecko = { id: 'cookieautodelete@vp.dev', strict_min_version: '115.0' }`; add `"contextualIdentities"` to `permissions`; remove `minimum_chrome_version`; convert `background.service_worker` → `background.scripts: [...]`. Firefox uses `scripts` (event page).
 - **Chrome/Edge build:** remove the `background.scripts` key (Chromium warns about unknown keys); remove any legacy `applications` block defensively.
 
 ### 2.3 Notable changes vs. MV2

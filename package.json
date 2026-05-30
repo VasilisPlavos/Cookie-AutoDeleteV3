@@ -1,5 +1,5 @@
 {
-  "name": "cookie-autodelete",
+  "name": "cookie-autodelete-v3",
   "version": "4.0.0-beta.1",
   "description": "Firefox and Chrome browser extension that manages Cookies and other site data",
   "keywords": [
@@ -74,18 +74,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Cookie-AutoDelete/Cookie-AutoDelete.git"
+    "url": "https://github.com/vasilisplavos/Cookie-AutoDeleteV3.git"
   },
   "author": "Kenny Do",
   "contributors": [
     {
       "name": "CAD Team",
       "url": "https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors"
+    },
+    {
+      "name": "Vasilis Plavos",
+      "url": "https://github.com/vasilisplavos"
     }
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/issues"
+    "url": "https://github.com/vasilisplavos/Cookie-AutoDeleteV3/issues"
   },
-  "homepage": "https://github.com/Cookie-AutoDelete/Cookie-AutoDelete#readme"
+  "homepage": "https://github.com/vasilisplavos/Cookie-AutoDeleteV3#readme"
 }

@@ -1,12 +1,12 @@
-[link-amo]: https://addons.mozilla.org/firefox/addon/cookie-autodelete/
-[link-cws]: https://chrome.google.com/webstore/detail/cookie-autodelete/fhcgjolkccmbidfldomjliifgaodjagh
-[link-edge]: https://microsoftedge.microsoft.com/addons/detail/djkjpnciiommncecmdefpdllknjdmmmo
+[link-upstream]: https://github.com/Cookie-AutoDelete/Cookie-AutoDelete
 
-| Latest Release Tests ![Latest Release](https://img.shields.io/github/v/release/Cookie-AutoDelete/Cookie-AutoDelete) | Development Tests | Localization | Coverage |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Tagged Release Distribution](https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/workflows/Tagged%20Release%20Distribution/badge.svg) | ![Node.js CI Tests](https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/workflows/CI/badge.svg?branch=3.X.X-Branch) | [![Crowdin](https://d322cqt584bo4o.cloudfront.net/cookie-autodelete/localized.svg)](https://crowdin.com/project/cookie-autodelete) | [![Coverage Status](https://coveralls.io/repos/github/Cookie-AutoDelete/Cookie-AutoDelete/badge.svg?branch=3.X.X-Branch)](https://coveralls.io/github/Cookie-AutoDelete/Cookie-AutoDelete?branch=3.X.X-Branch) [![codecov](https://codecov.io/gh/Cookie-AutoDelete/Cookie-AutoDelete/branch/3.X.X-Branch/graph/badge.svg)](https://codecov.io/gh/Cookie-AutoDelete/Cookie-AutoDelete) |
+# Cookie AutoDelete V3
 
-# Cookie AutoDelete
+> **This is a community fork** of the original [Cookie AutoDelete][link-upstream] by Kenny Do and the CAD Team. The fork focuses on shipping Manifest V3 support for Chrome 109+, Firefox 115+, and Edge 109+. The original 3.x line (MV2) continues at the upstream repo.
+>
+> All MV2 functionality is preserved. The MV3 architecture is documented in [`docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md`](docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md).
+
+![Tagged Release Distribution](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/workflows/Tagged%20Release%20Distribution/badge.svg) ![Node.js CI Tests](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/workflows/CI/badge.svg?branch=4.X.X-Branch)
 
 Control your cookies! This extension is inspired by [Self-Destructing Cookies](https://addons.mozilla.org/firefox/addon/self-destructing-cookies/). When a tab closes, any cookies not being used are automatically deleted. Prevent tracking by other cookies and add only the ones you trust. Easily import and export your cookie whitelist.
 
@@ -28,77 +28,59 @@ Control your cookies! This extension is inspired by [Self-Destructing Cookies](h
 
 ## Installation
 
-### via Official Channels
-
 > **Manifest V3 — version 4.x:** Requires Chrome 109+, Firefox 115+, or Edge 109+.
-> The 3.x release line (MV2) continues to receive critical bug fixes on the `3.X.X-Branch`.
 
-- [Google Chrome][link-cws]
+This fork is distributed **via GitHub Releases only** (no Chrome Web Store / AMO submission). For store-distributed builds use the [upstream project][link-upstream].
 
-  - [![Chrome Lastest](https://img.shields.io/chrome-web-store/v/fhcgjolkccmbidfldomjliifgaodjagh)][link-cws] [![Chrome Users](https://img.shields.io/chrome-web-store/users/fhcgjolkccmbidfldomjliifgaodjagh)][link-cws]
+### Install from GitHub Releases
 
-- [Mozilla Firefox][link-amo]
-  - [![Firefox Latest](https://img.shields.io/amo/v/cookie-autodelete)][link-amo] [![Firefox Users](https://img.shields.io/amo/users/cookie-autodelete)][link-amo]
-- [Microsoft Edge Chromium][link-edge]
-  - Should have the exact same features as Google Chrome
-  - [![](https://img.shields.io/badge/dynamic/json?label=edge%20chromium%20add-on&prefix=v&query=%24.version&url=https%3A%2F%2Fmicrosoftedge.microsoft.com%2Faddons%2Fgetproductdetailsbycrxid%2Fdjkjpnciiommncecmdefpdllknjdmmmo)][link-edge]
+1. Download the latest `Cookie-AutoDelete-V3_<version>_Chrome.zip` (or `_Firefox.xpi`) from [Releases](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases).
+2. **Chrome / Edge:** extract the zip, open `chrome://extensions` (or `edge://extensions`), enable Developer Mode, click "Load unpacked", and select the extracted folder.
+3. **Firefox:** open `about:debugging#/runtime/this-firefox`, click "Load Temporary Add-on", and select the `.xpi` file. (Note: temporary add-ons are removed when Firefox restarts — for a permanent install, use the `.xpi` via a signed self-distribution channel.)
 
-### via Self Installation
+> Officially supported browsers: Chrome, Firefox, Edge Chromium. Other Chromium/Gecko variants may work but are not tested.
 
-- [Github Releases](https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/releases)
+## Attribution
 
-> Please keep in mind that at this time only Mozilla Firefox and Google Chrome (as well as its development branches e.g. Developer Edition, Canary) will be supported.  
-> Microsoft Edge Chromium will be considered partially official as it is using the same code as Google Chrome for now.
-> While you may be able to install this extension on other browsers (i.e. Varations of Edge, Chrome, Firefox, Android), there will be no official support from the authors and maintainers through Github Discussions and/or Issues.
+The original Cookie AutoDelete is © 2017–2026 Kenny Do and the [CAD Team](https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors), licensed under MIT. All in-source copyright headers are preserved verbatim. This fork's contributions are © 2026 Vasilis Plavos, distributed under the same MIT terms (see [`LICENSE`](LICENSE)).
 
 ## Contributing
 
-### Donations
+### Bug reports
 
-[Donations are done through Liberapay/PayPal](https://liberapay.com/CAD_Developers/). If this webextension has helped you in any way, we would appreciate a small donation to assist in our efforts to make this even better. Note that although Liberapay has recurring donation model, you can opt to 'manually' donate a one time amount as well.
+[Open an issue](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/issues) on this fork for MV3-specific bugs. For pre-MV3 (3.x) issues, please file at the [upstream repo][link-upstream].
 
-### Internationalization (i18n)
+### Code
 
-[Translate Cookie AutoDelete in your language or help fix a translation on Crowdin!](https://crowdin.com/project/cookie-autodelete)
-Some translations were taken from Machine Translations - if you believe there is a better translation for them, please submit an updated translation and raise an issue through CrowdIn.
-
-### Contributing code
-
-If there are any bugs that only a certain browser has, and you have the fix for it, feel free to submit a PR for it, as long as it does not affect the functionality to other browsers. The easiest is to wrap your bugfix with check for that browser.
+PRs welcome. Run `npm install` then `npm test` to verify the suite before submitting.
 
 #### Requirements
 
-- Latest version of Node.js
+- Node.js 16.14+
 
 #### Development
 
 - `npm install` - Installs all dependencies
-- `npm run dev` - This will run the webpack watcher and automatically pack `/src/background/index.ts`, popup, and setting items and its dependencies to `/extension`
-- `npm run lint` - Runs the eslinter for JS files
-- `npm test` - Runs the test suite located in `/test`
-- `npm run build` - Builds the Firefox (.xpi/.zip) and Chrome (.zip) builds (MV3)
+- `npm run dev` - Webpack watcher; rebuilds `/src/background/index.ts`, popup, and settings into `/extension/bundles`
+- `npm run lint` - eslint over `src/`
+- `npm test` - jest suite under `__tests__/`
+- `npm run build` - Builds both Firefox (.xpi/.zip) and Chrome (.zip) MV3 packages into `/builds`
 - `npm run build:chrome` / `npm run build:firefox` - Build a single target
 
-#### Testing
+#### Testing the extension locally
 
-1. Run `npm install` (if you haven't already)
-2. Run `npm run dev`
-3. Load the extension in the browser
+1. `npm install`
+2. `npm run dev` (keeps rebuilding bundles as you change source)
+3. Load `/extension` into your browser:
+   - **Chrome / Edge:** `chrome://extensions` → Developer Mode → Load unpacked → select `/extension`
+   - **Firefox:** `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → select `/extension/manifest.json`
 
-- Firefox
+#### Building release artifacts
 
-  - Easiest way would be to run the tool [web-ext](https://extensionworkshop.com/documentation/develop/getting-started-with-web-ext/#Testing_out_an_extension)
-  - Another way is go into `about:debugging` and load `/extension/manifest.json`
-
-- Chrome
-  - In the extension tab, enable Developer Mode, then `load unpacked extension` and load the `/extension` folder
-
-#### Building
-
-1. Run `npm install` (if you haven't already)
-2. Run `npm run build`
-3. The build files should be in a new folder called `/builds`
+1. `npm install`
+2. `npm run build`
+3. Built files appear in `/builds/`.
 
 ## Documentation
 
-Full documentation can be found in the [wiki](https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation).
+Upstream wiki documentation: <https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation>. Fork-specific MV3 details: [`docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md`](docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md).

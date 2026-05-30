@@ -18,7 +18,7 @@ const archiver = require('archiver');
 
 const BUILDS = 'builds';
 const EXT = 'extension';
-const EXTNAME = 'Cookie-AutoDelete_';
+const EXTNAME = 'Cookie-AutoDelete-V3_';
 const MANIFEST = 'manifest.json';
 
 const ROOTDIR = process.cwd();
@@ -159,7 +159,7 @@ function firefoxPatchManifest(mf) {
   }
   mf.browser_specific_settings = {
     gecko: {
-      id: 'CookieAutoDelete@kennydo.com',
+      id: 'cookieautodelete@vp.dev',
       strict_min_version: '115.0',
     },
   };
