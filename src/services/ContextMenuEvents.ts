@@ -38,6 +38,7 @@ export default class ContextMenuEvents extends StoreUser {
     ACTIVE_MODE: 'cad-active-mode',
     CLEAN: 'cad-clean',
     CLEAN_OPEN: 'cad-clean-open',
+    CLEAN_WARNING_LABEL: 'cad-clean-warning-label',
     LINK_ADD_GREY_DOMAIN: 'cad-link-add-grey-domain',
     LINK_ADD_GREY_SUBS: 'cad-link-add-grey-subs',
     LINK_ADD_WHITE_DOMAIN: 'cad-link-add-white-domain',
@@ -59,6 +60,9 @@ export default class ContextMenuEvents extends StoreUser {
     SELECT_ADD_GREY_SUBS: 'cad-select-add-grey-subs',
     SELECT_ADD_WHITE_DOMAIN: 'cad-select-add-white-domain',
     SELECT_ADD_WHITE_SUBS: 'cad-select-add-white-subs',
+    SEPARATOR_CLEAN_TOP: 'cad-separator-clean-top',
+    SEPARATOR_AFTER_CLEAN: 'cad-separator-after-clean',
+    SEPARATOR_AFTER_EXPRESSION: 'cad-separator-after-expression',
     SETTINGS: 'cad-settings',
   };
 
@@ -109,11 +113,13 @@ export default class ContextMenuEvents extends StoreUser {
     });
     // Separator
     ContextMenuEvents.menuCreate({
+      id: ContextMenuEvents.MenuID.SEPARATOR_CLEAN_TOP,
       parentId: ContextMenuEvents.MenuID.PARENT_CLEAN,
       type: 'separator',
     });
     // Cleanup Warning
     ContextMenuEvents.menuCreate({
+      id: ContextMenuEvents.MenuID.CLEAN_WARNING_LABEL,
       enabled: false,
       parentId: ContextMenuEvents.MenuID.PARENT_CLEAN,
       title: browser.i18n.getMessage('cleanupActionsBypass'),
@@ -129,6 +135,7 @@ export default class ContextMenuEvents extends StoreUser {
     });
     // Separator
     ContextMenuEvents.menuCreate({
+      id: ContextMenuEvents.MenuID.SEPARATOR_AFTER_CLEAN,
       type: 'separator',
     });
     // Add Expression Option Group - page
@@ -252,6 +259,7 @@ export default class ContextMenuEvents extends StoreUser {
     });
     // Separator
     ContextMenuEvents.menuCreate({
+      id: ContextMenuEvents.MenuID.SEPARATOR_AFTER_EXPRESSION,
       type: 'separator',
     });
     // Active Mode
