@@ -45,10 +45,15 @@ export function getStore(): Store<State, ReduxAction> {
 export function _resetForTests(): void {
   _ready = null;
   _store = null;
+  if (_saveTimer) {
+    clearTimeout(_saveTimer);
+    _saveTimer = null;
+  }
+  _saveDirty = false;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sessionStorage: any = (browser.storage as any).session;
+const browserSessionStorage: any = (browser.storage as any).session;
 
 async function init(): Promise<void> {
   const local = await browser.storage.local.get();
@@ -70,7 +75,7 @@ async function init(): Promise<void> {
 
   // Restore the cache slice from session storage (warm SW restart) before
   // falling back to live runtime queries (cold start).
-  const session = await sessionStorage.get('cache');
+  const session = await browserSessionStorage.get('cache');
   const cache = (session as { cache?: State['cache'] }).cache;
   if (cache) {
     Object.entries(cache).forEach(([key, value]) => {
@@ -133,7 +138,9 @@ function saveSubscriber(): void {
   if (_saveTimer) return;
   _saveTimer = setTimeout(() => {
     _saveTimer = null;
-    flushSave();
+    flushSave().catch((err) => {
+      console.error('flushSave failed:', err);
+    });
   }, 1000);
 }
 
@@ -146,8 +153,14 @@ export async function flushSave(): Promise<void> {
   if (!_saveDirty || !_store) return;
   _saveDirty = false;
   const state = _store.getState();
-  await Promise.all([
-    browser.storage.local.set({ state: JSON.stringify(state) }),
-    sessionStorage.set({ cache: state.cache }),
-  ]);
+  try {
+    await Promise.all([
+      browser.storage.local.set({ state: JSON.stringify(state) }),
+      browserSessionStorage.set({ cache: state.cache }),
+    ]);
+  } catch (err) {
+    // Re-dirty so a subsequent change retries this write.
+    _saveDirty = true;
+    throw err;
+  }
 }
