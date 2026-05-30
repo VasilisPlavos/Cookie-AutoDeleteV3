@@ -6,7 +6,10 @@ const webpack = require('webpack');
 module.exports = {
   mode: 'production',
   entry: {
-    background: `${__dirname}/src/background.ts`,
+    background: {
+      import: `${__dirname}/src/background/index.ts`,
+      filename: 'background.js',
+    },
     popup: `${__dirname}/src/ui/popup/index.tsx`,
     setting: `${__dirname}/src/ui/settings/index.tsx`,
   },
@@ -90,10 +93,11 @@ module.exports = {
       cacheGroups: {
         ui: {
           test: /[\\/]node_modules[\\/](react|react-dom|@fortawesome)[\\/]|[\\/]src[\\/]ui[\\/]/,
+          chunks: (chunk) => chunk.name !== 'background',
           priority: -10,
         },
         common: {
-          chunks: 'initial',
+          chunks: (chunk) => chunk.name !== 'background',
           // cacheGroupKey here is `common` as key of cacheGroup
           name: (module, chunks, cacheGroupKey) => {
             return [cacheGroupKey, chunks.map((c) => c.runtime).join('-')].join(
@@ -111,6 +115,7 @@ module.exports = {
           priority: -15,
         },
         default: {
+          chunks: (chunk) => chunk.name !== 'background',
           minChunks: 2,
           priority: -20,
           reuseExistingChunk: true,
