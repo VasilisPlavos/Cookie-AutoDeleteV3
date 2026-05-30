@@ -11,6 +11,7 @@
  * SOFTWARE.
  */
 /* istanbul ignore file: React-redux init */
+import 'webextension-polyfill';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { createUIStore } from 'redux-webext';

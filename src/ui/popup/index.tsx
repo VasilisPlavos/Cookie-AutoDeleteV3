@@ -12,6 +12,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import 'webextension-polyfill';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { createUIStore } from 'redux-webext';
