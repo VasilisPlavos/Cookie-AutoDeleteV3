@@ -226,9 +226,9 @@ if (browser.contextMenus) {
   });
 }
 
-ready().then(() => {
+ready().then(async () => {
   if (browser.contextMenus) {
-    ContextMenuEvents.menuInit();
+    await ContextMenuEvents.menuInit();
   }
 }).catch((err) => {
   console.error('[CAD] context menu init failed:', err);

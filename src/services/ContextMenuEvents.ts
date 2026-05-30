@@ -62,7 +62,7 @@ export default class ContextMenuEvents extends StoreUser {
     SETTINGS: 'cad-settings',
   };
 
-  public static menuInit(): void {
+  public static async menuInit(): Promise<void> {
     if (!browser.contextMenus) return;
     if (
       !getSetting(
@@ -73,6 +73,23 @@ export default class ContextMenuEvents extends StoreUser {
       return;
     if (ContextMenuEvents.isInitialized) return;
     ContextMenuEvents.isInitialized = true;
+
+    // Context menus persist across SW restarts. Clear any stale items from a
+    // previous SW activation before re-creating them.
+    try {
+      await browser.contextMenus.removeAll();
+    } catch (err) {
+      cadLog(
+        {
+          msg: `ContextMenuEvents.menuInit: removeAll failed (continuing): ${
+            (err as Error)?.message || err
+          }`,
+          type: 'warn',
+        },
+        true,
+      );
+    }
+
     // Clean Option Group
     ContextMenuEvents.menuCreate({
       id: ContextMenuEvents.MenuID.PARENT_CLEAN,
@@ -301,9 +318,16 @@ export default class ContextMenuEvents extends StoreUser {
       SettingID.DEBUG_MODE,
     ) as boolean;
     if (browser.runtime.lastError) {
+      // lastError is typed as string|null in web-ext-types; cast to unknown first
+      // to handle both the typed (string) and runtime (Error-like object) shapes.
+      const raw = browser.runtime.lastError as unknown;
+      const errMsg =
+        raw && typeof raw === 'object' && 'message' in raw
+          ? (raw as { message: string }).message
+          : String(raw);
       cadLog(
         {
-          msg: `ContextMenuEvents.onCreatedOrUpdated received an error: ${browser.runtime.lastError}`,
+          msg: `ContextMenuEvents.onCreatedOrUpdated received an error: ${errMsg}`,
           type: 'error',
         },
         true,

@@ -123,23 +123,23 @@ describe('ContextMenuEvents', () => {
   });
 
   describe('menuInit', () => {
-    it('should do nothing if browser.contextMenus do not exist', () => {
+    it('should do nothing if browser.contextMenus do not exist', async () => {
       // Override setup of browser.contextMenus
       const jestContextMenus = global.browser.contextMenus;
       global.browser.contextMenus = undefined;
-      ContextMenuEvents.menuInit();
+      await ContextMenuEvents.menuInit();
       expect(spyLib.getSetting).not.toHaveBeenCalled();
       // Restore browser.contextMenus for future tests
       global.browser.contextMenus = jestContextMenus;
     });
-    it('should do nothing if contextMenus setting is disabled', () => {
+    it('should do nothing if contextMenus setting is disabled', async () => {
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, false);
-      ContextMenuEvents.menuInit();
+      await ContextMenuEvents.menuInit();
       expect(global.browser.contextMenus.create).not.toHaveBeenCalled();
     });
-    it('should create its menus contextMenus setting is enabled and none was created beforehand', () => {
+    it('should create its menus contextMenus setting is enabled and none was created beforehand', async () => {
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
-      ContextMenuEvents.menuInit();
+      await ContextMenuEvents.menuInit();
       expect(TestContextMenuEvents.getIsInitialized()).toBe(true);
       expect(global.browser.contextMenus.create).toHaveBeenCalledTimes(35);
       // onClicked listener is now registered at the background module top level,
@@ -148,16 +148,16 @@ describe('ContextMenuEvents', () => {
         global.browser.contextMenus.onClicked.addListener,
       ).not.toHaveBeenCalled();
     });
-    it('should not create menus again if already initialized', () => {
+    it('should not create menus again if already initialized', async () => {
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
       TestContextMenuEvents.setIsInitialized(true);
-      ContextMenuEvents.menuInit();
+      await ContextMenuEvents.menuInit();
       expect(global.browser.contextMenus.create).not.toHaveBeenCalled();
     });
-    it('should do nothing if contextMenus setting is enabled and menus were already created', () => {
+    it('should do nothing if contextMenus setting is enabled and menus were already created', async () => {
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
       TestContextMenuEvents.setIsInitialized(true);
-      ContextMenuEvents.menuInit();
+      await ContextMenuEvents.menuInit();
       expect(global.browser.contextMenus.create).not.toHaveBeenCalled();
     });
   });
