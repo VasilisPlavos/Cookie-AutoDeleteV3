@@ -231,5 +231,5 @@ ready().then(() => {
     ContextMenuEvents.menuInit();
   }
 }).catch((err) => {
-  console.error('[CAD] background init failed:', err);
+  console.error('[CAD] context menu init failed:', err);
 });

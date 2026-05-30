@@ -27,7 +27,11 @@ let _store: Store<State, ReduxAction> | null = null;
  */
 export function ready(): Promise<void> {
   if (!_ready) {
-    _ready = init();
+    _ready = init().catch((err) => {
+      console.error('[CAD] background init failed (will retry on next ready()):', err);
+      _ready = null; // Allow retry on next call.
+      throw err;
+    });
   }
   return _ready;
 }

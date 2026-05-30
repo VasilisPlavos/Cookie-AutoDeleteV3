@@ -19,16 +19,24 @@ export const showNumberOfCookiesInIcon = (
   cookieLength: number,
 ): void => {
   if (browser.action.setBadgeText) {
-    browser.action.setBadgeText({
-      tabId: tab.id,
-      text: `${cookieLength === 0 ? '' : cookieLength.toString()}`,
-    });
+    try {
+      browser.action.setBadgeText({
+        tabId: tab.id,
+        text: `${cookieLength === 0 ? '' : cookieLength.toString()}`,
+      });
+    } catch (err) {
+      console.warn('[CAD] browser.action.setBadgeText failed:', err);
+    }
   }
   if (browser.action.setBadgeTextColor) {
-    browser.action.setBadgeTextColor({
-      color: 'white',
-      tabId: tab.id,
-    });
+    try {
+      browser.action.setBadgeTextColor({
+        color: 'white',
+        tabId: tab.id,
+      });
+    } catch (err) {
+      console.warn('[CAD] browser.action.setBadgeTextColor failed:', err);
+    }
   }
 };
 
@@ -47,20 +55,29 @@ export const showNumberOfCookiesInTitle = async (
     mf.version
   }`;
 
-  const curData = /\[(.*)] \((\d*)\)/.exec(
-    await browser.action.getTitle({
-      tabId: tab.id,
-    }),
-  );
+  let curData: RegExpExecArray | null = null;
+  try {
+    curData = /\[(.*)] \((\d*)\)/.exec(
+      await browser.action.getTitle({
+        tabId: tab.id,
+      }),
+    );
+  } catch (err) {
+    console.warn('[CAD] browser.action.getTitle failed:', err);
+  }
   const newData = {
     cookies: otherInfo.cookieLength || (curData && curData[2]) || 0,
     list: otherInfo.listType || (curData && curData[1]) || 'NO LIST',
   };
 
-  browser.action.setTitle({
-    tabId: tab.id,
-    title: `${tabTitle} [${newData.list}] (${newData.cookies})`,
-  });
+  try {
+    browser.action.setTitle({
+      tabId: tab.id,
+      title: `${tabTitle} [${newData.list}] (${newData.cookies})`,
+    });
+  } catch (err) {
+    console.warn('[CAD] browser.action.setTitle failed:', err);
+  }
 };
 
 // Set Badge Color accordingly (to matching list)
@@ -71,10 +88,14 @@ const setBadgeColor = (tab: browser.tabs.Tab, color = 'default') => {
     yellow: '#e6a32e',
   };
   if (browser.action.setBadgeBackgroundColor) {
-    browser.action.setBadgeBackgroundColor({
-      color: badgeBackgroundColor[color],
-      tabId: tab.id,
-    });
+    try {
+      browser.action.setBadgeBackgroundColor({
+        color: badgeBackgroundColor[color],
+        tabId: tab.id,
+      });
+    } catch (err) {
+      console.warn('[CAD] browser.action.setBadgeBackgroundColor failed:', err);
+    }
   }
 };
 
@@ -85,14 +106,18 @@ const setIconColor = (
   color = 'default',
 ) => {
   if (browser.action.setIcon) {
-    browser.action.setIcon({
-      path: {
-        48: `icons/icon_48${
-          keepDefault || color === 'default' ? '' : `_${color}`
-        }.png`,
-      },
-      tabId: tab.id,
-    });
+    try {
+      browser.action.setIcon({
+        path: {
+          48: `icons/icon_48${
+            keepDefault || color === 'default' ? '' : `_${color}`
+          }.png`,
+        },
+        tabId: tab.id,
+      });
+    } catch (err) {
+      console.warn('[CAD] browser.action.setIcon failed:', err);
+    }
   }
 
   setBadgeColor(tab, color);
@@ -103,23 +128,31 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
   // This sets global icon
   if (browser.action.setIcon) {
     // Set Global Icon
-    await browser.action.setIcon({
-      path: {
-        48: `icons/icon_48${enabled ? '' : '_greyscale'}.png`,
-      },
-    });
+    try {
+      await browser.action.setIcon({
+        path: {
+          48: `icons/icon_48${enabled ? '' : '_greyscale'}.png`,
+        },
+      });
+    } catch (err) {
+      console.warn('[CAD] browser.action.setIcon (global) failed:', err);
+    }
 
     const tabAwait = await browser.tabs.query({
       windowType: 'normal',
     });
     for (const tab of tabAwait) {
       if (tab.id !== browser.tabs.TAB_ID_NONE) {
-        await browser.action.setIcon({
-          path: {
-            48: `icons/icon_48${enabled ? '' : '_greyscale'}.png`,
-          },
-          tabId: tab.id,
-        });
+        try {
+          await browser.action.setIcon({
+            path: {
+              48: `icons/icon_48${enabled ? '' : '_greyscale'}.png`,
+            },
+            tabId: tab.id,
+          });
+        } catch (err) {
+          console.warn('[CAD] browser.action.setIcon (tab) failed:', err);
+        }
       }
     }
   }
