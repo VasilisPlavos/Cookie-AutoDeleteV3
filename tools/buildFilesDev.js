@@ -153,6 +153,7 @@ function chromePatchManifest(mf) {
 }
 
 function firefoxPatchManifest(mf) {
+  if (!mf.permissions) mf.permissions = [];
   if (!mf.permissions.includes('contextualIdentities')) {
     mf.permissions.push('contextualIdentities');
   }
@@ -228,6 +229,11 @@ function chromeBuild(cb) {
       fs.writeFileSync(path.join(EXTDIR, MANIFEST), mforig);
       console.log('%s has been reverted back to original contents!', MANIFEST);
       console.log('Google Chrome Build Complete!');
+    } else {
+      console.warn(
+        'Archiver was not successful as it returned [%s]. Stopping the rest of the process.',
+        r,
+      );
     }
     cb(r);
   }, CHROMEFILENAME);
@@ -264,6 +270,7 @@ function mainBuild() {
   } else if (target === 'firefox') {
     runFirefox(() => {});
   } else {
+    // No --target= flag, or unknown/empty value — build both Firefox and Chrome.
     runFirefox((r) => {
       if (r === 0) runChrome(() => {});
     });
