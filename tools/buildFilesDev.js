@@ -163,9 +163,16 @@ function firefoxPatchManifest(mf) {
       strict_min_version: '115.0',
     },
   };
-  // Firefox event page reads `scripts`; the SW key is ignored but stripped for cleanliness.
-  if (mf.background && mf.background.service_worker) {
-    delete mf.background.service_worker;
+  // Convert the Chromium MV3 service_worker entry to Firefox's event-page scripts form.
+  if (mf.background) {
+    const sw = mf.background.service_worker;
+    if (sw) {
+      mf.background.scripts = [sw];
+      delete mf.background.service_worker;
+    } else if (!mf.background.scripts) {
+      // Defensive: source somehow has neither — fall back to the known bundle path.
+      mf.background.scripts = ['bundles/background.js'];
+    }
   }
   delete mf.minimum_chrome_version;
   return mf;
