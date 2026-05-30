@@ -9,6 +9,7 @@ import { checkIfProtected } from '../services/BrowserActionService';
 import AlarmScheduler from '../services/AlarmScheduler';
 import ContextMenuEvents from '../services/ContextMenuEvents';
 import CookieEvents from '../services/CookieEvents';
+import TabEvents from '../services/TabEvents';
 import {
   cadLog,
   convertVersionToNumber,
@@ -24,7 +25,6 @@ import { flushSave, getStore, ready } from './lifecycle';
 browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   await ready();
   // Forward to the existing TabEvents handlers in their original order.
-  const TabEvents = (await import('../services/TabEvents')).default;
   TabEvents.onDomainChange(tabId, changeInfo, tab);
   TabEvents.onTabDiscarded(tabId, changeInfo, tab);
   TabEvents.onTabUpdate(tabId, changeInfo, tab);
@@ -32,7 +32,6 @@ browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 browser.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
   await ready();
-  const TabEvents = (await import('../services/TabEvents')).default;
   TabEvents.onDomainChangeRemove(tabId, removeInfo);
   TabEvents.cleanFromTabEvents();
 });
@@ -223,4 +222,6 @@ ready().then(() => {
   if (browser.contextMenus) {
     ContextMenuEvents.menuInit();
   }
+}).catch((err) => {
+  console.error('[CAD] background init failed:', err);
 });
