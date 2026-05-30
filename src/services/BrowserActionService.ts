@@ -13,6 +13,34 @@
 
 import { getHostname, returnMatchedExpressionObject } from './Libs';
 
+// MV3 service workers can't reliably resolve relative icon paths during early
+// startup (Chromium bug #40058177). Convert paths to ImageData up-front via
+// OffscreenCanvas so chrome.action.setIcon never has to fetch from a
+// chrome-extension:// URL.
+const iconCache = new Map<string, ImageData>();
+
+async function loadIconData(path: string): Promise<ImageData | null> {
+  const cached = iconCache.get(path);
+  if (cached) return cached;
+  try {
+    const url = browser.runtime.getURL(path);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    const bitmap = await createImageBitmap(blob);
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D | null;
+    if (!ctx) throw new Error('OffscreenCanvas 2D context unavailable');
+    ctx.drawImage(bitmap, 0, 0);
+    const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+    iconCache.set(path, data);
+    return data;
+  } catch (err) {
+    console.warn(`[CAD] loadIconData failed for ${path}:`, err);
+    return null;
+  }
+}
+
 // Show the # of cookies in icon
 export const showNumberOfCookiesInIcon = (
   tab: browser.tabs.Tab,
@@ -100,23 +128,22 @@ const setBadgeColor = (tab: browser.tabs.Tab, color = 'default') => {
 };
 
 // Set Background icon color and badgeBackgroundColor accordingly.
-const setIconColor = (
+const setIconColor = async (
   tab: browser.tabs.Tab,
   keepDefault = false,
   color = 'default',
-) => {
+): Promise<void> => {
   if (browser.action.setIcon) {
-    try {
-      browser.action.setIcon({
-        path: {
-          48: `icons/icon_48${
-            keepDefault || color === 'default' ? '' : `_${color}`
-          }.png`,
-        },
-        tabId: tab.id,
-      });
-    } catch (err) {
-      console.warn('[CAD] browser.action.setIcon failed:', err);
+    const iconPath = `icons/icon_48${
+      keepDefault || color === 'default' ? '' : `_${color}`
+    }.png`;
+    const imageData = await loadIconData(iconPath);
+    if (imageData) {
+      try {
+        await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
+      } catch (err) {
+        console.warn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
+      }
     }
   }
 
@@ -125,34 +152,25 @@ const setIconColor = (
 
 // Set background icon for browser.
 export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
-  // This sets global icon
-  if (browser.action.setIcon) {
-    // Set Global Icon
-    try {
-      await browser.action.setIcon({
-        path: {
-          48: `icons/icon_48${enabled ? '' : '_greyscale'}.png`,
-        },
-      });
-    } catch (err) {
-      console.warn('[CAD] browser.action.setIcon (global) failed:', err);
-    }
+  if (!browser.action.setIcon) return;
 
-    const tabAwait = await browser.tabs.query({
-      windowType: 'normal',
-    });
-    for (const tab of tabAwait) {
-      if (tab.id !== browser.tabs.TAB_ID_NONE) {
-        try {
-          await browser.action.setIcon({
-            path: {
-              48: `icons/icon_48${enabled ? '' : '_greyscale'}.png`,
-            },
-            tabId: tab.id,
-          });
-        } catch (err) {
-          console.warn('[CAD] browser.action.setIcon (tab) failed:', err);
-        }
+  const iconPath = `icons/icon_48${enabled ? '' : '_greyscale'}.png`;
+  const imageData = await loadIconData(iconPath);
+  if (!imageData) return; // loadIconData already logged
+
+  try {
+    await browser.action.setIcon({ imageData: { 48: imageData } });
+  } catch (err) {
+    console.warn(`[CAD] browser.action.setIcon (global) failed for ${iconPath}:`, err);
+  }
+
+  const tabAwait = await browser.tabs.query({ windowType: 'normal' });
+  for (const tab of tabAwait) {
+    if (tab.id !== browser.tabs.TAB_ID_NONE) {
+      try {
+        await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
+      } catch (err) {
+        console.warn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
       }
     }
   }
@@ -177,7 +195,7 @@ export const checkIfProtected = async (
     });
   }
 
-  activeTabs.forEach((aTab) => {
+  for (const aTab of activeTabs) {
     const matchedExpression = returnMatchedExpressionObject(
       state,
       aTab.cookieStoreId || 'default',
@@ -199,20 +217,20 @@ export const checkIfProtected = async (
     }
 
     // Can't set icons on Android.
-    if (state.cache.platformOs && state.cache.platformOs === 'android') return;
+    if (state.cache.platformOs && state.cache.platformOs === 'android') continue;
 
     if (matchedExpression) {
       switch (matchedExpression.listType) {
         case ListType.WHITE:
           if (active) {
-            setIconColor(aTab);
+            await setIconColor(aTab);
           } else {
             setBadgeColor(aTab);
           }
           break;
         case ListType.GREY:
           if (active) {
-            setIconColor(
+            await setIconColor(
               aTab,
               state.settings[SettingID.KEEP_DEFAULT_ICON].value as boolean,
               'yellow',
@@ -223,7 +241,7 @@ export const checkIfProtected = async (
           break;
         default:
           if (active) {
-            setIconColor(
+            await setIconColor(
               aTab,
               state.settings[SettingID.KEEP_DEFAULT_ICON].value as boolean,
               'red',
@@ -236,13 +254,13 @@ export const checkIfProtected = async (
     } else {
       if (cookieLength !== undefined && cookieLength === 0) {
         if (active) {
-          setIconColor(aTab);
+          await setIconColor(aTab);
         } else {
           setBadgeColor(aTab);
         }
       } else {
         if (active) {
-          setIconColor(
+          await setIconColor(
             aTab,
             state.settings[SettingID.KEEP_DEFAULT_ICON].value as boolean,
             'red',
@@ -252,5 +270,5 @@ export const checkIfProtected = async (
         }
       }
     }
-  });
+  }
 };
