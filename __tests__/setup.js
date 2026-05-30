@@ -182,6 +182,9 @@ Object.keys(apis).forEach((api) => {
   });
 });
 
+// MV3 alias — same underlying jest mocks so test expectations can use either.
+browser.action = browser.browserAction;
+
 global.browser = browser;
 global.chrome = browser;
 
