@@ -86,3 +86,8 @@ declare namespace browser.tabs {
 }
 
 declare module 'redux-webext';
+
+declare namespace browser {
+  // MV3 alias. webextension-polyfill 0.8+ proxies browserAction <-> action at runtime.
+  const action: typeof browser.browserAction;
+}

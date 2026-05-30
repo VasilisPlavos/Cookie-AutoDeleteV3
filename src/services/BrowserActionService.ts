@@ -18,14 +18,14 @@ export const showNumberOfCookiesInIcon = (
   tab: browser.tabs.Tab,
   cookieLength: number,
 ): void => {
-  if (browser.browserAction.setBadgeText) {
-    browser.browserAction.setBadgeText({
+  if (browser.action.setBadgeText) {
+    browser.action.setBadgeText({
       tabId: tab.id,
       text: `${cookieLength === 0 ? '' : cookieLength.toString()}`,
     });
   }
-  if (browser.browserAction.setBadgeTextColor) {
-    browser.browserAction.setBadgeTextColor({
+  if (browser.action.setBadgeTextColor) {
+    browser.action.setBadgeTextColor({
       color: 'white',
       tabId: tab.id,
     });
@@ -48,7 +48,7 @@ export const showNumberOfCookiesInTitle = async (
   }`;
 
   const curData = /\[(.*)] \((\d*)\)/.exec(
-    await browser.browserAction.getTitle({
+    await browser.action.getTitle({
       tabId: tab.id,
     }),
   );
@@ -57,7 +57,7 @@ export const showNumberOfCookiesInTitle = async (
     list: otherInfo.listType || (curData && curData[1]) || 'NO LIST',
   };
 
-  browser.browserAction.setTitle({
+  browser.action.setTitle({
     tabId: tab.id,
     title: `${tabTitle} [${newData.list}] (${newData.cookies})`,
   });
@@ -70,8 +70,8 @@ const setBadgeColor = (tab: browser.tabs.Tab, color = 'default') => {
     red: 'red',
     yellow: '#e6a32e',
   };
-  if (browser.browserAction.setBadgeBackgroundColor) {
-    browser.browserAction.setBadgeBackgroundColor({
+  if (browser.action.setBadgeBackgroundColor) {
+    browser.action.setBadgeBackgroundColor({
       color: badgeBackgroundColor[color],
       tabId: tab.id,
     });
@@ -84,8 +84,8 @@ const setIconColor = (
   keepDefault = false,
   color = 'default',
 ) => {
-  if (browser.browserAction.setIcon) {
-    browser.browserAction.setIcon({
+  if (browser.action.setIcon) {
+    browser.action.setIcon({
       path: {
         48: `icons/icon_48${
           keepDefault || color === 'default' ? '' : `_${color}`
@@ -101,9 +101,9 @@ const setIconColor = (
 // Set background icon for browser.
 export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
   // This sets global icon
-  if (browser.browserAction.setIcon) {
+  if (browser.action.setIcon) {
     // Set Global Icon
-    await browser.browserAction.setIcon({
+    await browser.action.setIcon({
       path: {
         48: `icons/icon_48${enabled ? '' : '_greyscale'}.png`,
       },
@@ -114,7 +114,7 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
     });
     for (const tab of tabAwait) {
       if (tab.id !== browser.tabs.TAB_ID_NONE) {
-        await browser.browserAction.setIcon({
+        await browser.action.setIcon({
           path: {
             48: `icons/icon_48${enabled ? '' : '_greyscale'}.png`,
           },
