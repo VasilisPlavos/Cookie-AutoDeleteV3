@@ -30,6 +30,9 @@ Control your cookies! This extension is inspired by [Self-Destructing Cookies](h
 
 ### via Official Channels
 
+> **Manifest V3 — version 4.x:** Requires Chrome 109+, Firefox 115+, or Edge 109+.
+> The 3.x release line (MV2) continues to receive critical bug fixes on the `3.X.X-Branch`.
+
 - [Google Chrome][link-cws]
 
   - [![Chrome Lastest](https://img.shields.io/chrome-web-store/v/fhcgjolkccmbidfldomjliifgaodjagh)][link-cws] [![Chrome Users](https://img.shields.io/chrome-web-store/users/fhcgjolkccmbidfldomjliifgaodjagh)][link-cws]
@@ -70,10 +73,11 @@ If there are any bugs that only a certain browser has, and you have the fix for 
 #### Development
 
 - `npm install` - Installs all dependencies
-- `npm run dev` - This will run the webpack watcher and automatically pack `/src/background.ts`, popup, and setting items and its dependencies to `/extension`
+- `npm run dev` - This will run the webpack watcher and automatically pack `/src/background/index.ts`, popup, and setting items and its dependencies to `/extension`
 - `npm run lint` - Runs the eslinter for JS files
 - `npm test` - Runs the test suite located in `/test`
-- `npm run build` - Builds the Firefox (.xpi/.zip) and Chrome (.zip) builds
+- `npm run build` - Builds the Firefox (.xpi/.zip) and Chrome (.zip) builds (MV3)
+- `npm run build:chrome` / `npm run build:firefox` - Build a single target
 
 #### Testing
 

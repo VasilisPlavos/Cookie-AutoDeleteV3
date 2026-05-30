@@ -1,6 +1,15 @@
 {
   "releases": [
     {
+      "version": "4.0.0",
+      "notes": [
+        "Migrated to Manifest V3.",
+        "Minimum browser versions: Chrome 109, Firefox 115, Edge 109. Older browsers stay on the 3.x release line.",
+        "Background script now runs as a service worker on Chromium and as a non-persistent event page on Firefox. Behavior and settings are preserved across upgrade.",
+        "No data migration required — settings, whitelist, and greylist carry over."
+      ]
+    },
+    {
       "version": "3.8.2",
       "notes": [
         "Fixed:  Passing IP Addresses to browsingData / site data cleanups. Fixes #983 via PR#1451, with thanks to Rob W.",
