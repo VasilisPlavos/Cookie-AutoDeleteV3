@@ -11,14 +11,14 @@
  * SOFTWARE.
  */
 import { Store } from 'redux';
-import { cookieCleanup, validateSettings } from './redux/Actions';
-import createStore from './redux/Store';
+import { cookieCleanup, validateSettings } from '../redux/Actions';
+import createStore from '../redux/Store';
 import {
   checkIfProtected,
   setGlobalIcon,
-} from './services/BrowserActionService';
-import ContextMenuEvents from './services/ContextMenuEvents';
-import CookieEvents from './services/CookieEvents';
+} from '../services/BrowserActionService';
+import ContextMenuEvents from '../services/ContextMenuEvents';
+import CookieEvents from '../services/CookieEvents';
 import {
   cadLog,
   convertVersionToNumber,
@@ -26,12 +26,12 @@ import {
   extractMainDomain,
   getSetting,
   sleep,
-} from './services/Libs';
-import StoreUser from './services/StoreUser';
-import TabEvents from './services/TabEvents';
-import { ReduxAction, ReduxConstants } from './typings/ReduxConstants';
-import ContextualIdentitiesEvents from './services/ContextualIdentitiesEvents';
-import SettingService from './services/SettingService';
+} from '../services/Libs';
+import StoreUser from '../services/StoreUser';
+import TabEvents from '../services/TabEvents';
+import { ReduxAction, ReduxConstants } from '../typings/ReduxConstants';
+import ContextualIdentitiesEvents from '../services/ContextualIdentitiesEvents';
+import SettingService from '../services/SettingService';
 
 let store: Store<State, ReduxAction>;
 
