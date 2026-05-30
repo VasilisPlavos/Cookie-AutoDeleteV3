@@ -12,6 +12,7 @@ import {
 } from '../services/BrowserActionService';
 import ContextualIdentitiesEvents from '../services/ContextualIdentitiesEvents';
 import { getSetting } from '../services/Libs';
+import { detectBrowser } from '../services/BrowserDetect';
 import SettingService from '../services/SettingService';
 import StoreUser from '../services/StoreUser';
 import { ReduxAction, ReduxConstants } from '../typings/ReduxConstants';
@@ -86,6 +87,9 @@ async function init(): Promise<void> {
     });
   } else {
     // Cold start — populate cache for the first time.
+    const browserName = await detectBrowser();
+    _store.dispatch({ type: ReduxConstants.ADD_CACHE, payload: { key: 'browserDetect', value: browserName } });
+
     if (browser.runtime.getBrowserInfo) {
       const browserInfo = await browser.runtime.getBrowserInfo();
       const browserVersion = Number.parseInt(browserInfo.version, 10);
