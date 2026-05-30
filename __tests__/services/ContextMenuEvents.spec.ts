@@ -138,27 +138,21 @@ describe('ContextMenuEvents', () => {
       expect(global.browser.contextMenus.create).not.toHaveBeenCalled();
     });
     it('should create its menus contextMenus setting is enabled and none was created beforehand', () => {
-      when(global.browser.contextMenus.onClicked.hasListener)
-        .calledWith(expect.any(Function))
-        .mockReturnValue(false);
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
       ContextMenuEvents.menuInit();
       expect(TestContextMenuEvents.getIsInitialized()).toBe(true);
       expect(global.browser.contextMenus.create).toHaveBeenCalledTimes(35);
-      expect(
-        global.browser.contextMenus.onClicked.addListener,
-      ).toHaveBeenCalledTimes(1);
-    });
-    it('should not add another listener if one was already added', () => {
-      when(global.browser.contextMenus.onClicked.hasListener)
-        .calledWith(expect.any(Function))
-        .mockReturnValue(true);
-      TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
-      TestContextMenuEvents.setIsInitialized(false);
-      ContextMenuEvents.menuInit();
+      // onClicked listener is now registered at the background module top level,
+      // not inside menuInit — so menuInit must NOT call addListener.
       expect(
         global.browser.contextMenus.onClicked.addListener,
       ).not.toHaveBeenCalled();
+    });
+    it('should not create menus again if already initialized', () => {
+      TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
+      TestContextMenuEvents.setIsInitialized(true);
+      ContextMenuEvents.menuInit();
+      expect(global.browser.contextMenus.create).not.toHaveBeenCalled();
     });
     it('should do nothing if contextMenus setting is enabled and menus were already created', () => {
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
@@ -172,9 +166,11 @@ describe('ContextMenuEvents', () => {
     it('should work', async () => {
       TestContextMenuEvents.setIsInitialized(true);
       await ContextMenuEvents.menuClear();
+      // onClicked listener is managed at the background module top level and is
+      // never removed — so menuClear must NOT call removeListener.
       expect(
         global.browser.contextMenus.onClicked.removeListener,
-      ).toHaveBeenCalledTimes(1);
+      ).not.toHaveBeenCalled();
       expect(TestContextMenuEvents.getIsInitialized()).toBe(false);
     });
   });

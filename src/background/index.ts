@@ -215,9 +215,17 @@ browser.runtime.onConnect.addListener(async (p) => {
   cookiePopupPorts.push(p);
 });
 
-// --- Context menus: initialized inside ready() since they need the store. ---
-//     A separate top-level browser.contextMenus.onClicked listener is set up
-//     inside ContextMenuEvents.menuInit() via eventListenerActions().
+// --- Context menus ---
+// Register onClicked at module top level so MV3 SW wakes on context-menu clicks.
+// Menu creation (menuInit) still runs after ready() because it needs the store.
+
+if (browser.contextMenus) {
+  browser.contextMenus.onClicked.addListener(async (info, tab) => {
+    await ready();
+    ContextMenuEvents.onContextMenuClicked(info, tab);
+  });
+}
+
 ready().then(() => {
   if (browser.contextMenus) {
     ContextMenuEvents.menuInit();

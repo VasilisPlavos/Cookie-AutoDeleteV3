@@ -23,7 +23,6 @@ import {
 } from './CleanupService';
 import {
   cadLog,
-  eventListenerActions,
   getHostname,
   getSetting,
   localFileToRegex,
@@ -254,20 +253,10 @@ export default class ContextMenuEvents extends StoreUser {
       title: browser.i18n.getMessage('settingsText'),
     });
 
-    eventListenerActions(
-      browser.contextMenus.onClicked,
-      ContextMenuEvents.onContextMenuClicked,
-      EventListenerAction.ADD,
-    );
   }
 
   public static async menuClear(): Promise<void> {
     await browser.contextMenus.removeAll();
-    eventListenerActions(
-      browser.contextMenus.onClicked,
-      ContextMenuEvents.onContextMenuClicked,
-      EventListenerAction.REMOVE,
-    );
     ContextMenuEvents.isInitialized = false;
     cadLog(
       {
