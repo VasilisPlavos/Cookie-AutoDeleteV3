@@ -16,7 +16,7 @@ import 'webextension-polyfill';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { createUIStore } from 'redux-webext';
-import { isChrome, sleep } from '../../services/Libs';
+import { sleep } from '../../services/Libs';
 import ErrorBoundary from '../common_components/ErrorBoundary';
 import fontAwesomeImports from '../font-awesome-imports';
 import App from './App';
@@ -31,10 +31,6 @@ async function initApp() {
   }
   const mountNode = document.createElement('div');
   document.body.appendChild(mountNode);
-
-  if (isChrome(store.getState().cache)) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
 
   ReactDOM.render(
     <Provider store={store}>
