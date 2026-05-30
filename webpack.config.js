@@ -13,9 +13,6 @@ module.exports = {
     popup: `${__dirname}/src/ui/popup/index.tsx`,
     setting: `${__dirname}/src/ui/settings/index.tsx`,
   },
-  externals: {
-    'redux-webext': 'ReduxWebExt',
-  },
   output: {
     path: `${__dirname}/extension/bundles`,
     filename: `[name].bundle.js`,
@@ -72,12 +69,6 @@ module.exports = {
         {
           force: true,
           from: 'jquery/dist/jquery.slim.min*',
-          to: '../../extension/global_files/[name][ext]',
-          context: `${__dirname}/node_modules`,
-        },
-        {
-          force: true,
-          from: 'webextension-polyfill/dist/browser-polyfill.min.js*',
           to: '../../extension/global_files/[name][ext]',
           context: `${__dirname}/node_modules`,
         },
