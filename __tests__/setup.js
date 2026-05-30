@@ -44,6 +44,7 @@ const storageArea = {
 const apis = {
   alarms: {
     fn: ['clear', 'clearAll', 'create', 'get', 'getAll'],
+    events: ['onAlarm'],
   },
   browserAction: {
     fn: [
@@ -114,7 +115,7 @@ const apis = {
       'reload',
       'sendMessage',
     ],
-    events: ['onConnect', 'onInstalled', 'onMessage', 'onStartup'],
+    events: ['onConnect', 'onInstalled', 'onMessage', 'onStartup', 'onSuspend'],
   },
   tabs: {
     fn: [
