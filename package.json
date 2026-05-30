@@ -64,6 +64,8 @@
   },
   "scripts": {
     "build": "npm run compile && node ./tools/buildFilesDev.js",
+    "build:chrome": "npm run compile && node ./tools/buildFilesDev.js --target=chrome",
+    "build:firefox": "npm run compile && node ./tools/buildFilesDev.js --target=firefox",
     "compile": "webpack --config webpack.config.js --color",
     "dev": "webpack --config webpack.config.js --progress --color --watch",
     "lint": "eslint -c .eslintrc.json --ext .ts src/",
