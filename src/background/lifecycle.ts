@@ -3,16 +3,151 @@
  * Licensed under MIT (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/blob/3.X.X-Branch/LICENSE)
  */
 
-// Placeholder. Task 6 fills in ready() / init() / save().
-let _initialized: Promise<void> | null = null;
+import { Store } from 'redux';
+import { validateSettings } from '../redux/Actions';
+import createStore from '../redux/Store';
+import {
+  checkIfProtected,
+  setGlobalIcon,
+} from '../services/BrowserActionService';
+import ContextualIdentitiesEvents from '../services/ContextualIdentitiesEvents';
+import { getSetting } from '../services/Libs';
+import SettingService from '../services/SettingService';
+import StoreUser from '../services/StoreUser';
+import { ReduxAction, ReduxConstants } from '../typings/ReduxConstants';
 
+let _ready: Promise<void> | null = null;
+let _store: Store<State, ReduxAction> | null = null;
+
+/**
+ * Returns a Promise that resolves once the background has finished one-time
+ * init for this service-worker (or event-page) activation. Idempotent across
+ * concurrent callers.
+ */
 export function ready(): Promise<void> {
-  if (!_initialized) {
-    _initialized = Promise.resolve();
+  if (!_ready) {
+    _ready = init();
   }
-  return _initialized;
+  return _ready;
 }
 
-export function markInitialized(p: Promise<void>): void {
-  _initialized = p;
+/** Exposed for callers that need the post-init store. Throws if called before ready resolves. */
+export function getStore(): Store<State, ReduxAction> {
+  if (!_store) {
+    throw new Error(
+      'getStore() called before ready() resolved. Always `await ready()` in event handlers.',
+    );
+  }
+  return _store;
+}
+
+/** Test seam — resets the module so tests can simulate a fresh SW wake. */
+export function _resetForTests(): void {
+  _ready = null;
+  _store = null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sessionStorage: any = (browser.storage as any).session;
+
+async function init(): Promise<void> {
+  const local = await browser.storage.local.get();
+  let stateFromStorage: Partial<State> = {};
+  try {
+    const localAny = local as { state?: string };
+    if (localAny.state) {
+      stateFromStorage = JSON.parse(localAny.state);
+    }
+  } catch {
+    stateFromStorage = {};
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const store: any = createStore(stateFromStorage);
+  _store = store as Store<State, ReduxAction>;
+
+  store.dispatch({ type: ReduxConstants.ON_STARTUP });
+
+  // Restore the cache slice from session storage (warm SW restart) before
+  // falling back to live runtime queries (cold start).
+  const session = await sessionStorage.get('cache');
+  const cache = (session as { cache?: State['cache'] }).cache;
+  if (cache) {
+    Object.entries(cache).forEach(([key, value]) => {
+      store.dispatch({
+        type: ReduxConstants.ADD_CACHE,
+        payload: { key, value },
+      });
+    });
+  } else {
+    // Cold start — populate cache for the first time.
+    if (browser.runtime.getBrowserInfo) {
+      const browserInfo = await browser.runtime.getBrowserInfo();
+      const browserVersion = Number.parseInt(browserInfo.version, 10);
+      store.dispatch({
+        type: ReduxConstants.ADD_CACHE,
+        payload: { key: 'browserVersion', value: browserVersion },
+      });
+      store.dispatch({
+        type: ReduxConstants.ADD_CACHE,
+        payload: { key: 'browserInfo', value: browserInfo },
+      });
+    }
+    const platformInfo = await browser.runtime.getPlatformInfo();
+    store.dispatch({
+      type: ReduxConstants.ADD_CACHE,
+      payload: { key: 'platformInfo', value: platformInfo },
+    });
+    store.dispatch({
+      type: ReduxConstants.ADD_CACHE,
+      payload: { key: 'platformOs', value: platformInfo.os },
+    });
+  }
+
+  StoreUser.init(store);
+  SettingService.init();
+  store.subscribe(SettingService.onSettingsChange);
+  store.subscribe(saveSubscriber);
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  store.dispatch(validateSettings());
+
+  await setGlobalIcon(
+    getSetting(store.getState(), SettingID.ACTIVE_MODE) as boolean,
+  );
+
+  await checkIfProtected(store.getState());
+
+  if (browser.contextualIdentities) {
+    await ContextualIdentitiesEvents.init();
+  }
+}
+
+// --- Save debouncer (replaces the old delaySave variable in background.ts:40-50) ---
+
+let _saveTimer: ReturnType<typeof setTimeout> | null = null;
+let _saveDirty = false;
+
+function saveSubscriber(): void {
+  _saveDirty = true;
+  if (_saveTimer) return;
+  _saveTimer = setTimeout(() => {
+    _saveTimer = null;
+    flushSave();
+  }, 1000);
+}
+
+/**
+ * Immediately writes the current store state to local storage AND the cache
+ * slice to session storage. Called by the debounce timer and (synchronously)
+ * by runtime.onSuspend so no state is ever lost on SW termination.
+ */
+export async function flushSave(): Promise<void> {
+  if (!_saveDirty || !_store) return;
+  _saveDirty = false;
+  const state = _store.getState();
+  await Promise.all([
+    browser.storage.local.set({ state: JSON.stringify(state) }),
+    sessionStorage.set({ cache: state.cache }),
+  ]);
 }
