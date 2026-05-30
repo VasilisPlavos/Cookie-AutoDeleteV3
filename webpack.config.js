@@ -79,39 +79,13 @@ module.exports = {
     extensions: ['.mjs', '.tsx', '.ts', '.js', '.json', '.png'],
   },
   optimization: {
-    splitChunks: {
-      automaticNameDelimiter: '-',
-      cacheGroups: {
-        ui: {
-          test: /[\\/]node_modules[\\/](react|react-dom|@fortawesome)[\\/]|[\\/]src[\\/]ui[\\/]/,
-          chunks: (chunk) => chunk.name !== 'background',
-          priority: -10,
-        },
-        common: {
-          chunks: (chunk) => chunk.name !== 'background',
-          // cacheGroupKey here is `common` as key of cacheGroup
-          name: (module, chunks, cacheGroupKey) => {
-            return [cacheGroupKey, chunks.map((c) => c.runtime).join('-')].join(
-              '-',
-            );
-          },
-          // Alternate version of above results, only if output.filename stays as [name].bundle.js
-          // filename: (pathData) => {
-          //   return `common-${
-          //     pathData.runtime.size > 1
-          //       ? Array.from(pathData.runtime).join('-')
-          //       : pathData.runtime
-          //   }.bundle.js`;
-          // },
-          priority: -15,
-        },
-        default: {
-          chunks: (chunk) => chunk.name !== 'background',
-          minChunks: 2,
-          priority: -20,
-          reuseExistingChunk: true,
-        },
-      },
-    },
+    // Each entry (background, popup, setting) ships as ONE self-contained bundle.
+    // - background: required because Chromium MV3 SWs can't load split chunks via
+    //   <script> injection.
+    // - popup/setting: required because the popup.html / settings.html only
+    //   reference one bundle per entry; webpack's async chunk loader cannot
+    //   reliably resolve from chrome-extension:// URLs without HtmlWebpackPlugin
+    //   or manual <script> tags for every chunk webpack emits.
+    splitChunks: false,
   },
 };
