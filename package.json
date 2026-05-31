@@ -1,6 +1,6 @@
 {
   "name": "cookie-autodelete-v3",
-  "version": "4.0.0-beta.1",
+  "version": "1.0.0",
   "description": "Firefox and Chrome browser extension that manages Cookies and other site data",
   "keywords": [
     "cookie",
