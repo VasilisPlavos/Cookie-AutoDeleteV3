@@ -12,6 +12,7 @@
  */
 
 import { getHostname, returnMatchedExpressionObject } from './Libs';
+import { diagnosticWarn } from './Diagnostics';
 
 // MV3 service workers can't reliably resolve relative icon paths during early
 // startup (Chromium bug #40058177). Convert paths to ImageData up-front via
@@ -36,7 +37,7 @@ async function loadIconData(path: string): Promise<ImageData | null> {
     iconCache.set(path, data);
     return data;
   } catch (err) {
-    console.warn(`[CAD] loadIconData failed for ${path}:`, err);
+    diagnosticWarn(`[CAD] loadIconData failed for ${path}:`, err);
     return null;
   }
 }
@@ -53,7 +54,7 @@ export const showNumberOfCookiesInIcon = (
         text: `${cookieLength === 0 ? '' : cookieLength.toString()}`,
       });
     } catch (err) {
-      console.warn('[CAD] browser.action.setBadgeText failed:', err);
+      diagnosticWarn('[CAD] browser.action.setBadgeText failed:', err);
     }
   }
   if (browser.action.setBadgeTextColor) {
@@ -63,7 +64,7 @@ export const showNumberOfCookiesInIcon = (
         tabId: tab.id,
       });
     } catch (err) {
-      console.warn('[CAD] browser.action.setBadgeTextColor failed:', err);
+      diagnosticWarn('[CAD] browser.action.setBadgeTextColor failed:', err);
     }
   }
 };
@@ -91,7 +92,7 @@ export const showNumberOfCookiesInTitle = async (
       }),
     );
   } catch (err) {
-    console.warn('[CAD] browser.action.getTitle failed:', err);
+    diagnosticWarn('[CAD] browser.action.getTitle failed:', err);
   }
   const newData = {
     cookies: otherInfo.cookieLength || (curData && curData[2]) || 0,
@@ -104,7 +105,7 @@ export const showNumberOfCookiesInTitle = async (
       title: `${tabTitle} [${newData.list}] (${newData.cookies})`,
     });
   } catch (err) {
-    console.warn('[CAD] browser.action.setTitle failed:', err);
+    diagnosticWarn('[CAD] browser.action.setTitle failed:', err);
   }
 };
 
@@ -122,7 +123,7 @@ const setBadgeColor = (tab: browser.tabs.Tab, color = 'default') => {
         tabId: tab.id,
       });
     } catch (err) {
-      console.warn('[CAD] browser.action.setBadgeBackgroundColor failed:', err);
+      diagnosticWarn('[CAD] browser.action.setBadgeBackgroundColor failed:', err);
     }
   }
 };
@@ -142,7 +143,7 @@ const setIconColor = async (
       try {
         await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
       } catch (err) {
-        console.warn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
+        diagnosticWarn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
       }
     }
   }
@@ -161,7 +162,7 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
   try {
     await browser.action.setIcon({ imageData: { 48: imageData } });
   } catch (err) {
-    console.warn(`[CAD] browser.action.setIcon (global) failed for ${iconPath}:`, err);
+    diagnosticWarn(`[CAD] browser.action.setIcon (global) failed for ${iconPath}:`, err);
   }
 
   const tabAwait = await browser.tabs.query({ windowType: 'normal' });
@@ -170,7 +171,7 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
       try {
         await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
       } catch (err) {
-        console.warn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
+        diagnosticWarn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
       }
     }
   }

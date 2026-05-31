@@ -11,6 +11,7 @@ import {
   setGlobalIcon,
 } from '../services/BrowserActionService';
 import ContextualIdentitiesEvents from '../services/ContextualIdentitiesEvents';
+import { diagnosticError } from '../services/Diagnostics';
 import { getSetting } from '../services/Libs';
 import { detectBrowser } from '../services/BrowserDetect';
 import SettingService from '../services/SettingService';
@@ -28,7 +29,7 @@ let _store: Store<State, ReduxAction> | null = null;
 export function ready(): Promise<void> {
   if (!_ready) {
     _ready = init().catch((err) => {
-      console.error('[CAD] background init failed (will retry on next ready()):', err);
+      diagnosticError('[CAD] background init failed (will retry on next ready()):', err);
       _ready = null; // Allow retry on next call.
       throw err;
     });
@@ -147,7 +148,7 @@ function saveSubscriber(): void {
   _saveTimer = setTimeout(() => {
     _saveTimer = null;
     flushSave().catch((err) => {
-      console.error('flushSave failed:', err);
+      diagnosticError('flushSave failed:', err);
     });
   }, 1000);
 }

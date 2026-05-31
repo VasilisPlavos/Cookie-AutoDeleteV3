@@ -10,6 +10,7 @@ import { checkIfProtected } from '../services/BrowserActionService';
 import AlarmScheduler from '../services/AlarmScheduler';
 import ContextMenuEvents from '../services/ContextMenuEvents';
 import CookieEvents from '../services/CookieEvents';
+import { diagnosticError, diagnosticWarn } from '../services/Diagnostics';
 import TabEvents from '../services/TabEvents';
 import {
   cadLog,
@@ -241,7 +242,7 @@ browser.runtime.onMessage.addListener((msg: any, _sender: browser.runtime.Messag
         const arg = Object.keys(actionData).length ? payload : undefined;
         getStore().dispatch(actionFn(arg));
       } else {
-        console.warn('[CAD] redux-webext DISPATCH received unknown action type:', type);
+        diagnosticWarn('[CAD] redux-webext DISPATCH received unknown action type:', type);
       }
       sendResponse(undefined);
     })();
@@ -318,5 +319,5 @@ ready().then(async () => {
     await ContextMenuEvents.menuInit();
   }
 }).catch((err) => {
-  console.error('[CAD] context menu init failed:', err);
+  diagnosticError('[CAD] context menu init failed:', err);
 });
