@@ -81,7 +81,7 @@ jobs:
           node-version: '22.x'
       - name: Cache Node Modules
         id: nodeCache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # npm cache files stored in `~/.npm` on Linux
           path: ~/.npm
