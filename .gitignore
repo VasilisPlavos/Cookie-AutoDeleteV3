@@ -53,3 +53,4 @@ extension/global_files/bootstrap.bundle.min.js*
 extension/global_files/bootstrap.min.css*
 extension/global_files/browser-polyfill.min.js*
 extension/global_files/jquery.slim.min.*
+/.playwright-mcp
