@@ -6,6 +6,9 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-*'
 
+permissions:
+  contents: write
+
 jobs:
   all_jobs:
     name: Tests, Builds, Coverage, Release Uploads
@@ -50,6 +53,7 @@ jobs:
         with:
           files: |
             builds/Cookie-AutoDelete-V3_*_Chrome.zip
+            builds/Cookie-AutoDelete-V3_*_Firefox.zip
             builds/Cookie-AutoDelete-V3_*_Firefox.xpi
           body: This is an auto-generated tagged release - Change log will be manually inserted soon! Built artifacts are attached below. This fork distributes via GitHub Releases only -- install via 'Load unpacked' (Chrome/Edge) or 'Load Temporary Add-on' (Firefox). See the README for instructions.
           prerelease: ${{ contains(github.ref, '-') }}
