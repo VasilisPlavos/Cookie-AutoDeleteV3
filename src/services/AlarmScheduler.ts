@@ -28,7 +28,7 @@ let _dispatcher: Dispatcher | null = null;
 async function defaultDispatcher(): Promise<void> {
   // Lazily resolve StoreUser/lifecycle so this module is import-safe in tests.
   // Late import avoids a cycle (lifecycle imports services indirectly).
-  const { ready, getStore } = require('../background/lifecycle') as {
+  const { ready, getStore } = (await import('../background/lifecycle')) as {
     ready: () => Promise<void>;
     getStore: () => { dispatch: (action: unknown) => void };
   };
