@@ -2,7 +2,44 @@
 
 **Date:** 2026-06-12
 **Branch:** `fix/high-severity-vulns`
-**Status:** Approved design
+**Status:** Superseded in part — see "Revision" below.
+
+> ## Revision (2026-06-12): pivot to Node 20 + copy-webpack-plugin@14
+>
+> A code-review comment on PR #31 surfaced a flaw in the override approach for
+> serialize-javascript. The override `serialize-javascript@^7.0.5` is the only
+> way to clear **both** serialize-javascript highs, but **every patched version
+> requires Node >=20.0.0**, while this project declared `engines.node >=16.14.0`
+> and ran an 18.x CI leg. The advisory ranges make the patched floor unavoidable:
+>
+> | Advisory | Vulnerable range | First patched |
+> |----------|------------------|---------------|
+> | GHSA-5c6j-r48x-rmvq (RCE) | `<= 7.0.2` | 7.0.3 |
+> | GHSA-qj8w-gfj5-8c6v (DoS) | `>= 5.0.0, < 7.0.5` | **7.0.5** (Node >=20) |
+>
+> There is **no Node-18-compatible serialize-javascript** that clears both highs
+> (`6.0.2` — the newest 6.x — is vulnerable to both). So the serialize-javascript
+> high is structurally un-fixable while supporting Node 18.
+>
+> **Decision:** bring the deferred Node-floor bump forward and do the *real*
+> copy-webpack-plugin upgrade instead of overriding:
+>
+> - `engines.node`: `>=16.14.0` → `>=20.9.0` (copy-webpack-plugin@14's floor).
+> - `copy-webpack-plugin`: `^10.2.4` → `^14.0.0` — pulls patched
+>   `serialize-javascript@7.0.5` directly. The `patterns` API is unchanged, so
+>   `webpack.config.js` needs no edits.
+> - **Remove** the `serialize-javascript` override entirely. **Keep** the `braces`
+>   override (jest@26 still needs it — that upgrade remains deferred to issue #32).
+> - CI: the test workflow already runs Node 22.x; the two release/build workflows
+>   (`ci_tag_release.yml`, `ci_tag_testbuilds.yml`) move `18.x` → `20.x`.
+>
+> Verification (all green): `npm audit` 0 high; `serialize-javascript@7.0.5` and
+> `copy-webpack-plugin@14.0.0` resolved; `npm test` 430/430 (pre-existing
+> `TabEvents.spec.ts` failure unchanged); `npm run compile` builds and emits all
+> global files via cwp@14.
+>
+> The "Problem" and original "Approach" sections below describe the initial
+> override-only design and are retained for history.
 
 ## Problem
 
