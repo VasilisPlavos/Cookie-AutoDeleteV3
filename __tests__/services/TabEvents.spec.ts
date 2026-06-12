@@ -100,9 +100,12 @@ describe('TabEvents', () => {
     when(global.browser.runtime.getManifest)
       .calledWith()
       .mockReturnValue({ version: '0.12.34' } as never);
-    when(global.browser.cookies.getAll)
-      .calledWith(expect.any(Object))
-      .mockResolvedValue([] as never);
+    // Safe fallback: any getAll() call not explicitly stubbed below resolves to an
+    // empty cookie list. This MUST be a jest-when default (not .calledWith(any))
+    // because a plain matcher does not catch every unstubbed call — and an
+    // unstubbed call would return undefined and crash getAllCookiesForDomain's
+    // `.forEach`, hard-killing the Jest worker.
+    when(global.browser.cookies.getAll).defaultResolvedValue([] as never);
     // Required so the actual cleaning functions being awaited won't run.
     when(spyAlarmEvents.createActiveModeAlarm)
       .calledWith()
