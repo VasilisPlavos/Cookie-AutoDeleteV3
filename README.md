@@ -4,7 +4,7 @@
 
 > **This is a community fork** of the original [Cookie AutoDelete][link-upstream] by Kenny Do and the CAD Team. The fork focuses on shipping Manifest V3 support for Chrome 109+, Firefox 115+, and Edge 109+. The original 3.x line (MV2) continues at the upstream repo.
 >
-> All MV2 functionality is preserved. The MV3 architecture is documented in [`docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md`](docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md).
+> All MV2 functionality is preserved. MV3 support targets Chrome 109+, Firefox 115+, and Edge 109+.
 
 ![Tagged Release Distribution](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/workflows/Tagged%20Release%20Distribution/badge.svg) ![Node.js CI Tests](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/workflows/CI/badge.svg?branch=main)
 
@@ -58,4 +58,4 @@ PRs and bug reports are welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for
 
 ## Documentation
 
-Wiki documentation: <https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation>. Fork-specific MV3 details: [`docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md`](docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md).
+Wiki documentation: <https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation>.
