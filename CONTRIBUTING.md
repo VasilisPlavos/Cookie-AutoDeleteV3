@@ -16,7 +16,7 @@ PRs are welcome. Run `npm install` then `npm test` to verify the suite before su
 
 ### Requirements
 
-- Node.js 20.9+ (see `engines` in `package.json`)
+- Node.js 22+ (see `engines` in `package.json`)
 
 ### Development
 
