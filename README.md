@@ -8,6 +8,10 @@
 
 ![Tagged Release Distribution](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/workflows/Tagged%20Release%20Distribution/badge.svg) ![Node.js CI Tests](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/workflows/CI/badge.svg?branch=main)
 
+[![Available in the Chrome Web Store](https://img.shields.io/chrome-web-store/v/jofioghmpdcgiiobkhmdojhjbjiejfbd?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd)
+
+**▶ [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd)**
+
 Control your cookies! This extension is inspired by [Self-Destructing Cookies](https://addons.mozilla.org/firefox/addon/self-destructing-cookies/). When a tab closes, any cookies not being used are automatically deleted. Prevent tracking by other cookies and add only the ones you trust. Easily import and export your cookie whitelist.
 
 ## Main features
@@ -28,11 +32,15 @@ Control your cookies! This extension is inspired by [Self-Destructing Cookies](h
 
 ## Installation
 
-> **Manifest V3 — version 4.x:** Requires Chrome 109+, Firefox 115+, or Edge 109+.
+> **Manifest V3 — version 1.0.0:** Requires Chrome 109+, Firefox 115+, or Edge 109+.
 
-This fork is distributed **via GitHub Releases only** (no Chrome Web Store / AMO submission). For store-distributed builds use the [upstream project][link-upstream].
+### Chrome & Edge (recommended)
 
-### Install from GitHub Releases
+Install directly from the **[Chrome Web Store](https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd)**. Edge users can install Chrome Web Store extensions after enabling "Allow extensions from other stores" in `edge://extensions`.
+
+### Firefox & manual install (GitHub Releases)
+
+For Firefox, or to sideload an unpacked build on any supported browser, use the [GitHub Releases](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases) artifacts:
 
 1. Download the latest `Cookie-AutoDelete-V3_<version>_Chrome.zip` (or `_Firefox.xpi`) from [Releases](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases).
 2. **Chrome / Edge:** extract the zip, open `chrome://extensions` (or `edge://extensions`), enable Developer Mode, click "Load unpacked", and select the extracted folder.
@@ -46,40 +54,7 @@ The original Cookie AutoDelete is © 2017–2026 Kenny Do and the [CAD Team](htt
 
 ## Contributing
 
-### Bug reports
-
-[Open an issue](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/issues) on this fork for MV3-specific bugs. For pre-MV3 (3.x) issues, please file at the [upstream repo][link-upstream].
-
-### Code
-
-PRs welcome. Run `npm install` then `npm test` to verify the suite before submitting.
-
-#### Requirements
-
-- Node.js 16.14+
-
-#### Development
-
-- `npm install` - Installs all dependencies
-- `npm run dev` - Webpack watcher; rebuilds `/src/background/index.ts`, popup, and settings into `/extension/bundles`
-- `npm run lint` - eslint over `src/`
-- `npm test` - jest suite under `__tests__/`
-- `npm run build` - Builds both Firefox (.xpi/.zip) and Chrome (.zip) MV3 packages into `/builds`
-- `npm run build:chrome` / `npm run build:firefox` - Build a single target
-
-#### Testing the extension locally
-
-1. `npm install`
-2. `npm run dev` (keeps rebuilding bundles as you change source)
-3. Load `/extension` into your browser:
-   - **Chrome / Edge:** `chrome://extensions` → Developer Mode → Load unpacked → select `/extension`
-   - **Firefox:** `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → select `/extension/manifest.json`
-
-#### Building release artifacts
-
-1. `npm install`
-2. `npm run build`
-3. Built files appear in `/builds/`.
+PRs and bug reports are welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, build, and test instructions, and [`SECURITY.md`](SECURITY.md) for reporting vulnerabilities.
 
 ## Documentation
 
