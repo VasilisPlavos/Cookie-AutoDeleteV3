@@ -11,19 +11,19 @@ permissions:
 
 jobs:
   all_jobs:
-    name: Tests, Builds, Coverage, Release Uploads
+    name: Tests, Builds, Release Uploads
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
         uses: actions/checkout@v4
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v3
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
       - name: Install Dependencies (npm ci)
         run: npm ci --no-fund
       - name: Run Tests
-        run: npm run test -- --verbose
+        run: npm test
       - name: Run Lint
         run: npm run lint
       - name: Ensure Version is Updated
@@ -39,11 +39,6 @@ jobs:
         with:
           name: builds
           path: builds
-      - name: Archive Code Coverage Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage
       - name: GitHub Releases
         id: github_releases
         uses: softprops/action-gh-release@v1
