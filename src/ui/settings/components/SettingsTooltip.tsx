@@ -21,7 +21,7 @@ interface OwnProps {
 const SettingsTooltip: React.FunctionComponent<OwnProps> = ({ hrefURL }) => {
   const link = hrefURL.startsWith('http')
     ? hrefURL
-    : `https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation${hrefURL}`;
+    : `https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation${hrefURL}`;
   return (
     <a
       href={link}

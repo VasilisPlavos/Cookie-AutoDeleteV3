@@ -95,7 +95,7 @@ const Welcome: React.FunctionComponent<WelcomeProps> = ({
           className="btn-warning"
         />
       </p>
-      <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation">
+      <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation">
         <span>{`${browser.i18n.getMessage('documentationText')}`}</span>
       </a>
       <br />

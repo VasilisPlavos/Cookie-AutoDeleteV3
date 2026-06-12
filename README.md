@@ -58,4 +58,4 @@ PRs and bug reports are welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for
 
 ## Documentation
 
-Upstream wiki documentation: <https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation>. Fork-specific MV3 details: [`docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md`](docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md).
+Wiki documentation: <https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation>. Fork-specific MV3 details: [`docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md`](docs/superpowers/specs/2026-05-30-mv3-upgrade-design.md).
