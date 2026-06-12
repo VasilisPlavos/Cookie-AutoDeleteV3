@@ -48,6 +48,9 @@ builds/
 
 .idea/
 
+# Claude Code session/worktree data
+.claude/
+
 # 3rd-Party Files copied from npm
 extension/global_files/bootstrap.bundle.min.js*
 extension/global_files/bootstrap.min.css*
