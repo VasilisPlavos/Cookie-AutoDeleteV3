@@ -72,7 +72,8 @@
     "compile": "webpack --config webpack.config.js --color",
     "dev": "webpack --config webpack.config.js --progress --color --watch",
     "lint": "eslint -c .eslintrc.json --ext .ts src/",
-    "test": "jest --coverage",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
     "test-all": "npm run test && npm run lint"
   },
   "repository": {
