@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Discussion - For new support issues
-    url: https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/discussions/new
-    about: A new way of interacting with our community (in beta).  New support issues and feature requests can be created and discussed here.
+  - name: Discussions - Ask a question or request support
+    url: https://github.com/vasilisplavos/Cookie-AutoDeleteV3/discussions/new
+    about: Ask questions, request support, or propose features for this MV3 fork.
   - name: Documentation
     url: https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation
     about: Make sure that you have already read the Documentation on the available features and what they do.
