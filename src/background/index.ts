@@ -242,6 +242,7 @@ browser.runtime.onMessage.addListener((msg: any, _sender: browser.runtime.Messag
         const arg = Object.keys(actionData).length ? payload : undefined;
         getStore().dispatch(actionFn(arg));
       } else {
+        // eslint-disable-next-line no-console
         console.warn('[CAD] redux-webext DISPATCH received unknown action type:', type);
       }
       sendResponse(undefined);
@@ -319,5 +320,6 @@ ready().then(async () => {
     await ContextMenuEvents.menuInit();
   }
 }).catch((err) => {
+  // eslint-disable-next-line no-console
   console.error('[CAD] context menu init failed:', err);
 });

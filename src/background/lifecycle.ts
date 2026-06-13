@@ -29,6 +29,7 @@ let _store: Store<State, ReduxAction> | null = null;
 export function ready(): Promise<void> {
   if (!_ready) {
     _ready = init().catch((err) => {
+      // eslint-disable-next-line no-console
       console.error('[CAD] background init failed (will retry on next ready()):', err);
       _ready = null; // Allow retry on next call.
       throw err;
@@ -148,6 +149,7 @@ function saveSubscriber(): void {
   _saveTimer = setTimeout(() => {
     _saveTimer = null;
     flushSave().catch((err) => {
+      // eslint-disable-next-line no-console
       console.error('flushSave failed:', err);
     });
   }, 1000);
