@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2017-2026 Kenny Do and CAD Team (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors)
+ * Copyright (c) 2026 Vasilis Plavos
  * Licensed under MIT (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/blob/3.X.X-Branch/LICENSE)
  */
 import 'webextension-polyfill';
@@ -241,6 +242,7 @@ browser.runtime.onMessage.addListener((msg: any, _sender: browser.runtime.Messag
         const arg = Object.keys(actionData).length ? payload : undefined;
         getStore().dispatch(actionFn(arg));
       } else {
+        // eslint-disable-next-line no-console
         console.warn('[CAD] redux-webext DISPATCH received unknown action type:', type);
       }
       sendResponse(undefined);
@@ -318,5 +320,6 @@ ready().then(async () => {
     await ContextMenuEvents.menuInit();
   }
 }).catch((err) => {
+  // eslint-disable-next-line no-console
   console.error('[CAD] context menu init failed:', err);
 });

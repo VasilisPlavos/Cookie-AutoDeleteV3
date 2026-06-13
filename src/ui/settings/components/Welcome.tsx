@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2017-2022 Kenny Do and CAD Team (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors)
+ * Copyright (c) 2026 Vasilis Plavos
  * Licensed under MIT (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/blob/3.X.X-Branch/LICENSE)
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -99,10 +100,6 @@ const Welcome: React.FunctionComponent<WelcomeProps> = ({
         <span>{`${browser.i18n.getMessage('documentationText')}`}</span>
       </a>
       <br />
-      <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/FAQ:-Common-Questions-and-Issues">
-        <span>{`${browser.i18n.getMessage('faqText')}`}</span>
-      </a>
-      <br />
       <br />
       <a href={getReviewLink(bName)}>
         {browser.i18n.getMessage(
@@ -117,7 +114,7 @@ const Welcome: React.FunctionComponent<WelcomeProps> = ({
       <p>
         {browser.i18n.getMessage('oldReleasesText')}{' '}
         <a
-          href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/releases"
+          href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases"
           target="_blank"
           rel="noreferrer"
         >

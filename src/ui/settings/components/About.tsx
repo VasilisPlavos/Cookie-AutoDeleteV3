@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2017-2022 Kenny Do and CAD Team (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors)
+ * Copyright (c) 2026 Vasilis Plavos
  * Licensed under MIT (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/blob/3.X.X-Branch/LICENSE)
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -87,17 +88,13 @@ class About extends React.Component<AboutProps> {
           <br />
           <b>{browser.runtime.getManifest().version}</b>
         </h5>
-        <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/issues">
+        <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/issues">
           {browser.i18n.getMessage('reportIssuesText')}
         </a>{' '}
         <br />
         <br />
         <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation">
           <span>{`${browser.i18n.getMessage('documentationText')}`}</span>
-        </a>
-        <br />
-        <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/FAQ:-Common-Questions-and-Issues">
-          <span>{`${browser.i18n.getMessage('faqText')}`}</span>
         </a>
         <br />
         <br />{' '}
@@ -134,19 +131,9 @@ class About extends React.Component<AboutProps> {
         <br />
         <span>{`${browser.i18n.getMessage('contributorsText')}`}:</span>
         <ul>
-          <li>Kenny Do (Creator)</li>
           <li>
-            seansfkelley (UI Redesign of Expression Table Settings and Popup)
-          </li>
-          <li>kennethtran93 (UI bug fixes and then some)</li>
-          <li>
-            <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors">
-              GitHub Contributors
-            </a>
-          </li>
-          <li>
-            <a href="https://crowdin.com/project/cookie-autodelete">
-              Crowdin Contributors
+            <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/graphs/contributors">
+              Vasilis Plavos
             </a>
           </li>
         </ul>

@@ -4,7 +4,7 @@ Thanks for helping improve the Manifest V3 fork of Cookie AutoDelete!
 
 ## Bug reports
 
-[Open an issue](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/issues) on this fork for MV3-specific bugs. For pre-MV3 (3.x) issues, please file at the [upstream repo](https://github.com/Cookie-AutoDelete/Cookie-AutoDelete).
+[Open an issue](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/issues) on this fork for bug reports.
 
 ## Security issues
 

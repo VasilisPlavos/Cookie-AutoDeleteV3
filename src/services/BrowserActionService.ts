@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2017-2022 Kenny Do and CAD Team (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors)
+ * Copyright (c) 2026 Vasilis Plavos
  * Licensed under MIT (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/blob/3.X.X-Branch/LICENSE)
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -36,6 +37,7 @@ async function loadIconData(path: string): Promise<ImageData | null> {
     iconCache.set(path, data);
     return data;
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn(`[CAD] loadIconData failed for ${path}:`, err);
     return null;
   }
@@ -53,6 +55,7 @@ export const showNumberOfCookiesInIcon = (
         text: `${cookieLength === 0 ? '' : cookieLength.toString()}`,
       });
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.warn('[CAD] browser.action.setBadgeText failed:', err);
     }
   }
@@ -63,6 +66,7 @@ export const showNumberOfCookiesInIcon = (
         tabId: tab.id,
       });
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.warn('[CAD] browser.action.setBadgeTextColor failed:', err);
     }
   }
@@ -91,6 +95,7 @@ export const showNumberOfCookiesInTitle = async (
       }),
     );
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('[CAD] browser.action.getTitle failed:', err);
   }
   const newData = {
@@ -104,6 +109,7 @@ export const showNumberOfCookiesInTitle = async (
       title: `${tabTitle} [${newData.list}] (${newData.cookies})`,
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('[CAD] browser.action.setTitle failed:', err);
   }
 };
@@ -122,6 +128,7 @@ const setBadgeColor = (tab: browser.tabs.Tab, color = 'default') => {
         tabId: tab.id,
       });
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.warn('[CAD] browser.action.setBadgeBackgroundColor failed:', err);
     }
   }
@@ -142,6 +149,7 @@ const setIconColor = async (
       try {
         await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.warn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
       }
     }
@@ -161,6 +169,7 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
   try {
     await browser.action.setIcon({ imageData: { 48: imageData } });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn(`[CAD] browser.action.setIcon (global) failed for ${iconPath}:`, err);
   }
 
@@ -170,6 +179,7 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
       try {
         await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.warn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
       }
     }
