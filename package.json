@@ -1,6 +1,6 @@
 {
   "name": "cookie-autodelete-v3",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Firefox and Chrome browser extension that manages Cookies and other site data",
   "keywords": [
     "cookie",
@@ -9,6 +9,17 @@
     "webextension",
     "extension"
   ],
+  "scripts": {
+    "build": "npm run compile && node ./tools/buildFilesDev.js",
+    "build:chrome": "npm run compile && node ./tools/buildFilesDev.js --target=chrome",
+    "build:firefox": "npm run compile && node ./tools/buildFilesDev.js --target=firefox",
+    "compile": "webpack --config webpack.config.js --color",
+    "dev": "webpack --config webpack.config.js --progress --color --watch",
+    "lint": "eslint -c .eslintrc.json --ext .ts src/",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test-all": "npm run test && npm run lint"
+  },
   "engines": {
     "node": ">=22.0.0",
     "npm": ">=8.5.0"
@@ -62,17 +73,6 @@
     "webpack": "^5.75.0",
     "webpack-bundle-analyzer": "^5.3.0",
     "webpack-cli": "^4.10.0"
-  },
-  "scripts": {
-    "build": "npm run compile && node ./tools/buildFilesDev.js",
-    "build:chrome": "npm run compile && node ./tools/buildFilesDev.js --target=chrome",
-    "build:firefox": "npm run compile && node ./tools/buildFilesDev.js --target=firefox",
-    "compile": "webpack --config webpack.config.js --color",
-    "dev": "webpack --config webpack.config.js --progress --color --watch",
-    "lint": "eslint -c .eslintrc.json --ext .ts src/",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
-    "test-all": "npm run test && npm run lint"
   },
   "repository": {
     "type": "git",
