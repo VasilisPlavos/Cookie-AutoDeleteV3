@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2026 CAD Team
+ * Copyright (c) 2026 Vasilis Plavos
  * Licensed under MIT
  */
 
