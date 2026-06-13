@@ -131,19 +131,9 @@ class About extends React.Component<AboutProps> {
         <br />
         <span>{`${browser.i18n.getMessage('contributorsText')}`}:</span>
         <ul>
-          <li>Kenny Do (Creator)</li>
           <li>
-            seansfkelley (UI Redesign of Expression Table Settings and Popup)
-          </li>
-          <li>kennethtran93 (UI bug fixes and then some)</li>
-          <li>
-            <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors">
-              GitHub Contributors
-            </a>
-          </li>
-          <li>
-            <a href="https://crowdin.com/project/cookie-autodelete">
-              Crowdin Contributors
+            <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/graphs/contributors">
+              Vasilis Plavos
             </a>
           </li>
         </ul>

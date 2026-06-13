@@ -79,12 +79,8 @@
     "type": "git",
     "url": "https://github.com/vasilisplavos/Cookie-AutoDeleteV3.git"
   },
-  "author": "Kenny Do",
+  "author": "Vasilis Plavos",
   "contributors": [
-    {
-      "name": "CAD Team",
-      "url": "https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors"
-    },
     {
       "name": "Vasilis Plavos",
       "url": "https://github.com/vasilisplavos"
