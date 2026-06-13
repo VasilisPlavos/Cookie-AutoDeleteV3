@@ -875,8 +875,8 @@ describe('Library Functions', () => {
   });
 
   describe('getSetting()', () => {
-    it('should return value of false for activeMode in default settings', () => {
-      expect(getSetting(initialState, SettingID.ACTIVE_MODE)).toEqual(false);
+    it('should return value of true for activeMode in default settings', () => {
+      expect(getSetting(initialState, SettingID.ACTIVE_MODE)).toEqual(true);
     });
   });
 

@@ -491,6 +491,7 @@ describe('TabEvents', () => {
     });
 
     it('should do nothing if activeMode is disabled', async () => {
+      TestStore.changeSetting(SettingID.ACTIVE_MODE, false);
       await TabEvents.cleanFromTabEvents();
       expect(spyAlarmEvents.createActiveModeAlarm).not.toHaveBeenCalled();
     });

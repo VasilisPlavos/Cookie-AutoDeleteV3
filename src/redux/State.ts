@@ -20,7 +20,7 @@ export const initialState: State = {
   settings: {
     [SettingID.ACTIVE_MODE]: {
       name: SettingID.ACTIVE_MODE,
-      value: false,
+      value: true,
     },
     [SettingID.CLEANUP_CACHE]: {
       name: SettingID.CLEANUP_CACHE,
