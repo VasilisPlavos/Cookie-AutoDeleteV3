@@ -88,17 +88,13 @@ class About extends React.Component<AboutProps> {
           <br />
           <b>{browser.runtime.getManifest().version}</b>
         </h5>
-        <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/issues">
+        <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/issues">
           {browser.i18n.getMessage('reportIssuesText')}
         </a>{' '}
         <br />
         <br />
         <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation">
           <span>{`${browser.i18n.getMessage('documentationText')}`}</span>
-        </a>
-        <br />
-        <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/FAQ:-Common-Questions-and-Issues">
-          <span>{`${browser.i18n.getMessage('faqText')}`}</span>
         </a>
         <br />
         <br />{' '}
