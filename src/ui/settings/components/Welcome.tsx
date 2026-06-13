@@ -100,10 +100,6 @@ const Welcome: React.FunctionComponent<WelcomeProps> = ({
         <span>{`${browser.i18n.getMessage('documentationText')}`}</span>
       </a>
       <br />
-      <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/FAQ:-Common-Questions-and-Issues">
-        <span>{`${browser.i18n.getMessage('faqText')}`}</span>
-      </a>
-      <br />
       <br />
       <a href={getReviewLink(bName)}>
         {browser.i18n.getMessage(
@@ -118,7 +114,7 @@ const Welcome: React.FunctionComponent<WelcomeProps> = ({
       <p>
         {browser.i18n.getMessage('oldReleasesText')}{' '}
         <a
-          href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/releases"
+          href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases"
           target="_blank"
           rel="noreferrer"
         >
