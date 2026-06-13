@@ -46,11 +46,11 @@ const displayReleaseNotes = (releases: ReleaseNote[]) => {
 const getReviewLink = (bName: browserName = browserDetect() as browserName) => {
   switch (bName) {
     case browserName.Chrome:
-      return 'https://chrome.google.com/webstore/detail/cookie-autodelete/fhcgjolkccmbidfldomjliifgaodjagh/reviews';
+      return 'https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd/reviews';
     case browserName.EdgeChromium:
-      return 'https://microsoftedge.microsoft.com/addons/detail/djkjpnciiommncecmdefpdllknjdmmmo#reviewList';
+      return 'https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases';
     case browserName.Firefox:
-      return 'https://addons.mozilla.org/en-US/firefox/addon/cookie-autodelete/reviews/';
+      return 'https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases';
     default:
       return '';
   }
@@ -95,7 +95,7 @@ const Welcome: React.FunctionComponent<WelcomeProps> = ({
           className="btn-warning"
         />
       </p>
-      <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation">
+      <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation">
         <span>{`${browser.i18n.getMessage('documentationText')}`}</span>
       </a>
       <br />

@@ -412,7 +412,7 @@ class Expressions extends React.Component<ExpressionProps> {
           <a
             target="_blank"
             rel="help noreferrer noopener"
-            href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation#enter-expression"
+            href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation#enter-expression"
           >
             {browser.i18n.getMessage('questionExpression')}
             <SettingsTooltip hrefURL="#enter-expression" />

@@ -18,7 +18,7 @@ module.exports = {
   clearMocks: true,
 
   // Indicates whether the coverage information should be collected while executing the test
-  collectCoverage: true,
+  collectCoverage: false,
 
   // An array of glob patterns indicating a set of files for which coverage information should be collected
   collectCoverageFrom: ['src/**/*.{ts,tsx}'],
@@ -53,13 +53,6 @@ module.exports = {
 
   // A path to a module which exports an async function that is triggered once after all test suites
   // globalTeardown: null,
-
-  // A set of global variables that need to be available in all test environments
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.json',
-    },
-  },
 
   // An array of directory names to be searched recursively up from the requiring module's location
   // moduleDirectories: [
@@ -156,7 +149,7 @@ module.exports = {
 
   // A map from regular expressions to paths to transformers
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
   },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation

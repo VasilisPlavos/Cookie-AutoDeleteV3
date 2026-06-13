@@ -112,15 +112,6 @@ class SideBar extends React.Component<OwnProps> {
                 <span>{`${element.tabText}`}</span>
               </div>
             ))}
-            <br />
-            <a
-              className={`pure-menu-item`}
-              href="https://liberapay.com/CAD_Developers/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span>{browser.i18n.getMessage('contributeText')}</span>
-            </a>
           </div>
         </div>
       </div>

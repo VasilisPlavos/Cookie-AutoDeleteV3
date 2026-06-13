@@ -92,7 +92,7 @@ class About extends React.Component<AboutProps> {
         </a>{' '}
         <br />
         <br />
-        <a href="https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/wiki/Documentation">
+        <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/wiki/Documentation">
           <span>{`${browser.i18n.getMessage('documentationText')}`}</span>
         </a>
         <br />
@@ -102,7 +102,7 @@ class About extends React.Component<AboutProps> {
         <br />
         <br />{' '}
         <a
-          href="https://chrome.google.com/webstore/detail/cookie-autodelete/fhcgjolkccmbidfldomjliifgaodjagh"
+          href="https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd"
           target="_blank"
           rel="noreferrer"
         >
@@ -112,7 +112,7 @@ class About extends React.Component<AboutProps> {
         </a>
         <br />
         <a
-          href="https://microsoftedge.microsoft.com/addons/detail/djkjpnciiommncecmdefpdllknjdmmmo"
+          href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases"
           target="_blank"
           rel="noreferrer"
         >
@@ -122,7 +122,7 @@ class About extends React.Component<AboutProps> {
         </a>{' '}
         <br />
         <a
-          href="https://addons.mozilla.org/firefox/addon/cookie-autodelete/"
+          href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases"
           target="_blank"
           rel="noreferrer"
         >

@@ -8,19 +8,19 @@ on:
 
 jobs:
   all_jobs:
-    name: Tests, Builds, Coverage, Release Uploads
+    name: Tests, Builds, Release Uploads
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
         uses: actions/checkout@v4
-      - name: Use Node.js 18.x
-        uses: actions/setup-node@v3
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '22.x'
       - name: Install Dependencies (npm ci)
         run: npm ci --no-fund
       - name: Run Tests
-        run: npm run test -- --verbose
+        run: npm test
       - name: Run Lint
         run: npm run lint
       - name: Ensure Version is Updated
@@ -29,16 +29,6 @@ jobs:
         run: npm run build
         env:
           GITSHA: ${{ github.event.after }}
-      - name: Codecov.io Coverage upload
-        uses: codecov/codecov-action@v5
-        with:
-          fail_ci_if_error: true
-          directory: ./coverage/
-          token: ${{ secrets.CODECOV_TOKEN }} # Optional as it is open source repo
-      - name: Coveralls.io Coverage Upload
-        uses: coverallsapp/github-action@v2.3.6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: GitHub Releases
         id: github_releases
         uses: softprops/action-gh-release@v1
