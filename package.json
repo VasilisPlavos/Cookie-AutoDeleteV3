@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "build": "npm run compile && node ./tools/buildFilesDev.js",
+    "prebuild:chrome": "node ./tools/bumpVersion.js",
     "build:chrome": "npm run compile && node ./tools/buildFilesDev.js --target=chrome",
     "build:firefox": "npm run compile && node ./tools/buildFilesDev.js --target=firefox",
     "compile": "webpack --config webpack.config.js --color",
