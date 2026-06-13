@@ -164,6 +164,9 @@ describe('SettingService', () => {
       expect(global.browser.browsingData.remove).not.toHaveBeenCalled();
     });
     it('should enable global icon if active mode was recently enabled', async () => {
+      TestStore.changeSetting(SettingID.ACTIVE_MODE, false);
+      await SettingService.onSettingsChange();
+      spyBrowserActions.setGlobalIcon.mockClear();
       TestStore.changeSetting(SettingID.ACTIVE_MODE, true);
       await SettingService.onSettingsChange();
       expect(spyBrowserActions.setGlobalIcon).toHaveBeenCalledWith(true);
