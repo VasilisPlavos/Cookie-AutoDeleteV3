@@ -1,10 +1,6 @@
-[link-upstream]: https://github.com/Cookie-AutoDelete/Cookie-AutoDelete
-
 # Cookie AutoDelete V3
 
-> **This is a community fork** of the original [Cookie AutoDelete][link-upstream] by Kenny Do and the CAD Team. The fork focuses on shipping Manifest V3 support for Chrome 109+, Firefox 115+, and Edge 109+. The original 3.x line (MV2) continues at the upstream repo.
->
-> All MV2 functionality is preserved. MV3 support targets Chrome 109+, Firefox 115+, and Edge 109+.
+> Cookie AutoDelete V3 brings Manifest V3 support to Chrome 109+, Firefox 115+, and Edge 109+. All prior MV2 functionality is preserved.
 
 ![Tagged Release Distribution](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/workflows/Tagged%20Release%20Distribution/badge.svg) ![Node.js CI Tests](https://github.com/vasilisplavos/Cookie-AutoDeleteV3/workflows/CI/badge.svg?branch=main)
 
@@ -50,7 +46,7 @@ For Firefox, or to sideload an unpacked build on any supported browser, use the 
 
 ## Attribution
 
-The original Cookie AutoDelete is © 2017–2026 Kenny Do and the [CAD Team](https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors), licensed under MIT. All in-source copyright headers are preserved verbatim. This fork's contributions are © 2026 Vasilis Plavos, distributed under the same MIT terms (see [`LICENSE`](LICENSE)).
+This project is distributed under the MIT License (see [`LICENSE`](LICENSE)). It builds on prior MIT-licensed work whose original copyright notices are retained in the [`LICENSE`](LICENSE) file and in every source file's header, alongside this fork's copyright (© 2026 Vasilis Plavos).
 
 ## Contributing
 

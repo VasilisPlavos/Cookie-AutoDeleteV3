@@ -19,6 +19,5 @@ You can expect an initial acknowledgement within 7 days. If the report is
 accepted, a fix will be prepared and released, and you will be credited in the
 release notes unless you request otherwise.
 
-This fork only covers the Manifest V3 (4.x architecture, versioned 1.0.x here)
-codebase. Vulnerabilities in the upstream MV2 line should be reported to the
-[upstream project](https://github.com/Cookie-AutoDelete/Cookie-AutoDelete).
+This project covers the Manifest V3 (4.x architecture, versioned 1.0.x here)
+codebase.
