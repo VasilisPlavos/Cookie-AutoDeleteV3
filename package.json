@@ -58,7 +58,7 @@
     "copy-webpack-plugin": "^14.0.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^35.5.1",
+    "eslint-plugin-jsdoc": "^63.0.2",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "eslint-plugin-react": "^7.37.5",
     "jest": "^30.4.2",
