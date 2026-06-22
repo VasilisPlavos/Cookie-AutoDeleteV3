@@ -942,6 +942,26 @@ describe('CleanupService', () => {
         '1',
       ]);
     });
+
+    it('requests partitioned cookies when support is cached', async () => {
+      const partitionedState: State = {
+        ...initialState,
+        cache: { supportsPartitionedCookies: true },
+      };
+      when(global.browser.cookies.getAll)
+        .calledWith({
+          domain: 'google.com',
+          storeId: 'firefox-default',
+          partitionKey: {},
+        })
+        .mockResolvedValue([] as never);
+      await clearCookiesForThisDomain(partitionedState, googleTab);
+      expect(global.browser.cookies.getAll).toHaveBeenCalledWith({
+        domain: 'google.com',
+        storeId: 'firefox-default',
+        partitionKey: {},
+      });
+    });
   });
 
   describe('clearLocalStorageForThisDomain()', () => {

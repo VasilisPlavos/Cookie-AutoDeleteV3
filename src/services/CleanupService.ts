@@ -13,6 +13,7 @@
  */
 
 import {
+  addPartitionKeyForRead,
   CADCOOKIENAME,
   cadLog,
   extractMainDomain,
@@ -331,10 +332,13 @@ export const clearCookiesForThisDomain = async (
 ): Promise<boolean> => {
   const hostname = getHostname(tab.url);
   const getCookies = await browser.cookies.getAll(
-    returnOptionalCookieAPIAttributes(state, {
-      domain: hostname,
-      storeId: tab.cookieStoreId,
-    }),
+    addPartitionKeyForRead(
+      state.cache,
+      returnOptionalCookieAPIAttributes(state, {
+        domain: hostname,
+        storeId: tab.cookieStoreId,
+      }),
+    ),
   );
   // Filter out our own CAD cookie that cleans up other Browsing Data
   const cookies = getCookies.filter((c) => c.name !== CADCOOKIENAME);
@@ -858,9 +862,12 @@ export const cleanCookiesOperation = async (
     let cookies: browser.cookies.Cookie[] = [];
     try {
       cookies = await browser.cookies.getAll(
-        returnOptionalCookieAPIAttributes(state, {
-          storeId: id,
-        }),
+        addPartitionKeyForRead(
+          state.cache,
+          returnOptionalCookieAPIAttributes(state, {
+            storeId: id,
+          }),
+        ),
       );
     } catch (e: unknown) {
       if (e instanceof Error) {

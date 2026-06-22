@@ -15,6 +15,7 @@
 import { when } from 'jest-when';
 import { initialState } from '../../src/redux/State';
 import {
+  addPartitionKeyForRead,
   cadLog,
   convertVersionToNumber,
   createPartialTabInfo,
@@ -1766,6 +1767,30 @@ describe('Library Functions', () => {
       const r = validateExpressionDomain('/[Rr]eg[Ee]xp.com/');
       expect(global.browser.i18n.getMessage).not.toHaveBeenCalled();
       expect(r).toEqual('');
+    });
+  });
+
+  describe('addPartitionKeyForRead()', () => {
+    it('adds partitionKey: {} when support is cached true', () => {
+      expect(
+        addPartitionKeyForRead(
+          { supportsPartitionedCookies: true },
+          { domain: 'a.com', storeId: 'firefox-default' },
+        ),
+      ).toEqual({
+        domain: 'a.com',
+        storeId: 'firefox-default',
+        partitionKey: {},
+      });
+    });
+
+    it('leaves details unchanged when support is absent/false', () => {
+      expect(
+        addPartitionKeyForRead(
+          { browserDetect: browserName.Chrome },
+          { domain: 'a.com', storeId: 'firefox-default' },
+        ),
+      ).toEqual({ domain: 'a.com', storeId: 'firefox-default' });
     });
   });
 
