@@ -86,5 +86,28 @@ describe('background/lifecycle', () => {
       await ready();
       expect(platformSpy).not.toHaveBeenCalled();
     });
+
+    it('cold start: probes partitioned-cookie support and caches the result', async () => {
+      when(global.browser.storage.session.get)
+        .calledWith('cache')
+        .mockResolvedValue({} as never);
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {} })
+        .mockResolvedValue([] as never);
+      await ready();
+      expect(global.browser.cookies.getAll).toHaveBeenCalledWith({
+        partitionKey: {},
+      });
+    });
+
+    it('cold start: a failing partitioned-cookie probe does not break init', async () => {
+      when(global.browser.storage.session.get)
+        .calledWith('cache')
+        .mockResolvedValue({} as never);
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {} })
+        .mockRejectedValue(new Error('unsupported') as never);
+      await expect(ready()).resolves.not.toThrow();
+    });
   });
 });
