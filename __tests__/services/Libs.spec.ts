@@ -16,6 +16,7 @@ import { when } from 'jest-when';
 import { initialState } from '../../src/redux/State';
 import {
   addPartitionKeyForRead,
+  addPartitionKeyForRemove,
   cadLog,
   convertVersionToNumber,
   createPartialTabInfo,
@@ -1791,6 +1792,40 @@ describe('Library Functions', () => {
           { domain: 'a.com', storeId: 'firefox-default' },
         ),
       ).toEqual({ domain: 'a.com', storeId: 'firefox-default' });
+    });
+  });
+
+  describe('addPartitionKeyForRemove()', () => {
+    const base = { name: 'k', url: 'https://a.com/' };
+
+    it('adds the cookie partitionKey when supported and present', () => {
+      expect(
+        addPartitionKeyForRemove(
+          { supportsPartitionedCookies: true },
+          { partitionKey: { topLevelSite: 'https://a.com' } },
+          base,
+        ),
+      ).toEqual({ ...base, partitionKey: { topLevelSite: 'https://a.com' } });
+    });
+
+    it('omits partitionKey for an unpartitioned cookie', () => {
+      expect(
+        addPartitionKeyForRemove(
+          { supportsPartitionedCookies: true },
+          {},
+          base,
+        ),
+      ).toEqual(base);
+    });
+
+    it('omits partitionKey when support is absent', () => {
+      expect(
+        addPartitionKeyForRemove(
+          { browserDetect: browserName.Chrome },
+          { partitionKey: { topLevelSite: 'https://a.com' } },
+          base,
+        ),
+      ).toEqual(base);
     });
   });
 

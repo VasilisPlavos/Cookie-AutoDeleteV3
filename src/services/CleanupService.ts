@@ -14,6 +14,7 @@
 
 import {
   addPartitionKeyForRead,
+  addPartitionKeyForRemove,
   CADCOOKIENAME,
   cadLog,
   extractMainDomain,
@@ -304,11 +305,11 @@ export const cleanCookies = async (
       firstPartyDomain: cookieProperties.firstPartyDomain,
       storeId: cookieProperties.storeId,
     });
-    const cookieRemove = {
+    const cookieRemove = addPartitionKeyForRemove(state.cache, cookieProperties, {
       ...cookieAPIProperties,
       name: cookieProperties.name,
       url: cookieProperties.preparedCookieDomain,
-    };
+    });
     // url: "http://domain.com" + cookies[i].path
     cadLog(
       {
@@ -347,12 +348,16 @@ export const clearCookiesForThisDomain = async (
     let cookieDeletedCount = 0;
     for (const cookie of cookies) {
       const r = await browser.cookies.remove(
-        returnOptionalCookieAPIAttributes(state, {
-          firstPartyDomain: cookie.firstPartyDomain,
-          name: cookie.name,
-          storeId: cookie.storeId,
-          url: prepareCookieDomain(cookie),
-        }) as {
+        addPartitionKeyForRemove(
+          state.cache,
+          cookie,
+          returnOptionalCookieAPIAttributes(state, {
+            firstPartyDomain: cookie.firstPartyDomain,
+            name: cookie.name,
+            storeId: cookie.storeId,
+            url: prepareCookieDomain(cookie),
+          }),
+        ) as {
           // This explicit type is required as cookies.remove requires these two
           // parameters, but url is not defined in cookies.Cookie as it is made
           // up of cookie.domain + cookie.path, and neither required parameters

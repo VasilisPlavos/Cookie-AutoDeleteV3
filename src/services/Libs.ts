@@ -838,6 +838,22 @@ export const addPartitionKeyForRead = (
 };
 
 /**
+ * For cookie REMOVES: target the exact partition by passing the cookie's own
+ * partitionKey verbatim (this also carries hasCrossSiteAncestor on Chrome 130+).
+ * No-op for unpartitioned cookies or unsupported browsers.
+ */
+export const addPartitionKeyForRemove = <T extends { [x: string]: any }>(
+  cache: CacheMap,
+  cookie: Partial<CookiePropertiesCleanup>,
+  removeProperties: T,
+): T => {
+  if (cache.supportsPartitionedCookies && cookie.partitionKey) {
+    return { ...removeProperties, partitionKey: cookie.partitionKey };
+  }
+  return removeProperties;
+};
+
+/**
  * Show a notification
  * @param x Contains object consisting of:
  *          - duration: number in seconds

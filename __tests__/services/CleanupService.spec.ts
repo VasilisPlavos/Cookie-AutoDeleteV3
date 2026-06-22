@@ -306,6 +306,55 @@ describe('CleanupService', () => {
         undefined,
       );
     });
+
+    it('passes the cookie partitionKey to remove when supported', async () => {
+      const partitionedState: State = {
+        ...initialState,
+        cache: { supportsPartitionedCookies: true },
+      };
+      const partitionedCookie: CookiePropertiesCleanup = {
+        ...youtubeCookie,
+        partitionKey: { topLevelSite: 'https://example.com' },
+      };
+      when(global.browser.cookies.remove)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue({} as never);
+      await cleanCookies(partitionedState, [
+        {
+          cached: false,
+          cleanCookie: true,
+          cookie: partitionedCookie,
+          reason: ReasonClean.NoMatchedExpression,
+        } as CleanReasonObject,
+      ]);
+      expect(global.browser.cookies.remove).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'SID',
+          partitionKey: { topLevelSite: 'https://example.com' },
+        }),
+      );
+    });
+
+    it('omits partitionKey from remove for an unpartitioned cookie', async () => {
+      const partitionedState: State = {
+        ...initialState,
+        cache: { supportsPartitionedCookies: true },
+      };
+      when(global.browser.cookies.remove)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue({} as never);
+      await cleanCookies(partitionedState, [
+        {
+          cached: false,
+          cleanCookie: true,
+          cookie: youtubeCookie,
+          reason: ReasonClean.NoMatchedExpression,
+        } as CleanReasonObject,
+      ]);
+      expect(global.browser.cookies.remove.mock.calls[0][0]).not.toHaveProperty(
+        'partitionKey',
+      );
+    });
   });
 
   describe('cleanCookiesOperation()', () => {
