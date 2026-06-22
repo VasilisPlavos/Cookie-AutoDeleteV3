@@ -15,9 +15,12 @@
 import { when } from 'jest-when';
 import { initialState } from '../../src/redux/State';
 import {
+  addPartitionKeyForRead,
+  addPartitionKeyForRemove,
   cadLog,
   convertVersionToNumber,
   createPartialTabInfo,
+  detectPartitionedCookieSupport,
   eventListenerActions,
   extractMainDomain,
   getAllCookiesForDomain,
@@ -37,6 +40,7 @@ import {
   isFirstPartyIsolate,
   localFileToRegex,
   matchIPInExpression,
+  PARTITION_PROBE_COOKIE_NAME,
   parseCookieStoreId,
   prepareCleanupDomains,
   prepareCookieDomain,
@@ -1765,6 +1769,114 @@ describe('Library Functions', () => {
       const r = validateExpressionDomain('/[Rr]eg[Ee]xp.com/');
       expect(global.browser.i18n.getMessage).not.toHaveBeenCalled();
       expect(r).toEqual('');
+    });
+  });
+
+  describe('addPartitionKeyForRead()', () => {
+    it('adds partitionKey: {} when support is cached true', () => {
+      expect(
+        addPartitionKeyForRead(
+          { supportsPartitionedCookies: true },
+          { domain: 'a.com', storeId: 'firefox-default' },
+        ),
+      ).toEqual({
+        domain: 'a.com',
+        storeId: 'firefox-default',
+        partitionKey: {},
+      });
+    });
+
+    it('leaves details unchanged when support is absent/false', () => {
+      expect(
+        addPartitionKeyForRead(
+          { browserDetect: browserName.Chrome },
+          { domain: 'a.com', storeId: 'firefox-default' },
+        ),
+      ).toEqual({ domain: 'a.com', storeId: 'firefox-default' });
+    });
+
+    it('does not throw when cache is undefined', () => {
+      expect(
+        addPartitionKeyForRead(undefined as never, {
+          domain: 'a.com',
+          storeId: 'firefox-default',
+        }),
+      ).toEqual({ domain: 'a.com', storeId: 'firefox-default' });
+    });
+  });
+
+  describe('addPartitionKeyForRemove()', () => {
+    const base = { name: 'k', url: 'https://a.com/' };
+
+    it('adds the cookie partitionKey when supported and present', () => {
+      expect(
+        addPartitionKeyForRemove(
+          { supportsPartitionedCookies: true },
+          { partitionKey: { topLevelSite: 'https://a.com' } },
+          base,
+        ),
+      ).toEqual({ ...base, partitionKey: { topLevelSite: 'https://a.com' } });
+    });
+
+    it('omits partitionKey for an unpartitioned cookie', () => {
+      expect(
+        addPartitionKeyForRemove(
+          { supportsPartitionedCookies: true },
+          {},
+          base,
+        ),
+      ).toEqual(base);
+    });
+
+    it('omits partitionKey when support is absent', () => {
+      expect(
+        addPartitionKeyForRemove(
+          { browserDetect: browserName.Chrome },
+          { partitionKey: { topLevelSite: 'https://a.com' } },
+          base,
+        ),
+      ).toEqual(base);
+    });
+
+    it('does not throw when cache or cookie is undefined', () => {
+      expect(
+        addPartitionKeyForRemove(
+          undefined as never,
+          undefined as never,
+          base,
+        ),
+      ).toEqual(base);
+    });
+  });
+
+  describe('detectPartitionedCookieSupport()', () => {
+    afterEach(() => {
+      global.browser.cookies.getAll.mockReset();
+    });
+
+    it('probes with a non-matching cookie name so the whole jar is not fetched', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
+        .mockResolvedValue([] as never);
+      await detectPartitionedCookieSupport();
+      expect(global.browser.cookies.getAll).toHaveBeenCalledWith({
+        partitionKey: {},
+        name: PARTITION_PROBE_COOKIE_NAME,
+      });
+    });
+
+    it('returns true when the probe getAll resolves', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
+        .mockResolvedValue([] as never);
+      expect(await detectPartitionedCookieSupport()).toBe(true);
+    });
+
+    it('returns false when the probe getAll rejects', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
+        .mockRejectedValue(new Error('unsupported') as never);
+      expect(await detectPartitionedCookieSupport()).toBe(false);
     });
   });
 });

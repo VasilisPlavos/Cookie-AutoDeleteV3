@@ -13,6 +13,8 @@
  */
 
 import {
+  addPartitionKeyForRead,
+  addPartitionKeyForRemove,
   CADCOOKIENAME,
   cadLog,
   extractMainDomain,
@@ -303,11 +305,11 @@ export const cleanCookies = async (
       firstPartyDomain: cookieProperties.firstPartyDomain,
       storeId: cookieProperties.storeId,
     });
-    const cookieRemove = {
+    const cookieRemove = addPartitionKeyForRemove(state.cache, cookieProperties, {
       ...cookieAPIProperties,
       name: cookieProperties.name,
       url: cookieProperties.preparedCookieDomain,
-    };
+    });
     // url: "http://domain.com" + cookies[i].path
     cadLog(
       {
@@ -331,10 +333,13 @@ export const clearCookiesForThisDomain = async (
 ): Promise<boolean> => {
   const hostname = getHostname(tab.url);
   const getCookies = await browser.cookies.getAll(
-    returnOptionalCookieAPIAttributes(state, {
-      domain: hostname,
-      storeId: tab.cookieStoreId,
-    }),
+    addPartitionKeyForRead(
+      state.cache,
+      returnOptionalCookieAPIAttributes(state, {
+        domain: hostname,
+        storeId: tab.cookieStoreId,
+      }),
+    ),
   );
   // Filter out our own CAD cookie that cleans up other Browsing Data
   const cookies = getCookies.filter((c) => c.name !== CADCOOKIENAME);
@@ -343,12 +348,16 @@ export const clearCookiesForThisDomain = async (
     let cookieDeletedCount = 0;
     for (const cookie of cookies) {
       const r = await browser.cookies.remove(
-        returnOptionalCookieAPIAttributes(state, {
-          firstPartyDomain: cookie.firstPartyDomain,
-          name: cookie.name,
-          storeId: cookie.storeId,
-          url: prepareCookieDomain(cookie),
-        }) as {
+        addPartitionKeyForRemove(
+          state.cache,
+          cookie,
+          returnOptionalCookieAPIAttributes(state, {
+            firstPartyDomain: cookie.firstPartyDomain,
+            name: cookie.name,
+            storeId: cookie.storeId,
+            url: prepareCookieDomain(cookie),
+          }),
+        ) as {
           // This explicit type is required as cookies.remove requires these two
           // parameters, but url is not defined in cookies.Cookie as it is made
           // up of cookie.domain + cookie.path, and neither required parameters
@@ -858,9 +867,12 @@ export const cleanCookiesOperation = async (
     let cookies: browser.cookies.Cookie[] = [];
     try {
       cookies = await browser.cookies.getAll(
-        returnOptionalCookieAPIAttributes(state, {
-          storeId: id,
-        }),
+        addPartitionKeyForRead(
+          state.cache,
+          returnOptionalCookieAPIAttributes(state, {
+            storeId: id,
+          }),
+        ),
       );
     } catch (e: unknown) {
       if (e instanceof Error) {
