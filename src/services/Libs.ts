@@ -791,6 +791,23 @@ export const returnOptionalCookieAPIAttributes = (
 };
 
 /**
+ * One-time probe: does this browser support reading partitioned cookies (CHIPS)?
+ * `getAll({ partitionKey: {} })` returns partitioned + unpartitioned where
+ * supported (Chrome 119+, Firefox), and throws / is unavailable otherwise.
+ */
+export const detectPartitionedCookieSupport = async (): Promise<boolean> => {
+  try {
+    const allPartitions: browser.cookies.OptionalCookieProperties = {
+      partitionKey: {},
+    };
+    await browser.cookies.getAll(allPartitions);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Show a notification
  * @param x Contains object consisting of:
  *          - duration: number in seconds

@@ -18,6 +18,7 @@ import {
   cadLog,
   convertVersionToNumber,
   createPartialTabInfo,
+  detectPartitionedCookieSupport,
   eventListenerActions,
   extractMainDomain,
   getAllCookiesForDomain,
@@ -1765,6 +1766,26 @@ describe('Library Functions', () => {
       const r = validateExpressionDomain('/[Rr]eg[Ee]xp.com/');
       expect(global.browser.i18n.getMessage).not.toHaveBeenCalled();
       expect(r).toEqual('');
+    });
+  });
+
+  describe('detectPartitionedCookieSupport()', () => {
+    afterEach(() => {
+      global.browser.cookies.getAll.mockReset();
+    });
+
+    it('returns true when getAll with an empty partitionKey resolves', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {} })
+        .mockResolvedValue([] as never);
+      expect(await detectPartitionedCookieSupport()).toBe(true);
+    });
+
+    it('returns false when getAll with an empty partitionKey rejects', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {} })
+        .mockRejectedValue(new Error('unsupported') as never);
+      expect(await detectPartitionedCookieSupport()).toBe(false);
     });
   });
 });

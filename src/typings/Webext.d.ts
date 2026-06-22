@@ -33,10 +33,22 @@ declare namespace browser.browsingData {
 }
 
 declare namespace browser.cookies {
+  interface CookiePartitionKey {
+    topLevelSite?: string;
+    hasCrossSiteAncestor?: boolean; // Chrome 130+
+  }
   interface CookieProperties extends browser.cookies.Cookie {
     firstPartyDomain?: string;
+    partitionKey?: CookiePartitionKey;
   }
   type OptionalCookieProperties = Partial<CookieProperties>;
+
+  // CHIPS: the bundled web-ext-types predates partitioned cookies, so add
+  // overloads that accept partitionKey in getAll / remove details.
+  function getAll(details: OptionalCookieProperties): Promise<Cookie[]>;
+  function remove(
+    details: OptionalCookieProperties & { url: string; name: string },
+  ): Promise<Cookie | null>;
 }
 
 // Until web-ext-types land this, per https://github.com/kelseasy/web-ext-types/issues/81#issuecomment-527758881
