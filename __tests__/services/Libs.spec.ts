@@ -40,6 +40,7 @@ import {
   isFirstPartyIsolate,
   localFileToRegex,
   matchIPInExpression,
+  PARTITION_PROBE_COOKIE_NAME,
   parseCookieStoreId,
   prepareCleanupDomains,
   prepareCookieDomain,
@@ -1793,6 +1794,15 @@ describe('Library Functions', () => {
         ),
       ).toEqual({ domain: 'a.com', storeId: 'firefox-default' });
     });
+
+    it('does not throw when cache is undefined', () => {
+      expect(
+        addPartitionKeyForRead(undefined as never, {
+          domain: 'a.com',
+          storeId: 'firefox-default',
+        }),
+      ).toEqual({ domain: 'a.com', storeId: 'firefox-default' });
+    });
   });
 
   describe('addPartitionKeyForRemove()', () => {
@@ -1827,6 +1837,16 @@ describe('Library Functions', () => {
         ),
       ).toEqual(base);
     });
+
+    it('does not throw when cache or cookie is undefined', () => {
+      expect(
+        addPartitionKeyForRemove(
+          undefined as never,
+          undefined as never,
+          base,
+        ),
+      ).toEqual(base);
+    });
   });
 
   describe('detectPartitionedCookieSupport()', () => {
@@ -1834,16 +1854,27 @@ describe('Library Functions', () => {
       global.browser.cookies.getAll.mockReset();
     });
 
-    it('returns true when getAll with an empty partitionKey resolves', async () => {
+    it('probes with a non-matching cookie name so the whole jar is not fetched', async () => {
       when(global.browser.cookies.getAll)
-        .calledWith({ partitionKey: {} })
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
+        .mockResolvedValue([] as never);
+      await detectPartitionedCookieSupport();
+      expect(global.browser.cookies.getAll).toHaveBeenCalledWith({
+        partitionKey: {},
+        name: PARTITION_PROBE_COOKIE_NAME,
+      });
+    });
+
+    it('returns true when the probe getAll resolves', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
         .mockResolvedValue([] as never);
       expect(await detectPartitionedCookieSupport()).toBe(true);
     });
 
-    it('returns false when getAll with an empty partitionKey rejects', async () => {
+    it('returns false when the probe getAll rejects', async () => {
       when(global.browser.cookies.getAll)
-        .calledWith({ partitionKey: {} })
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
         .mockRejectedValue(new Error('unsupported') as never);
       expect(await detectPartitionedCookieSupport()).toBe(false);
     });

@@ -16,6 +16,7 @@ import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 import { removeActivity } from '../../redux/Actions';
 import {
+  addPartitionKeyForRemove,
   cadLog,
   getSetting,
   returnOptionalCookieAPIAttributes,
@@ -190,7 +191,10 @@ const restoreCookies = async (
       // For cookies starting with __Secure-, secure attribute should already be true,
       // and url should already start with https://
       // Only modify cookie names starting with __Host- as it shouldn't have domain.
-      const cookieProperties = {
+      // Restore the cookie into the same partition it was deleted from.  This
+      // is the same partition-targeting logic used for removes, so a partitioned
+      // (CHIPS) cookie isn't re-created as an unpartitioned one.
+      const cookieProperties = addPartitionKeyForRemove(state.cache, obj.cookie, {
         ...returnOptionalCookieAPIAttributes(state, {
           firstPartyDomain,
         }),
@@ -203,7 +207,7 @@ const restoreCookies = async (
         storeId,
         url: obj.cookie.preparedCookieDomain,
         value,
-      };
+      });
       promiseArr.push(browser.cookies.set(cookieProperties));
     }
   }

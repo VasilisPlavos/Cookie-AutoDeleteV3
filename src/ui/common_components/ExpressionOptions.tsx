@@ -18,6 +18,7 @@ import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 import { updateExpressionUI } from '../../redux/Actions';
 import {
+  addPartitionKeyForRead,
   isChrome,
   isFirefox,
   isFirefoxNotAndroid,
@@ -88,9 +89,12 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
     if (exp.startsWith('/') && exp.endsWith('/')) {
       // Treat expression as regular expression.  Get all cookies then regex domain.
       const allCookies = await browser.cookies.getAll(
-        returnOptionalCookieAPIAttributes(this.props.state, {
-          storeId: this.toPublicStoreId(expression.storeId),
-        }),
+        addPartitionKeyForRead(
+          this.props.state.cache,
+          returnOptionalCookieAPIAttributes(this.props.state, {
+            storeId: this.toPublicStoreId(expression.storeId),
+          }),
+        ),
       );
       if (exp.slice(1).startsWith('file:')) {
         // Regex with Local Directories
@@ -104,9 +108,12 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
       }
     } else if (exp.startsWith('file:')) {
       const allCookies = await browser.cookies.getAll(
-        returnOptionalCookieAPIAttributes(this.props.state, {
-          storeId: this.toPublicStoreId(expression.storeId),
-        }),
+        addPartitionKeyForRead(
+          this.props.state.cache,
+          returnOptionalCookieAPIAttributes(this.props.state, {
+            storeId: this.toPublicStoreId(expression.storeId),
+          }),
+        ),
       );
       const regExp = new RegExp(exp.slice(7)); // take out file://
       cookies = allCookies.filter(
@@ -119,17 +126,23 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
         // Check if expression was a CIDR Notation
         cidrEXP = ipaddr.parseCIDR(exp);
         allCookies = await browser.cookies.getAll(
-          returnOptionalCookieAPIAttributes(this.props.state, {
-            storeId: this.toPublicStoreId(expression.storeId),
-          }),
+          addPartitionKeyForRead(
+            this.props.state.cache,
+            returnOptionalCookieAPIAttributes(this.props.state, {
+              storeId: this.toPublicStoreId(expression.storeId),
+            }),
+          ),
         );
       } catch {
         // Not valid CIDR.  Proceed with default fetch.  Also applies to IP Addresses with no CIDR.
         cookies = await browser.cookies.getAll(
-          returnOptionalCookieAPIAttributes(this.props.state, {
-            domain: `${trimDotAndStar(exp)}${exp.endsWith('.') ? '.' : ''}`,
-            storeId: this.toPublicStoreId(expression.storeId),
-          }),
+          addPartitionKeyForRead(
+            this.props.state.cache,
+            returnOptionalCookieAPIAttributes(this.props.state, {
+              domain: `${trimDotAndStar(exp)}${exp.endsWith('.') ? '.' : ''}`,
+              storeId: this.toPublicStoreId(expression.storeId),
+            }),
+          ),
         );
       }
       if (allCookies) {

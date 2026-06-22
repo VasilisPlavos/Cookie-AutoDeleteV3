@@ -117,6 +117,13 @@ async function init(): Promise<void> {
       type: ReduxConstants.ADD_CACHE,
       payload: { key: 'platformOs', value: platformInfo.os },
     });
+  }
+
+  // Probe for partitioned-cookie (CHIPS) support whenever the flag is missing:
+  // on a cold start, or when restoring a cache slice persisted by an older build
+  // that predates this flag. Without this, CHIPS handling would stay disabled
+  // until the next full cold start.
+  if (store.getState().cache.supportsPartitionedCookies === undefined) {
     const supportsPartitionedCookies = await detectPartitionedCookieSupport();
     store.dispatch({
       type: ReduxConstants.ADD_CACHE,
