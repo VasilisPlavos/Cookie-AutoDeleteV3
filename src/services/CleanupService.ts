@@ -38,7 +38,7 @@ import {
 
 /** Prepare a cookie for deletion */
 export const prepareCookie = (
-  cookie: browser.cookies.Cookie,
+  cookie: browser.cookies.CookieProperties,
   debug = false,
 ): CookiePropertiesCleanup => {
   const cookieProperties = {
@@ -55,6 +55,19 @@ export const prepareCookie = (
       cookieProperties.preparedCookieDomain,
     );
     cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
+    // CHIPS: a partitioned cookie is third-party state owned by the partition's
+    // top-level site, not by its own host. Decide keep/delete (whitelist + open
+    // tab) against that top-level site so a whitelisted host (e.g. youtube.com)
+    // does not protect a cookie partitioned under a non-whitelisted site. The
+    // removal target (preparedCookieDomain / cookie.domain) stays the host.
+    // For opaque origins (topLevelSite='null'), getHostname returns '' so we
+    // fall back to the raw string — it won't match any whitelist entry, which
+    // is the correct behaviour (opaque partitions belong to no known site).
+    const topLevelSite = cookie.partitionKey?.topLevelSite;
+    if (topLevelSite) {
+      cookieProperties.hostname = getHostname(topLevelSite) || topLevelSite;
+      cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
+    }
   }
   cadLog(
     {
@@ -744,7 +757,15 @@ export const filterSiteData = (
     },
     debug,
   );
+  // CHIPS: browsingData.remove is not partition-aware, so for a cross-site
+  // partitioned cookie (host ≠ partition site) removing by host_key would
+  // affect the wrong origin. Same-site partitioned cookies (host == partition)
+  // are fine — browsingData.remove by host clears the right data either way.
+  const isCrossSitePartitioned =
+    !!obj.cookie.partitionKey?.topLevelSite &&
+    extractMainDomain(trimDot(obj.cookie.domain)) !== obj.cookie.mainDomain;
   const r =
+    !isCrossSitePartitioned &&
     (notInAnyLists || (notProtectedByOpenTab && canCleanSiteData)) &&
     nonBlankCookieHostName;
   cadLog(
