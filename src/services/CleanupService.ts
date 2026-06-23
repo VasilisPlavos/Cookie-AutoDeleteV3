@@ -55,20 +55,18 @@ export const prepareCookie = (
       cookieProperties.preparedCookieDomain,
     );
     cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
-  }
-  // CHIPS: a partitioned cookie is third-party state owned by the partition's
-  // top-level site, not by its own host. Decide keep/delete (whitelist + open
-  // tab) against that top-level site so a whitelisted host (e.g. youtube.com)
-  // does not protect a cookie partitioned under a non-whitelisted site. The
-  // removal target (preparedCookieDomain / cookie.domain) stays the host.
-  // Skip for file:// cookies — they never have a meaningful partition site.
-  if (!cookieProperties.preparedCookieDomain.startsWith('file:')) {
-    const partitionHostname = cookie.partitionKey?.topLevelSite
-      ? getHostname(cookie.partitionKey.topLevelSite)
-      : '';
-    if (partitionHostname) {
-      cookieProperties.hostname = partitionHostname;
-      cookieProperties.mainDomain = extractMainDomain(partitionHostname);
+    // CHIPS: a partitioned cookie is third-party state owned by the partition's
+    // top-level site, not by its own host. Decide keep/delete (whitelist + open
+    // tab) against that top-level site so a whitelisted host (e.g. youtube.com)
+    // does not protect a cookie partitioned under a non-whitelisted site. The
+    // removal target (preparedCookieDomain / cookie.domain) stays the host.
+    // For opaque origins (topLevelSite='null'), getHostname returns '' so we
+    // fall back to the raw string — it won't match any whitelist entry, which
+    // is the correct behaviour (opaque partitions belong to no known site).
+    const topLevelSite = cookie.partitionKey?.topLevelSite;
+    if (topLevelSite) {
+      cookieProperties.hostname = getHostname(topLevelSite) || topLevelSite;
+      cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
     }
   }
   cadLog(
