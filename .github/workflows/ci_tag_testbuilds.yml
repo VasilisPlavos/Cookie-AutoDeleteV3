@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Use Node.js 22.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22.x'
       - name: Install Dependencies (npm ci)
@@ -31,7 +31,7 @@ jobs:
           GITSHA: ${{ github.event.after }}
       - name: GitHub Releases
         id: github_releases
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

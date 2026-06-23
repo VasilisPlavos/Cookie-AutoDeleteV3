@@ -19,15 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Use Node.js 22.x
         id: node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22.x'
       - name: Cache Node Modules
         id: nodeCache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           # npm cache files stored in `~/.npm` on Linux
           path: ~/.npm
@@ -56,13 +56,13 @@ jobs:
         working-directory: ./builds
       - name: Upload Artifact for Mozilla Firefox Build
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ steps.extbuilds.outputs.ffdir }}
           path: builds/${{ steps.extbuilds.outputs.ffdir }}
       - name: Upload Artifact for Google Chrome Build
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ steps.extbuilds.outputs.crdir }}
           path: builds/${{ steps.extbuilds.outputs.crdir }}
