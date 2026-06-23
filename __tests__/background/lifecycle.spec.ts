@@ -32,6 +32,7 @@ jest.mock('../../src/services/ContextualIdentitiesEvents', () => {
 });
 
 import { ready, _resetForTests } from '../../src/background/lifecycle';
+import { PARTITION_PROBE_COOKIE_NAME } from '../../src/services/Libs';
 
 describe('background/lifecycle', () => {
   beforeEach(() => {
@@ -85,6 +86,57 @@ describe('background/lifecycle', () => {
         .mockResolvedValue({ cache: { browserDetect: 'Chrome', platformOs: 'linux' } } as never);
       await ready();
       expect(platformSpy).not.toHaveBeenCalled();
+    });
+
+    it('cold start: probes partitioned-cookie support and caches the result', async () => {
+      when(global.browser.storage.session.get)
+        .calledWith('cache')
+        .mockResolvedValue({} as never);
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
+        .mockResolvedValue([] as never);
+      await ready();
+      expect(global.browser.cookies.getAll).toHaveBeenCalledWith({
+        partitionKey: {},
+        name: PARTITION_PROBE_COOKIE_NAME,
+      });
+    });
+
+    it('cold start: a failing partitioned-cookie probe does not break init', async () => {
+      when(global.browser.storage.session.get)
+        .calledWith('cache')
+        .mockResolvedValue({} as never);
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
+        .mockRejectedValue(new Error('unsupported') as never);
+      await expect(ready()).resolves.not.toThrow();
+    });
+
+    it('warm start: probes when the restored cache lacks the support flag', async () => {
+      when(global.browser.storage.session.get)
+        .calledWith('cache')
+        .mockResolvedValue({
+          cache: { browserDetect: 'Chrome', platformOs: 'linux' },
+        } as never);
+      when(global.browser.cookies.getAll)
+        .calledWith({ partitionKey: {}, name: PARTITION_PROBE_COOKIE_NAME })
+        .mockResolvedValue([] as never);
+      await ready();
+      expect(global.browser.cookies.getAll).toHaveBeenCalledWith({
+        partitionKey: {},
+        name: PARTITION_PROBE_COOKIE_NAME,
+      });
+    });
+
+    it('warm start: does not re-probe when the support flag is already cached', async () => {
+      when(global.browser.storage.session.get)
+        .calledWith('cache')
+        .mockResolvedValue({
+          cache: { supportsPartitionedCookies: false },
+        } as never);
+      global.browser.cookies.getAll = jest.fn();
+      await ready();
+      expect(global.browser.cookies.getAll).not.toHaveBeenCalled();
     });
   });
 });

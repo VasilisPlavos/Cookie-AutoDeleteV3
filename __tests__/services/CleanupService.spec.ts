@@ -306,6 +306,55 @@ describe('CleanupService', () => {
         undefined,
       );
     });
+
+    it('passes the cookie partitionKey to remove when supported', async () => {
+      const partitionedState: State = {
+        ...initialState,
+        cache: { supportsPartitionedCookies: true },
+      };
+      const partitionedCookie: CookiePropertiesCleanup = {
+        ...youtubeCookie,
+        partitionKey: { topLevelSite: 'https://example.com' },
+      };
+      when(global.browser.cookies.remove)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue({} as never);
+      await cleanCookies(partitionedState, [
+        {
+          cached: false,
+          cleanCookie: true,
+          cookie: partitionedCookie,
+          reason: ReasonClean.NoMatchedExpression,
+        } as CleanReasonObject,
+      ]);
+      expect(global.browser.cookies.remove).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'SID',
+          partitionKey: { topLevelSite: 'https://example.com' },
+        }),
+      );
+    });
+
+    it('omits partitionKey from remove for an unpartitioned cookie', async () => {
+      const partitionedState: State = {
+        ...initialState,
+        cache: { supportsPartitionedCookies: true },
+      };
+      when(global.browser.cookies.remove)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue({} as never);
+      await cleanCookies(partitionedState, [
+        {
+          cached: false,
+          cleanCookie: true,
+          cookie: youtubeCookie,
+          reason: ReasonClean.NoMatchedExpression,
+        } as CleanReasonObject,
+      ]);
+      expect(global.browser.cookies.remove.mock.calls[0][0]).not.toHaveProperty(
+        'partitionKey',
+      );
+    });
   });
 
   describe('cleanCookiesOperation()', () => {
@@ -942,6 +991,26 @@ describe('CleanupService', () => {
         '1',
       ]);
     });
+
+    it('requests partitioned cookies when support is cached', async () => {
+      const partitionedState: State = {
+        ...initialState,
+        cache: { supportsPartitionedCookies: true },
+      };
+      when(global.browser.cookies.getAll)
+        .calledWith({
+          domain: 'google.com',
+          storeId: 'firefox-default',
+          partitionKey: {},
+        })
+        .mockResolvedValue([] as never);
+      await clearCookiesForThisDomain(partitionedState, googleTab);
+      expect(global.browser.cookies.getAll).toHaveBeenCalledWith({
+        domain: 'google.com',
+        storeId: 'firefox-default',
+        partitionKey: {},
+      });
+    });
   });
 
   describe('clearLocalStorageForThisDomain()', () => {
@@ -1018,6 +1087,43 @@ describe('CleanupService', () => {
         cleanCookie: true,
         cookie: {
           ...mockCookie,
+        },
+        openTabStatus: OpenTabStatus.TabsWasNotIgnored,
+        reason: ReasonClean.NoMatchedExpression,
+      };
+      const result = filterSiteData(cleanReasonObj, SiteDataType.CACHE);
+      expect(result).toBe(true);
+    });
+
+    it('should return false for a cross-site partitioned cookie (browsingData.remove cannot target the partition)', () => {
+      const cleanReasonObj: CleanReasonObject = {
+        cached: false,
+        cleanCookie: true,
+        cookie: {
+          ...mockCookie,
+          domain: 'youtube.com',
+          // hostname/mainDomain reflect the partition site after prepareCookie
+          hostname: 'whosampled.com',
+          mainDomain: 'whosampled.com',
+          partitionKey: { topLevelSite: 'https://whosampled.com' },
+        },
+        openTabStatus: OpenTabStatus.TabsWasNotIgnored,
+        reason: ReasonClean.NoMatchedExpression,
+      };
+      const result = filterSiteData(cleanReasonObj, SiteDataType.CACHE);
+      expect(result).toBe(false);
+    });
+
+    it('should return true for a same-site partitioned cookie (host and partition match, browsingData.remove is correct)', () => {
+      const cleanReasonObj: CleanReasonObject = {
+        cached: false,
+        cleanCookie: true,
+        cookie: {
+          ...mockCookie,
+          domain: 'youtube.com',
+          hostname: 'youtube.com',
+          mainDomain: 'youtube.com',
+          partitionKey: { topLevelSite: 'https://youtube.com' },
         },
         openTabStatus: OpenTabStatus.TabsWasNotIgnored,
         reason: ReasonClean.NoMatchedExpression,
@@ -1359,6 +1465,65 @@ describe('CleanupService', () => {
         ...cleanupProperties,
       });
       expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+      expect(result.cleanCookie).toBe(false);
+    });
+
+    // CHIPS: a partitioned cookie is third-party state owned by the partition's
+    // top-level site, so keep/delete is decided against that site, not the host.
+    it('should clean a partitioned cookie whose host is whitelisted but partition is not', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: 'https://whosampled.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.reason).toBe(ReasonClean.NoMatchedExpression);
+      expect(result.cleanCookie).toBe(true);
+    });
+
+    it('should keep a partitioned cookie whose host is not whitelisted but partition is', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'tracker.com',
+        partitionKey: { topLevelSite: 'https://youtube.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+      expect(result.cleanCookie).toBe(false);
+    });
+
+    it('should keep a first-party partitioned cookie when its host/partition is whitelisted', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: 'https://youtube.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+      expect(result.cleanCookie).toBe(false);
+    });
+
+    it('should keep a partitioned cookie whose partition site has an open tab', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'youtube.com',
+        storeId: 'firefox-default',
+        partitionKey: { topLevelSite: 'https://example.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.reason).toBe(ReasonKeep.OpenTabs);
       expect(result.cleanCookie).toBe(false);
     });
 
@@ -2074,6 +2239,37 @@ describe('CleanupService', () => {
       expect(result.preparedCookieDomain).toBe('file:///folder/file.html');
       expect(result.hostname).toBe('file:///folder/file.html');
       expect(result.mainDomain).toBe('file:///folder/file.html');
+    });
+
+    it('should evaluate a partitioned cookie against the partition top-level site', () => {
+      const partitionedCookie = {
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: 'https://whosampled.com' },
+      };
+
+      const result = prepareCookie(partitionedCookie);
+
+      // Decision identity follows the partition's top-level site...
+      expect(result.hostname).toBe('whosampled.com');
+      expect(result.mainDomain).toBe('whosampled.com');
+      // ...but the removal target stays the cookie's own host.
+      expect(result.preparedCookieDomain).toBe('https://youtube.com/');
+    });
+
+    it('should fall back to the host for a partitionKey without a top-level site', () => {
+      const partitionedCookie = {
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: '' },
+      };
+
+      const result = prepareCookie(partitionedCookie);
+
+      expect(result.hostname).toBe('youtube.com');
+      expect(result.mainDomain).toBe('youtube.com');
+      // No top-level site means no extra getHostname call beyond the host one.
+      expect(spyLib.getHostname).toHaveBeenCalledTimes(1);
     });
   });
 

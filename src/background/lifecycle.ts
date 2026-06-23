@@ -12,7 +12,7 @@ import {
   setGlobalIcon,
 } from '../services/BrowserActionService';
 import ContextualIdentitiesEvents from '../services/ContextualIdentitiesEvents';
-import { getSetting } from '../services/Libs';
+import { detectPartitionedCookieSupport, getSetting } from '../services/Libs';
 import { detectBrowser } from '../services/BrowserDetect';
 import SettingService from '../services/SettingService';
 import StoreUser from '../services/StoreUser';
@@ -116,6 +116,21 @@ async function init(): Promise<void> {
     store.dispatch({
       type: ReduxConstants.ADD_CACHE,
       payload: { key: 'platformOs', value: platformInfo.os },
+    });
+  }
+
+  // Probe for partitioned-cookie (CHIPS) support whenever the flag is missing:
+  // on a cold start, or when restoring a cache slice persisted by an older build
+  // that predates this flag. Without this, CHIPS handling would stay disabled
+  // until the next full cold start.
+  if (store.getState().cache.supportsPartitionedCookies === undefined) {
+    const supportsPartitionedCookies = await detectPartitionedCookieSupport();
+    store.dispatch({
+      type: ReduxConstants.ADD_CACHE,
+      payload: {
+        key: 'supportsPartitionedCookies',
+        value: supportsPartitionedCookies,
+      },
     });
   }
 

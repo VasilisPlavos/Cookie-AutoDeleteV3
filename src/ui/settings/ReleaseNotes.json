@@ -1,6 +1,12 @@
 {
   "releases": [
     {
+      "version": "1.0.3",
+      "notes": [
+        "Now deletes partitioned cookies (CHIPS) too — third-party cookies that Chrome's Privacy Sandbox isolates per top-level site are now cleaned just like regular cookies on tab close."
+      ]
+    },
+    {
       "version": "1.0.0",
       "notes": [
         "First release of Cookie AutoDelete V3 — a Manifest V3 fork of Cookie AutoDelete.",

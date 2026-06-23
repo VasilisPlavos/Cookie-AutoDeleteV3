@@ -204,9 +204,12 @@ export const getAllCookiesForDomain = async (
 
   if (hostname.startsWith('file:')) {
     const allCookies = await browser.cookies.getAll(
-      returnOptionalCookieAPIAttributes(state, {
-        storeId: cookieStoreId,
-      }),
+      addPartitionKeyForRead(
+        state.cache,
+        returnOptionalCookieAPIAttributes(state, {
+          storeId: cookieStoreId,
+        }),
+      ),
     );
     const regExp = new RegExp(hostname.slice(7)); // take out 'file://'
     cadLog(
@@ -233,11 +236,14 @@ export const getAllCookiesForDomain = async (
       debug,
     );
     const cookiesFPI = await browser.cookies.getAll(
-      returnOptionalCookieAPIAttributes(state, {
-        domain: hostname,
-        firstPartyDomain: mainDomain,
-        storeId: cookieStoreId,
-      }),
+      addPartitionKeyForRead(
+        state.cache,
+        returnOptionalCookieAPIAttributes(state, {
+          domain: hostname,
+          firstPartyDomain: mainDomain,
+          storeId: cookieStoreId,
+        }),
+      ),
     );
     cookiesFPI.forEach((c) => cookies.push(c));
     // Try to get additional firstParty Isolation cookies if
@@ -257,11 +263,14 @@ export const getAllCookiesForDomain = async (
       debug,
     );
     const cookiesFPIUseSite = await browser.cookies.getAll(
-      returnOptionalCookieAPIAttributes(state, {
-        domain: hostname,
-        firstPartyDomain: `(${proto},${mainDomain})`,
-        storeId: cookieStoreId,
-      }),
+      addPartitionKeyForRead(
+        state.cache,
+        returnOptionalCookieAPIAttributes(state, {
+          domain: hostname,
+          firstPartyDomain: `(${proto},${mainDomain})`,
+          storeId: cookieStoreId,
+        }),
+      ),
     );
     cookiesFPIUseSite.forEach((c) => cookies.push(c));
     // firstPartyDomain = (https,domain.com,2048)
@@ -279,11 +288,14 @@ export const getAllCookiesForDomain = async (
         debug,
       );
       const cookiesFPIUseSitePort = await browser.cookies.getAll(
-        returnOptionalCookieAPIAttributes(state, {
-          domain: hostname,
-          firstPartyDomain: `(${proto},${mainDomain},${siteURL.port})`,
-          storeId: cookieStoreId,
-        }),
+        addPartitionKeyForRead(
+          state.cache,
+          returnOptionalCookieAPIAttributes(state, {
+            domain: hostname,
+            firstPartyDomain: `(${proto},${mainDomain},${siteURL.port})`,
+            storeId: cookieStoreId,
+          }),
+        ),
       );
       cookiesFPIUseSitePort.forEach((c) => cookies.push(c));
     }
@@ -300,10 +312,13 @@ export const getAllCookiesForDomain = async (
       debug,
     );
     const cookiesDomain = await browser.cookies.getAll(
-      returnOptionalCookieAPIAttributes(state, {
-        domain: hostname,
-        storeId: cookieStoreId,
-      }),
+      addPartitionKeyForRead(
+        state.cache,
+        returnOptionalCookieAPIAttributes(state, {
+          domain: hostname,
+          storeId: cookieStoreId,
+        }),
+      ),
     );
     cookiesDomain.forEach((c) => cookies.push(c));
   }
@@ -788,6 +803,61 @@ export const returnOptionalCookieAPIAttributes = (
     return rest;
   }
   return cookieAPIAttributes;
+};
+
+// Cookie name used only to probe partitionKey support.  It must not match any
+// real cookie so the browser returns an empty list instead of the whole jar.
+export const PARTITION_PROBE_COOKIE_NAME = '__CAD_partitionKey_probe__';
+
+/**
+ * One-time probe: does this browser support reading partitioned cookies (CHIPS)?
+ * `getAll({ partitionKey: {} })` is accepted where supported (Chrome 119+,
+ * Firefox) and throws / is unavailable otherwise.  We pair it with a
+ * non-matching cookie name so the browser can answer instantly with an empty
+ * array instead of serializing every cookie across every store and partition.
+ */
+export const detectPartitionedCookieSupport = async (): Promise<boolean> => {
+  try {
+    const probe: browser.cookies.OptionalCookieProperties = {
+      partitionKey: {},
+      name: PARTITION_PROBE_COOKIE_NAME,
+    };
+    await browser.cookies.getAll(probe);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * For cookie READS: ask the browser for partitioned + unpartitioned cookies by
+ * adding `partitionKey: {}` (all partitions).  No-op when unsupported, so the
+ * exact same request goes out as before on browsers without CHIPS support.
+ */
+export const addPartitionKeyForRead = (
+  cache: CacheMap,
+  details: Partial<CookiePropertiesCleanup> & { [x: string]: any },
+): Partial<CookiePropertiesCleanup> & { [x: string]: any } => {
+  if (cache?.supportsPartitionedCookies) {
+    return { ...details, partitionKey: {} };
+  }
+  return details;
+};
+
+/**
+ * For cookie REMOVES: target the exact partition by passing the cookie's own
+ * partitionKey verbatim (this also carries hasCrossSiteAncestor on Chrome 130+).
+ * No-op for unpartitioned cookies or unsupported browsers.
+ */
+export const addPartitionKeyForRemove = <T extends { [x: string]: any }>(
+  cache: CacheMap,
+  cookie: Partial<CookiePropertiesCleanup>,
+  removeProperties: T,
+): T => {
+  if (cache?.supportsPartitionedCookies && cookie?.partitionKey) {
+    return { ...removeProperties, partitionKey: cookie.partitionKey };
+  }
+  return removeProperties;
 };
 
 /**

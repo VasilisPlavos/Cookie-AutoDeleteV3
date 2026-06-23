@@ -13,6 +13,8 @@
  */
 
 import {
+  addPartitionKeyForRead,
+  addPartitionKeyForRemove,
   CADCOOKIENAME,
   cadLog,
   extractMainDomain,
@@ -36,7 +38,7 @@ import {
 
 /** Prepare a cookie for deletion */
 export const prepareCookie = (
-  cookie: browser.cookies.Cookie,
+  cookie: browser.cookies.CookieProperties,
   debug = false,
 ): CookiePropertiesCleanup => {
   const cookieProperties = {
@@ -53,6 +55,19 @@ export const prepareCookie = (
       cookieProperties.preparedCookieDomain,
     );
     cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
+    // CHIPS: a partitioned cookie is third-party state owned by the partition's
+    // top-level site, not by its own host. Decide keep/delete (whitelist + open
+    // tab) against that top-level site so a whitelisted host (e.g. youtube.com)
+    // does not protect a cookie partitioned under a non-whitelisted site. The
+    // removal target (preparedCookieDomain / cookie.domain) stays the host.
+    // For opaque origins (topLevelSite='null'), getHostname returns '' so we
+    // fall back to the raw string — it won't match any whitelist entry, which
+    // is the correct behaviour (opaque partitions belong to no known site).
+    const topLevelSite = cookie.partitionKey?.topLevelSite;
+    if (topLevelSite) {
+      cookieProperties.hostname = getHostname(topLevelSite) || topLevelSite;
+      cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
+    }
   }
   cadLog(
     {
@@ -303,11 +318,11 @@ export const cleanCookies = async (
       firstPartyDomain: cookieProperties.firstPartyDomain,
       storeId: cookieProperties.storeId,
     });
-    const cookieRemove = {
+    const cookieRemove = addPartitionKeyForRemove(state.cache, cookieProperties, {
       ...cookieAPIProperties,
       name: cookieProperties.name,
       url: cookieProperties.preparedCookieDomain,
-    };
+    });
     // url: "http://domain.com" + cookies[i].path
     cadLog(
       {
@@ -331,10 +346,13 @@ export const clearCookiesForThisDomain = async (
 ): Promise<boolean> => {
   const hostname = getHostname(tab.url);
   const getCookies = await browser.cookies.getAll(
-    returnOptionalCookieAPIAttributes(state, {
-      domain: hostname,
-      storeId: tab.cookieStoreId,
-    }),
+    addPartitionKeyForRead(
+      state.cache,
+      returnOptionalCookieAPIAttributes(state, {
+        domain: hostname,
+        storeId: tab.cookieStoreId,
+      }),
+    ),
   );
   // Filter out our own CAD cookie that cleans up other Browsing Data
   const cookies = getCookies.filter((c) => c.name !== CADCOOKIENAME);
@@ -343,12 +361,16 @@ export const clearCookiesForThisDomain = async (
     let cookieDeletedCount = 0;
     for (const cookie of cookies) {
       const r = await browser.cookies.remove(
-        returnOptionalCookieAPIAttributes(state, {
-          firstPartyDomain: cookie.firstPartyDomain,
-          name: cookie.name,
-          storeId: cookie.storeId,
-          url: prepareCookieDomain(cookie),
-        }) as {
+        addPartitionKeyForRemove(
+          state.cache,
+          cookie,
+          returnOptionalCookieAPIAttributes(state, {
+            firstPartyDomain: cookie.firstPartyDomain,
+            name: cookie.name,
+            storeId: cookie.storeId,
+            url: prepareCookieDomain(cookie),
+          }),
+        ) as {
           // This explicit type is required as cookies.remove requires these two
           // parameters, but url is not defined in cookies.Cookie as it is made
           // up of cookie.domain + cookie.path, and neither required parameters
@@ -735,7 +757,15 @@ export const filterSiteData = (
     },
     debug,
   );
+  // CHIPS: browsingData.remove is not partition-aware, so for a cross-site
+  // partitioned cookie (host ≠ partition site) removing by host_key would
+  // affect the wrong origin. Same-site partitioned cookies (host == partition)
+  // are fine — browsingData.remove by host clears the right data either way.
+  const isCrossSitePartitioned =
+    !!obj.cookie.partitionKey?.topLevelSite &&
+    extractMainDomain(trimDot(obj.cookie.domain)) !== obj.cookie.mainDomain;
   const r =
+    !isCrossSitePartitioned &&
     (notInAnyLists || (notProtectedByOpenTab && canCleanSiteData)) &&
     nonBlankCookieHostName;
   cadLog(
@@ -858,9 +888,12 @@ export const cleanCookiesOperation = async (
     let cookies: browser.cookies.Cookie[] = [];
     try {
       cookies = await browser.cookies.getAll(
-        returnOptionalCookieAPIAttributes(state, {
-          storeId: id,
-        }),
+        addPartitionKeyForRead(
+          state.cache,
+          returnOptionalCookieAPIAttributes(state, {
+            storeId: id,
+          }),
+        ),
       );
     } catch (e: unknown) {
       if (e instanceof Error) {
