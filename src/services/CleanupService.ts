@@ -61,12 +61,15 @@ export const prepareCookie = (
   // tab) against that top-level site so a whitelisted host (e.g. youtube.com)
   // does not protect a cookie partitioned under a non-whitelisted site. The
   // removal target (preparedCookieDomain / cookie.domain) stays the host.
-  const partitionHostname = cookie.partitionKey?.topLevelSite
-    ? getHostname(cookie.partitionKey.topLevelSite)
-    : '';
-  if (partitionHostname) {
-    cookieProperties.hostname = partitionHostname;
-    cookieProperties.mainDomain = extractMainDomain(partitionHostname);
+  // Skip for file:// cookies — they never have a meaningful partition site.
+  if (!cookieProperties.preparedCookieDomain.startsWith('file:')) {
+    const partitionHostname = cookie.partitionKey?.topLevelSite
+      ? getHostname(cookie.partitionKey.topLevelSite)
+      : '';
+    if (partitionHostname) {
+      cookieProperties.hostname = partitionHostname;
+      cookieProperties.mainDomain = extractMainDomain(partitionHostname);
+    }
   }
   cadLog(
     {
@@ -756,12 +759,15 @@ export const filterSiteData = (
     },
     debug,
   );
-  // CHIPS: browsingData.remove is not partition-aware, so removing site data
-  // by host_key when the cookie is partitioned would affect the wrong origin.
-  const isPartitioned = !!(obj.cookie as browser.cookies.CookieProperties)
-    .partitionKey?.topLevelSite;
+  // CHIPS: browsingData.remove is not partition-aware, so for a cross-site
+  // partitioned cookie (host ≠ partition site) removing by host_key would
+  // affect the wrong origin. Same-site partitioned cookies (host == partition)
+  // are fine — browsingData.remove by host clears the right data either way.
+  const isCrossSitePartitioned =
+    !!obj.cookie.partitionKey?.topLevelSite &&
+    extractMainDomain(trimDot(obj.cookie.domain)) !== obj.cookie.mainDomain;
   const r =
-    !isPartitioned &&
+    !isCrossSitePartitioned &&
     (notInAnyLists || (notProtectedByOpenTab && canCleanSiteData)) &&
     nonBlankCookieHostName;
   cadLog(

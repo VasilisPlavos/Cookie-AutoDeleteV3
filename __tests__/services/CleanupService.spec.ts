@@ -1095,13 +1095,16 @@ describe('CleanupService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false for a partitioned cookie (browsingData.remove is not partition-aware)', () => {
+    it('should return false for a cross-site partitioned cookie (browsingData.remove cannot target the partition)', () => {
       const cleanReasonObj: CleanReasonObject = {
         cached: false,
         cleanCookie: true,
         cookie: {
           ...mockCookie,
+          domain: 'youtube.com',
+          // hostname/mainDomain reflect the partition site after prepareCookie
           hostname: 'whosampled.com',
+          mainDomain: 'whosampled.com',
           partitionKey: { topLevelSite: 'https://whosampled.com' },
         },
         openTabStatus: OpenTabStatus.TabsWasNotIgnored,
@@ -1109,6 +1112,24 @@ describe('CleanupService', () => {
       };
       const result = filterSiteData(cleanReasonObj, SiteDataType.CACHE);
       expect(result).toBe(false);
+    });
+
+    it('should return true for a same-site partitioned cookie (host and partition match, browsingData.remove is correct)', () => {
+      const cleanReasonObj: CleanReasonObject = {
+        cached: false,
+        cleanCookie: true,
+        cookie: {
+          ...mockCookie,
+          domain: 'youtube.com',
+          hostname: 'youtube.com',
+          mainDomain: 'youtube.com',
+          partitionKey: { topLevelSite: 'https://youtube.com' },
+        },
+        openTabStatus: OpenTabStatus.TabsWasNotIgnored,
+        reason: ReasonClean.NoMatchedExpression,
+      };
+      const result = filterSiteData(cleanReasonObj, SiteDataType.CACHE);
+      expect(result).toBe(true);
     });
     it('should return true because of no matched expression on a CAD Cookie', () => {
       const cleanReasonObj: CleanReasonObject = {
