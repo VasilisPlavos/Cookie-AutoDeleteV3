@@ -38,7 +38,7 @@ import {
 
 /** Prepare a cookie for deletion */
 export const prepareCookie = (
-  cookie: browser.cookies.Cookie,
+  cookie: browser.cookies.CookieProperties,
   debug = false,
 ): CookiePropertiesCleanup => {
   const cookieProperties = {
@@ -55,6 +55,18 @@ export const prepareCookie = (
       cookieProperties.preparedCookieDomain,
     );
     cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
+  }
+  // CHIPS: a partitioned cookie is third-party state owned by the partition's
+  // top-level site, not by its own host. Decide keep/delete (whitelist + open
+  // tab) against that top-level site so a whitelisted host (e.g. youtube.com)
+  // does not protect a cookie partitioned under a non-whitelisted site. The
+  // removal target (preparedCookieDomain / cookie.domain) stays the host.
+  const partitionHostname = cookie.partitionKey?.topLevelSite
+    ? getHostname(cookie.partitionKey.topLevelSite)
+    : '';
+  if (partitionHostname) {
+    cookieProperties.hostname = partitionHostname;
+    cookieProperties.mainDomain = extractMainDomain(partitionHostname);
   }
   cadLog(
     {
@@ -744,7 +756,12 @@ export const filterSiteData = (
     },
     debug,
   );
+  // CHIPS: browsingData.remove is not partition-aware, so removing site data
+  // by host_key when the cookie is partitioned would affect the wrong origin.
+  const isPartitioned = !!(obj.cookie as browser.cookies.CookieProperties)
+    .partitionKey?.topLevelSite;
   const r =
+    !isPartitioned &&
     (notInAnyLists || (notProtectedByOpenTab && canCleanSiteData)) &&
     nonBlankCookieHostName;
   cadLog(
