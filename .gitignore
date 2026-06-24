@@ -52,7 +52,8 @@ builds/
 .claude/
 
 # Superpowers planning/spec docs (kept local, not tracked)
-docs/superpowers/
+/docs/superpowers/plans/
+/docs/superpowers/specs/
 
 # 3rd-Party Files copied from npm
 extension/global_files/bootstrap.bundle.min.js*
