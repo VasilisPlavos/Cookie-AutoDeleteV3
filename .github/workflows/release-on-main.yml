@@ -1,0 +1,86 @@
+name: Auto Release on Main
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build artifacts but do not publish a release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.x'
+      - name: Install Dependencies (npm ci)
+        run: npm ci --no-fund
+      - name: Resolve version from package.json
+        id: ver
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VERSION"
+      - name: Check whether this version is already released
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "v${{ steps.ver.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release v${{ steps.ver.outputs.version }} already exists - nothing to do."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Release v${{ steps.ver.outputs.version }} does not exist - will build and publish."
+          fi
+      - name: Run Tests
+        if: steps.check.outputs.exists == 'false'
+        run: npm test
+      - name: Run Lint
+        if: steps.check.outputs.exists == 'false'
+        run: npm run lint
+      - name: Run Build
+        id: build
+        if: steps.check.outputs.exists == 'false'
+        env:
+          BUILD_VERSION: v${{ steps.ver.outputs.version }}
+        run: npm run build
+      - name: Publish GitHub Release
+        id: publish
+        if: steps.check.outputs.exists == 'false' && github.event.inputs.dry_run != 'true'
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: v${{ steps.ver.outputs.version }}
+          draft: false
+          make_latest: true
+          generate_release_notes: true
+          body: |
+            Cookie AutoDelete V3 — v${{ steps.ver.outputs.version }}
+
+            🟢 **Recommended (Chrome / Edge / Brave / Vivaldi & any Chromium browser):** install from the [Chrome Web Store](https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd) for automatic updates.
+
+            🦊 **Firefox or manual / sideload install:** download an artifact below — see the [README](https://github.com/vasilisplavos/Cookie-AutoDeleteV3#installation) for step-by-step instructions.
+            - `..._Chrome.zip` — Chromium browsers (Load unpacked)
+            - `..._Firefox.xpi` — Firefox (Load Temporary Add-on)
+          files: |
+            builds/Cookie-AutoDelete-V3_*_Chrome.zip
+            builds/Cookie-AutoDelete-V3_*_Firefox.xpi
