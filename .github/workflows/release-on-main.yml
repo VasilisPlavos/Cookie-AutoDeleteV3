@@ -73,6 +73,7 @@ jobs:
           draft: false
           make_latest: true
           generate_release_notes: true
+          fail_on_unmatched_files: true
           body: |
             Cookie AutoDelete V3 — v${{ steps.ver.outputs.version }}
 

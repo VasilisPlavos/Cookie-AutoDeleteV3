@@ -58,4 +58,9 @@ describe('release-on-main.yml', () => {
     expect(publish.if).toContain("steps.check.outputs.exists");
     expect(publish.if).toContain("dry_run");
   });
+
+  test('publish fails the job on unmatched files', () => {
+    const publish = stepById(doc, jobKey, 'publish');
+    expect(publish.with.fail_on_unmatched_files).toBe(true);
+  });
 });

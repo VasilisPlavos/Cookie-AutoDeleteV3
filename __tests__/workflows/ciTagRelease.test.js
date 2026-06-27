@@ -21,6 +21,17 @@ describe('ci_tag_release.yml (manual fallback)', () => {
     expect(release.with.draft).toBe(false);
   });
 
+  test('uses auto-generated notes and the Web Store body', () => {
+    expect(release.with.generate_release_notes).toBe(true);
+    expect(release.with.body).toContain(
+      'https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd',
+    );
+  });
+
+  test('fails the job on unmatched files', () => {
+    expect(release.with.fail_on_unmatched_files).toBe(true);
+  });
+
   test('attaches only Chrome.zip and Firefox.xpi', () => {
     expect(release.with.files).toContain('Chrome.zip');
     expect(release.with.files).toContain('Firefox.xpi');

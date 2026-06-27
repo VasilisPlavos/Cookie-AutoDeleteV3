@@ -59,5 +59,6 @@ jobs:
             - `..._Chrome.zip` — Chromium browsers (Load unpacked)
             - `..._Firefox.xpi` — Firefox (Load Temporary Add-on)
           generate_release_notes: true
+          fail_on_unmatched_files: true
           prerelease: ${{ contains(github.ref, '-') }}
           draft: false
