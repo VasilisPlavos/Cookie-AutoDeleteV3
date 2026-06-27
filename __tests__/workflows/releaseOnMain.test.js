@@ -28,9 +28,14 @@ describe('release-on-main.yml', () => {
     expect(doc.concurrency.group).toBe('release-main');
   });
 
+  test('defines the version-resolve and existence-check steps', () => {
+    expect(stepById(doc, jobKey, 'ver')).toBeDefined();
+    expect(stepById(doc, jobKey, 'check')).toBeDefined();
+  });
+
   test('build step feeds BUILD_VERSION', () => {
     const build = stepById(doc, jobKey, 'build');
-    expect(build.env.BUILD_VERSION).toMatch(/version/);
+    expect(build.env.BUILD_VERSION).toMatch(/^v\$\{\{.*steps\.ver\.outputs\.version/);
   });
 
   test('publish step is a full, latest, auto-noted release', () => {
@@ -50,6 +55,7 @@ describe('release-on-main.yml', () => {
 
   test('publish is skipped on dry runs', () => {
     const publish = stepById(doc, jobKey, 'publish');
+    expect(publish.if).toContain("steps.check.outputs.exists");
     expect(publish.if).toContain("dry_run");
   });
 });
