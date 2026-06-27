@@ -1557,6 +1557,36 @@ describe('CleanupService', () => {
       expect(result.cleanCookie).toBe(false);
     });
 
+    it('should keep a cross-site partitioned cookie whose host is greylisted during normal cleanup', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'sub.google.com',
+        partitionKey: { topLevelSite: 'https://youtube.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+        greyCleanup: false,
+      });
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+      expect(result.cleanCookie).toBe(false);
+    });
+
+    it('should clean a cross-site partitioned cookie whose host is greylisted during restart cleanup', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'sub.google.com',
+        partitionKey: { topLevelSite: 'https://youtube.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+        greyCleanup: true,
+      });
+      expect(result.reason).toBe(ReasonClean.PartitionedThirdParty);
+      expect(result.cleanCookie).toBe(true);
+    });
+
     it('should keep a first-party partitioned cookie when its host/partition is whitelisted', () => {
       const cookieProperty = prepareCookie({
         ...mockCookie,

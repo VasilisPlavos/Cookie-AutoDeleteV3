@@ -291,11 +291,13 @@ export const isSafeToClean = (
   }
   // CHIPS: the match above kept this cookie based on its partition's top-level
   // site. But a partitioned cookie is kept only when BOTH its partition site AND
-  // its own host are whitelisted. A cross-site partitioned cookie (host main
-  // domain != partition main domain) whose host is not itself whitelisted is
-  // third-party state — e.g. an ad/tracker host partitioned under a whitelisted
-  // site — and must be cleaned. Open tabs above still grant the usual grace
-  // period, and same-site partitioned cookies (host == partition) are unaffected.
+  // its own host are protected. A cross-site partitioned cookie (host main domain
+  // != partition main domain) whose host is not protected is third-party state —
+  // e.g. an ad/tracker host partitioned under a whitelisted site — and must be
+  // cleaned. The host is protected when it is whitelisted, or greylisted during a
+  // normal (non-restart) cleanup, mirroring how greylisted cookies are otherwise
+  // kept until restart. Open tabs above still grant the usual grace period, and
+  // same-site partitioned cookies (host == partition) are unaffected.
   const hostHostname = getHostname(cookieProperties.preparedCookieDomain);
   const isCrossSitePartitioned =
     !!cookieProperties.partitionKey?.topLevelSite &&
@@ -306,10 +308,11 @@ export const isSafeToClean = (
       storeId,
       hostHostname,
     );
-    if (
-      !hostMatchedExpression ||
-      hostMatchedExpression.listType !== ListType.WHITE
-    ) {
+    const isHostProtected =
+      !!hostMatchedExpression &&
+      (hostMatchedExpression.listType === ListType.WHITE ||
+        (!greyCleanup && hostMatchedExpression.listType === ListType.GREY));
+    if (!isHostProtected) {
       cadLog(
         {
           msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie whose host is not whitelisted.  Safe to Clean.',
