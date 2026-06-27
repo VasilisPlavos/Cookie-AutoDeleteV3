@@ -5,6 +5,7 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
       - 'v[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -48,8 +49,15 @@ jobs:
         with:
           files: |
             builds/Cookie-AutoDelete-V3_*_Chrome.zip
-            builds/Cookie-AutoDelete-V3_*_Firefox.zip
             builds/Cookie-AutoDelete-V3_*_Firefox.xpi
-          body: This is an auto-generated tagged release - Change log will be manually inserted soon! Built artifacts are attached below. This fork distributes via GitHub Releases only -- install via 'Load unpacked' (Chrome/Edge) or 'Load Temporary Add-on' (Firefox). See the README for instructions.
+          body: |
+            Cookie AutoDelete V3 — ${{ github.ref_name }}
+
+            🟢 **Recommended (Chrome / Edge / Brave / Vivaldi & any Chromium browser):** install from the [Chrome Web Store](https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd) for automatic updates.
+
+            🦊 **Firefox or manual / sideload install:** download an artifact below — see the [README](https://github.com/vasilisplavos/Cookie-AutoDeleteV3#installation) for step-by-step instructions.
+            - `..._Chrome.zip` — Chromium browsers (Load unpacked)
+            - `..._Firefox.xpi` — Firefox (Load Temporary Add-on)
+          generate_release_notes: true
           prerelease: ${{ contains(github.ref, '-') }}
-          draft: true
+          draft: false
