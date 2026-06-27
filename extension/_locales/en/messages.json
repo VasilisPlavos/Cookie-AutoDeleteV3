@@ -879,6 +879,20 @@
       }
     }
   },
+  "reasonCleanPartitionedThirdParty": {
+    "message": "Clean because $cookieDomain$ is a third-party partitioned (CHIPS) cookie stored under $partition$ but is not itself whitelisted",
+    "description": "Clean because $cookieDomain$ is a third-party partitioned (CHIPS) cookie stored under $partition$ but is not itself whitelisted. Found in Activity Log Detailed Entries.",
+    "placeholders": {
+      "cookieDomain": {
+        "content": "$1",
+        "example": ".doubleclick.net"
+      },
+      "partition": {
+        "content": "$2",
+        "example": "youtube.com"
+      }
+    }
+  },
   "reasonCleanStartupNoList": {
     "message": "Clean because of startup cleanup and $hostname$ is not in the White or Grey lists",
     "description": "Clean because of startup cleanup and $hostname$ is not in the White or Grey lists",

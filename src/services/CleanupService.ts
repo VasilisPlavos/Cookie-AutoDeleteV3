@@ -289,6 +289,44 @@ export const isSafeToClean = (
       reason: ReasonClean.MatchedExpressionButNoCookieName,
     };
   }
+  // CHIPS: the match above kept this cookie based on its partition's top-level
+  // site. But a partitioned cookie is kept only when BOTH its partition site AND
+  // its own host are whitelisted. A cross-site partitioned cookie (host main
+  // domain != partition main domain) whose host is not itself whitelisted is
+  // third-party state — e.g. an ad/tracker host partitioned under a whitelisted
+  // site — and must be cleaned. Open tabs above still grant the usual grace
+  // period, and same-site partitioned cookies (host == partition) are unaffected.
+  const hostHostname = getHostname(cookieProperties.preparedCookieDomain);
+  const isCrossSitePartitioned =
+    !!cookieProperties.partitionKey?.topLevelSite &&
+    extractMainDomain(hostHostname) !== mainDomain;
+  if (isCrossSitePartitioned) {
+    const hostMatchedExpression = returnMatchedExpressionObject(
+      state,
+      storeId,
+      hostHostname,
+    );
+    if (
+      !hostMatchedExpression ||
+      hostMatchedExpression.listType !== ListType.WHITE
+    ) {
+      cadLog(
+        {
+          msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie whose host is not whitelisted.  Safe to Clean.',
+          x: { partialCookieInfo, matchedExpression, hostHostname },
+        },
+        debug,
+      );
+      return {
+        cached: false,
+        cleanCookie: true,
+        cookie: cookieProperties,
+        expression: matchedExpression,
+        openTabStatus,
+        reason: ReasonClean.PartitionedThirdParty,
+      };
+    }
+  }
   cadLog(
     {
       msg: 'CleanupService.isSafeToClean:  Matched Expression and cookie name.  Cookie stays!',

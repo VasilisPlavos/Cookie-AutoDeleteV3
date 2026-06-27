@@ -1468,8 +1468,9 @@ describe('CleanupService', () => {
       expect(result.cleanCookie).toBe(false);
     });
 
-    // CHIPS: a partitioned cookie is third-party state owned by the partition's
-    // top-level site, so keep/delete is decided against that site, not the host.
+    // CHIPS: a partitioned cookie is third-party state. It is kept only when
+    // BOTH its partition top-level site AND its own host are whitelisted; any
+    // cross-site combination is third-party and is cleaned (see #43).
     it('should clean a partitioned cookie whose host is whitelisted but partition is not', () => {
       const cookieProperty = prepareCookie({
         ...mockCookie,
@@ -1484,7 +1485,7 @@ describe('CleanupService', () => {
       expect(result.cleanCookie).toBe(true);
     });
 
-    it('should keep a partitioned cookie whose host is not whitelisted but partition is', () => {
+    it('should clean a partitioned cookie whose host is not whitelisted but partition is (third-party tracker)', () => {
       const cookieProperty = prepareCookie({
         ...mockCookie,
         domain: 'tracker.com',
@@ -1492,6 +1493,64 @@ describe('CleanupService', () => {
       });
 
       const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.reason).toBe(ReasonClean.PartitionedThirdParty);
+      expect(result.cleanCookie).toBe(true);
+    });
+
+    it('should clean a partitioned cookie whose host is a non-whitelisted subdomain-style tracker but partition is whitelisted', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: '.doubleclick.net',
+        partitionKey: { topLevelSite: 'https://youtube.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.reason).toBe(ReasonClean.PartitionedThirdParty);
+      expect(result.cleanCookie).toBe(true);
+    });
+
+    it('should keep a cross-site partitioned cookie when its non-whitelisted partition site has an open tab (grace period)', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'tracker.com',
+        storeId: 'firefox-default',
+        partitionKey: { topLevelSite: 'https://example.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.reason).toBe(ReasonKeep.OpenTabs);
+      expect(result.cleanCookie).toBe(false);
+    });
+
+    it('should keep a cross-site partitioned cookie when BOTH host and partition are whitelisted (Case 5 deferred to #58)', () => {
+      const twoWhitelistState: State = {
+        ...sampleState,
+        lists: {
+          ...sampleState.lists,
+          default: [
+            ...sampleState.lists.default,
+            {
+              expression: 'vimeo.com',
+              id: '99',
+              listType: ListType.WHITE,
+              storeId: 'default',
+            },
+          ],
+        },
+      };
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+
+      const result = isSafeToClean(twoWhitelistState, cookieProperty, {
         ...cleanupProperties,
       });
       expect(result.reason).toBe(ReasonKeep.MatchedExpression);
