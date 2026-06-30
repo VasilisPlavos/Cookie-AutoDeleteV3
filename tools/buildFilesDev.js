@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
+const { resolveBuildVersion } = require('./resolveBuildVersion');
 
 const BUILDS = 'builds';
 const EXT = 'extension';
@@ -38,16 +39,7 @@ console.log('GITHUB_REF:  %s', process.env.GITHUB_REF);
 console.log('TRAVIS_TAG:  %s', process.env.TRAVIS_TAG);
 console.log('GITSHA    :  %s', process.env.GITSHA);
 
-let versionTag = process.env.GITHUB_REF || process.env.TRAVIS_TAG || '';
-
-if (versionTag.startsWith('refs/tags/')) {
-  versionTag = versionTag.slice(10);
-}
-
-if (versionTag && !RegExp(/^v?\d+\.\d+\.\d+$/).test(versionTag)) {
-  console.warn('Version [ %s ] is not in valid semver form.', versionTag);
-  versionTag = '';
-}
+let versionTag = resolveBuildVersion(process.env);
 
 if (!versionTag) {
   console.log(
