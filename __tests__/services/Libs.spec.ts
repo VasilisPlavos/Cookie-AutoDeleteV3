@@ -1506,6 +1506,7 @@ describe('Library Functions', () => {
       };
       const cookieAPIAttributes = {
         ...mockCookie,
+        firstPartyDomain: '',
       };
       const results = returnOptionalCookieAPIAttributes(
         state,
