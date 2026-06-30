@@ -1638,6 +1638,45 @@ describe('CleanupService', () => {
       expect(result.cleanCookie).toBe(false);
     });
 
+    // Smell A: host protection for cross-site partitioned cookies must honour
+    // cleanAllCookies/cookieNames, exactly as the unpartitioned path does. A host
+    // configured to keep only a named cookie does NOT protect a partitioned cookie
+    // with a different name, even though the partition site is whitelisted.
+    it('should clean a cross-site partitioned cookie whose whitelisted host keeps only a different cookie name', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'examplewithcookiename.com',
+        name: 'not-in-cookie-names',
+        partitionKey: { topLevelSite: 'https://youtube.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(true);
+      expect(result.reason).toBe(ReasonClean.PartitionedThirdParty);
+      // Smell B: the expression attached reflects the host expression that drove
+      // the clean decision, not the protected partition's expression.
+      expect(result.expression?.expression).toBe('examplewithcookiename.com');
+    });
+
+    // Companion to the above: when the cookie name IS in the host keep-list, the
+    // host is protected; with the partition also whitelisted, the cookie is kept.
+    it('should keep a cross-site partitioned cookie whose whitelisted host keeps that cookie name (partition also whitelisted)', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'examplewithcookiename.com',
+        name: 'in-cookie-names',
+        partitionKey: { topLevelSite: 'https://youtube.com' },
+      });
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(false);
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+    });
+
     it('should return true for sub.youtube.com', () => {
       const cookieProperty = {
         ...mockCookie,
