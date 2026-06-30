@@ -333,11 +333,12 @@ export const isSafeToClean = (
   // kept until restart. Open tabs above still grant the usual grace period, and
   // same-site partitioned cookies (host == partition) are unaffected.
   if (isCrossSitePartitioned(cookieProperties)) {
-    const hostHostname = getHostname(cookieProperties.preparedCookieDomain);
+    // hostname now always holds the cookie's own host (see prepareCookie), so
+    // the host-level whitelist/greylist check keys on it directly.
     const hostMatchedExpression = returnMatchedExpressionObject(
       state,
       storeId,
-      hostHostname,
+      hostname,
     );
     const isHostProtected =
       !!hostMatchedExpression &&
@@ -347,7 +348,7 @@ export const isSafeToClean = (
       cadLog(
         {
           msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie whose host is not whitelisted (nor greylisted during normal cleanup).  Safe to Clean.',
-          x: { partialCookieInfo, matchedExpression, hostHostname },
+          x: { partialCookieInfo, matchedExpression },
         },
         debug,
       );
