@@ -56,9 +56,8 @@ import {
 
 import ipaddr from 'ipaddr.js';
 
-const mockCookie: browser.cookies.Cookie = {
+const mockCookie: browser.cookies.CookieProperties = {
   domain: 'domain.com',
-  firstPartyDomain: '',
   hostOnly: true,
   httpOnly: true,
   name: 'blah',
@@ -492,9 +491,8 @@ describe('Library Functions', () => {
         .mockResolvedValue([testCookie] as never);
     });
 
-    const testCookie: browser.cookies.Cookie = {
+    const testCookie: browser.cookies.CookieProperties = {
       domain: 'domain.com',
-      firstPartyDomain: '',
       hostOnly: true,
       httpOnly: true,
       name: 'blah',
@@ -1508,7 +1506,6 @@ describe('Library Functions', () => {
       };
       const cookieAPIAttributes = {
         ...mockCookie,
-        firstPartyDomain: '',
       };
       const results = returnOptionalCookieAPIAttributes(
         state,

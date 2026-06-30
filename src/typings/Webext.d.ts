@@ -16,10 +16,14 @@
  */
 
 declare namespace browser.cookies {
-  // Native Cookie already carries firstPartyDomain (required) and a native
-  // partitionKey (PartitionKey with topLevelSite). CookieProperties is the
-  // project's working cookie shape; it extends the native Cookie unchanged.
-  interface CookieProperties extends browser.cookies.Cookie {}
+  // CookieProperties is the project's working cookie shape. firstPartyDomain is
+  // kept OPTIONAL (the native Cookie marks it required, but at runtime Firefox
+  // only sets it under first-party isolation and Chrome never does), so code and
+  // fixtures treat an unset firstPartyDomain as undefined as they always have.
+  interface CookieProperties
+    extends Omit<browser.cookies.Cookie, 'firstPartyDomain'> {
+    firstPartyDomain?: string;
+  }
   type OptionalCookieProperties = Partial<CookieProperties>;
 }
 

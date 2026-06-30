@@ -738,7 +738,9 @@ export const prepareCleanupDomains = (
 /**
  * Puts the domain in the right format for browser.cookies.remove()
  */
-export const prepareCookieDomain = (cookie: browser.cookies.Cookie): string => {
+export const prepareCookieDomain = (
+  cookie: browser.cookies.CookieProperties,
+): string => {
   let cookieDomain = cookie.domain.trim();
   if (cookieDomain.length === 0 && cookie.path.trim().length !== 0) {
     // No Domain - presuming local file (file:// protocol)
