@@ -38,14 +38,14 @@ class App extends Component<OwnProps> {
       (this.props.sizeSetting as number) || 16
     }px`;
     const tab = await browser.tabs.getCurrent();
-    if (!tab) return;
-    const tabURL = new URL(tab.url || '');
+    if (!tab || !tab.url) return;
+    const tabURL = new URL(tab.url);
     this.setState({
       activeTab:
         tabURL.hash !== '' || undefined
           ? tabURL.hash.slice(1)
           : 'tabWelcome',
-      settingsURL: tab.url ?? '',
+      settingsURL: tab.url,
       tabId: tab.id ?? 0,
     });
   }
