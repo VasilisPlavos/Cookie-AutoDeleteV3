@@ -23,4 +23,34 @@ declare namespace browser.cookies {
   type OptionalCookieProperties = Partial<CookieProperties>;
 }
 
+declare namespace browser.tabs {
+  // Firefox tabs.onUpdated changeInfo, including CAD's cookieChanged extension;
+  // the new types expose this only as the internal _OnUpdatedChangeInfo.
+  interface TabChangeInfo {
+    attention?: boolean;
+    audible?: boolean;
+    cookieChanged?: {
+      removed: boolean;
+      cookie: browser.cookies.Cookie;
+      cause: browser.cookies.OnChangedCause;
+    };
+    discarded?: boolean;
+    favIconUrl?: string;
+    hidden?: boolean;
+    isArticle?: boolean;
+    mutedInfo?: browser.tabs.MutedInfo;
+    pinned?: boolean;
+    status?: string;
+    title?: string;
+    url?: string;
+  }
+}
+
+declare namespace browser.contextualIdentities {
+  // Project-named change-info type (native exposes it only as _OnUpdatedChangeInfo).
+  type contextualIdentitiesChangeInfo = {
+    contextualIdentity: ContextualIdentity;
+  };
+}
+
 declare module 'redux-webext';
