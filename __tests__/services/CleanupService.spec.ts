@@ -51,7 +51,6 @@ const sampleTab: browser.tabs.Tab = {
   isInReaderMode: false,
   lastAccessed: 12345678,
   pinned: false,
-  selected: true,
   url: 'https://example.com',
   windowId: 1,
 };
@@ -1038,7 +1037,7 @@ describe('CleanupService', () => {
   describe('clearLocalStorageForThisDomain()', () => {
     it('should clear localstorage from active tab (via tabs.executeScript)', async () => {
       when(global.browser.tabs.executeScript)
-        .calledWith(undefined, expect.any(Object))
+        .calledWith(expect.any(Object))
         .mockResolvedValue([{ local: 2, session: 0 }] as never);
       expect(
         await clearLocalStorageForThisDomain(initialState, sampleTab),
@@ -1048,7 +1047,7 @@ describe('CleanupService', () => {
     });
     it('should show error notification if browser.tabs.executeScript threw an error', async () => {
       when(global.browser.tabs.executeScript)
-        .calledWith(undefined, expect.any(Object))
+        .calledWith(expect.any(Object))
         .mockRejectedValue(new Error('test') as never);
       expect(
         await clearLocalStorageForThisDomain(initialState, sampleTab),
@@ -1059,7 +1058,7 @@ describe('CleanupService', () => {
     });
     it('should only show the no cleanup done notification if browser.tabs.executeScript threw a non-error type', async () => {
       when(global.browser.tabs.executeScript)
-        .calledWith(undefined, expect.any(Object))
+        .calledWith(expect.any(Object))
         .mockRejectedValue('error' as never);
       expect(
         await clearLocalStorageForThisDomain(initialState, sampleTab),

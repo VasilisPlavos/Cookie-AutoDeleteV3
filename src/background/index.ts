@@ -311,7 +311,7 @@ browser.runtime.onConnect.addListener(async (p) => {
 if (browser.contextMenus) {
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
     await ready();
-    ContextMenuEvents.onContextMenuClicked(info, tab);
+    if (tab) ContextMenuEvents.onContextMenuClicked(info, tab);
   });
 }
 

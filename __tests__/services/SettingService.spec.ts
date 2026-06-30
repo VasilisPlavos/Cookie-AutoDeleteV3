@@ -86,7 +86,6 @@ const defaultTab: browser.tabs.Tab = {
   isInReaderMode: false,
   lastAccessed: 12345678,
   pinned: false,
-  selected: true,
   url: 'https://domain.com',
   windowId: 1,
 };

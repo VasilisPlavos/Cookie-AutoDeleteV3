@@ -23,6 +23,7 @@ const spyLib: JestSpyObject = global.generateSpies(Lib);
 
 const defaultCookie: browser.cookies.Cookie = {
   domain: 'domain.com',
+  firstPartyDomain: '',
   hostOnly: false,
   httpOnly: false,
   name: 'CookieName',
@@ -46,7 +47,6 @@ const defaultTab: browser.tabs.Tab = {
   isInReaderMode: false,
   lastAccessed: 12345678,
   pinned: false,
-  selected: true,
   url: 'https://domain.com',
   windowId: 1,
 };
