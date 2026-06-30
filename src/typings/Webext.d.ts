@@ -51,7 +51,8 @@ declare namespace browser.tabs {
 }
 
 declare namespace browser.contextualIdentities {
-  // Project-named change-info type (native exposes it only as _OnUpdatedChangeInfo).
+  // Project-named change-info type (native exposes it only as the internal
+  // _OnCreatedChangeInfo / _OnRemovedChangeInfo / _OnUpdatedChangeInfo).
   type contextualIdentitiesChangeInfo = {
     contextualIdentity: ContextualIdentity;
   };
