@@ -41,7 +41,7 @@ export const prepareCookie = (
   cookie: browser.cookies.CookieProperties,
   debug = false,
 ): CookiePropertiesCleanup => {
-  const cookieProperties = {
+  const cookieProperties: CookiePropertiesCleanup = {
     ...cookie,
     hostname: '',
     mainDomain: '',
@@ -56,17 +56,23 @@ export const prepareCookie = (
     );
     cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
     // CHIPS: a partitioned cookie is third-party state owned by the partition's
-    // top-level site, not by its own host. Decide keep/delete (whitelist + open
-    // tab) against that top-level site so a whitelisted host (e.g. youtube.com)
-    // does not protect a cookie partitioned under a non-whitelisted site. The
-    // removal target (preparedCookieDomain / cookie.domain) stays the host.
+    // top-level site, not by its own host. hostname/mainDomain always describe
+    // the cookie's own host (so reporting attributes a deletion to the host that
+    // was actually removed). The partition top-level site is exposed separately
+    // via partitionHostname/partitionMainDomain; isSafeToClean keys the
+    // keep/delete decision (whitelist + open tab) on those so a whitelisted host
+    // (e.g. youtube.com) does not protect a cookie partitioned under a
+    // non-whitelisted site. The removal target stays the host.
     // For opaque origins (topLevelSite='null'), getHostname returns '' so we
     // fall back to the raw string — it won't match any whitelist entry, which
     // is the correct behaviour (opaque partitions belong to no known site).
     const topLevelSite = cookie.partitionKey?.topLevelSite;
     if (topLevelSite) {
-      cookieProperties.hostname = getHostname(topLevelSite) || topLevelSite;
-      cookieProperties.mainDomain = extractMainDomain(cookieProperties.hostname);
+      cookieProperties.partitionHostname =
+        getHostname(topLevelSite) || topLevelSite;
+      cookieProperties.partitionMainDomain = extractMainDomain(
+        cookieProperties.partitionHostname,
+      );
     }
   }
   cadLog(
@@ -87,16 +93,21 @@ export const prepareCookie = (
 
 /**
  * CHIPS: true when a partitioned cookie's own host differs from its partition
- * top-level site, i.e. it is third-party (cross-site) partitioned state.
- * prepareCookie overwrites hostname/mainDomain with the partition site, so the
+ * top-level site, i.e. it is third-party (cross-site) partitioned state. The
  * cookie's own host main domain is derived from its own domain and compared
- * against mainDomain (the partition main domain).
+ * against the partition top-level site's main domain. Self-contained so it works
+ * whether or not the cookie has been run through prepareCookie.
  */
 export const isCrossSitePartitioned = (
   cookie: CookiePropertiesCleanup,
-): boolean =>
-  !!cookie.partitionKey?.topLevelSite &&
-  extractMainDomain(trimDot(cookie.domain)) !== cookie.mainDomain;
+): boolean => {
+  const topLevelSite = cookie.partitionKey?.topLevelSite;
+  if (!topLevelSite) return false;
+  const partitionMainDomain =
+    cookie.partitionMainDomain ??
+    extractMainDomain(getHostname(topLevelSite) || topLevelSite);
+  return extractMainDomain(trimDot(cookie.domain)) !== partitionMainDomain;
+};
 
 /** Returns an object representing the cookie with internal flags */
 export const isSafeToClean = (
@@ -127,6 +138,12 @@ export const isSafeToClean = (
   const openTabStatus = ignoreOpenTabs
     ? OpenTabStatus.TabsWereIgnored
     : OpenTabStatus.TabsWasNotIgnored;
+  // CHIPS: a partitioned cookie is third-party state owned by its partition
+  // top-level site, so the keep/delete decision (open tab + whitelist match)
+  // keys on that site, not the cookie's own host. hostname/mainDomain stay the
+  // host for reporting; these fall back to the host for non-partitioned cookies.
+  const decisionHostname = cookieProperties.partitionHostname || hostname;
+  const decisionMainDomain = cookieProperties.partitionMainDomain || mainDomain;
   cadLog(
     {
       msg: 'CleanupService.isSafeToClean:  Properties Debug',
@@ -136,7 +153,10 @@ export const isSafeToClean = (
   );
 
   // Tests if the main domain is open on that specific storeId/container
-  if (openTabDomains[storeId] && openTabDomains[storeId].includes(mainDomain)) {
+  if (
+    openTabDomains[storeId] &&
+    openTabDomains[storeId].includes(decisionMainDomain)
+  ) {
     cadLog(
       {
         msg: `CleanupService.isSafeToClean:  mainDomain found in openTabsDomain[${storeId}] - not cleaning.`,
@@ -153,11 +173,12 @@ export const isSafeToClean = (
     };
   }
 
-  // Checks the list for the first available match
+  // Checks the list for the first available match (against the partition
+  // top-level site for partitioned cookies; see decisionHostname above).
   const matchedExpression = returnMatchedExpressionObject(
     state,
     storeId,
-    hostname,
+    decisionHostname,
   );
 
   // Internal CAD Cookie Checks

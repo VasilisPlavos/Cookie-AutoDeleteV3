@@ -68,4 +68,10 @@ interface CookiePropertiesCleanup extends browser.cookies.CookieProperties {
   mainDomain: string;
   hostname: string;
   preparedCookieDomain: string;
+  // CHIPS: for a partitioned cookie, the partition top-level site's hostname and
+  // main domain. hostname/mainDomain above always describe the cookie's own host
+  // (used for reporting); these drive the keep/delete decision instead. Undefined
+  // for non-partitioned cookies.
+  partitionHostname?: string;
+  partitionMainDomain?: string;
 }
