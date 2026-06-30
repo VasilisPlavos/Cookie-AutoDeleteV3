@@ -1,14 +1,28 @@
 version: 2
+# -----------------------------------------------------------------------------
+# Security-only policy.
+#
+# Routine VERSION updates are disabled (open-pull-requests-limit: 0) to avoid
+# noisy major-bump PRs that break CI and have to be done by hand anyway.
+#
+# CVE-driven SECURITY updates are still wanted. Those are NOT controlled by this
+# file — they are raised automatically when GitHub detects a vulnerable
+# dependency, and require these repo settings to be ON:
+#   Settings -> Code security -> Dependabot alerts            = Enabled
+#   Settings -> Code security -> Dependabot security updates  = Enabled
+# Security updates are not affected by open-pull-requests-limit, so they still
+# come through even though version updates below are capped at 0.
+# -----------------------------------------------------------------------------
 updates:
-  # Maintain Dependencies for GitHub Actions
+  # GitHub Actions — version updates off (security updates still apply)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
-  # Maintain Dependencies for NodeJS / npm
+    open-pull-requests-limit: 0
+  # NodeJS / npm — version updates off (security updates still apply)
   - package-ecosystem: "npm"
-    # Look for `package.json` and `lock` files in the `root` directory
     directory: "/"
-    # Check npm registry for updates every day (weekdays)
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 0
