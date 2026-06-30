@@ -15,92 +15,12 @@
  * SOFTWARE.
  */
 
-declare namespace browser.browsingData {
-  function remove(
-    removalOptions: {
-      hostnames?: string[];
-      origins?: string[]; // Added in Chrome 74+
-      since?: number;
-    },
-    dataTypeSet: {
-      cache?: boolean;
-      indexedDB?: boolean;
-      localStorage?: boolean;
-      pluginData?: boolean;
-      serviceWorkers?: boolean;
-    },
-  ): Promise<void>;
-}
-
 declare namespace browser.cookies {
-  interface CookiePartitionKey {
-    topLevelSite?: string;
-    hasCrossSiteAncestor?: boolean; // Chrome 130+
-  }
-  interface CookieProperties extends browser.cookies.Cookie {
-    firstPartyDomain?: string;
-    partitionKey?: CookiePartitionKey;
-  }
+  // Native Cookie already carries firstPartyDomain (required) and a native
+  // partitionKey (PartitionKey with topLevelSite). CookieProperties is the
+  // project's working cookie shape; it extends the native Cookie unchanged.
+  interface CookieProperties extends browser.cookies.Cookie {}
   type OptionalCookieProperties = Partial<CookieProperties>;
-
-  // CHIPS: the bundled web-ext-types predates partitioned cookies, so add
-  // overloads that accept partitionKey in getAll / remove details.
-  function getAll(details: OptionalCookieProperties): Promise<Cookie[]>;
-  function remove(
-    details: OptionalCookieProperties & { url: string; name: string },
-  ): Promise<Cookie | null>;
-}
-
-// Until web-ext-types land this, per https://github.com/kelseasy/web-ext-types/issues/81#issuecomment-527758881
-declare namespace browser.contextMenus {
-  type ContextType = browser.menus.ContextType;
-  type ItemType = browser.menus.ItemType;
-  type OnClickData = browser.menus.OnClickData;
-  const create: typeof browser.menus.create;
-  const getTargetElement: typeof browser.menus.getTargetElement;
-  const refresh: typeof browser.menus.refresh;
-  const remove: typeof browser.menus.remove;
-  const removeAll: typeof browser.menus.removeAll;
-  const update: typeof browser.menus.update;
-  const onClicked: typeof browser.menus.onClicked;
-  const onHidden: typeof browser.menus.onHidden;
-  const onShown: typeof browser.menus.onShown;
-}
-
-// Until web-ext-types land events into it.
-declare namespace browser.contextualIdentities {
-  type contextualIdentitiesChangeInfo = {
-    contextualIdentity: ContextualIdentity;
-  };
-  const onCreated: Listener<contextualIdentitiesChangeInfo>;
-  const onRemoved: Listener<contextualIdentitiesChangeInfo>;
-  const onUpdated: Listener<contextualIdentitiesChangeInfo>;
-}
-
-declare namespace browser.tabs {
-  interface TabChangeInfo {
-    attention?: boolean;
-    audible?: boolean;
-    cookieChanged?: {
-      removed: boolean;
-      cookie: browser.cookies.Cookie;
-      cause: browser.cookies.OnChangedCause;
-    };
-    discarded?: boolean;
-    favIconUrl?: string;
-    hidden?: boolean;
-    isArticle?: boolean;
-    mutedInfo?: browser.tabs.MutedInfo;
-    pinned?: boolean;
-    status?: string;
-    title?: string;
-    url?: string;
-  }
 }
 
 declare module 'redux-webext';
-
-declare namespace browser {
-  // MV3 alias. webextension-polyfill 0.8+ proxies browserAction <-> action at runtime.
-  const action: typeof browser.browserAction;
-}
