@@ -85,6 +85,19 @@ export const prepareCookie = (
   return cookieProperties;
 };
 
+/**
+ * CHIPS: true when a partitioned cookie's own host differs from its partition
+ * top-level site, i.e. it is third-party (cross-site) partitioned state.
+ * prepareCookie overwrites hostname/mainDomain with the partition site, so the
+ * cookie's own host main domain is derived from its own domain and compared
+ * against mainDomain (the partition main domain).
+ */
+export const isCrossSitePartitioned = (
+  cookie: CookiePropertiesCleanup,
+): boolean =>
+  !!cookie.partitionKey?.topLevelSite &&
+  extractMainDomain(trimDot(cookie.domain)) !== cookie.mainDomain;
+
 /** Returns an object representing the cookie with internal flags */
 export const isSafeToClean = (
   state: State,
@@ -288,6 +301,44 @@ export const isSafeToClean = (
       openTabStatus,
       reason: ReasonClean.MatchedExpressionButNoCookieName,
     };
+  }
+  // CHIPS: the match above kept this cookie based on its partition's top-level
+  // site. But a partitioned cookie is kept only when BOTH its partition site AND
+  // its own host are protected. A cross-site partitioned cookie (host main domain
+  // != partition main domain) whose host is not protected is third-party state —
+  // e.g. an ad/tracker host partitioned under a whitelisted site — and must be
+  // cleaned. The host is protected when it is whitelisted, or greylisted during a
+  // normal (non-restart) cleanup, mirroring how greylisted cookies are otherwise
+  // kept until restart. Open tabs above still grant the usual grace period, and
+  // same-site partitioned cookies (host == partition) are unaffected.
+  if (isCrossSitePartitioned(cookieProperties)) {
+    const hostHostname = getHostname(cookieProperties.preparedCookieDomain);
+    const hostMatchedExpression = returnMatchedExpressionObject(
+      state,
+      storeId,
+      hostHostname,
+    );
+    const isHostProtected =
+      !!hostMatchedExpression &&
+      (hostMatchedExpression.listType === ListType.WHITE ||
+        (!greyCleanup && hostMatchedExpression.listType === ListType.GREY));
+    if (!isHostProtected) {
+      cadLog(
+        {
+          msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie whose host is not whitelisted (nor greylisted during normal cleanup).  Safe to Clean.',
+          x: { partialCookieInfo, matchedExpression, hostHostname },
+        },
+        debug,
+      );
+      return {
+        cached: false,
+        cleanCookie: true,
+        cookie: cookieProperties,
+        expression: matchedExpression,
+        openTabStatus,
+        reason: ReasonClean.PartitionedThirdParty,
+      };
+    }
   }
   cadLog(
     {
@@ -761,11 +812,8 @@ export const filterSiteData = (
   // partitioned cookie (host ≠ partition site) removing by host_key would
   // affect the wrong origin. Same-site partitioned cookies (host == partition)
   // are fine — browsingData.remove by host clears the right data either way.
-  const isCrossSitePartitioned =
-    !!obj.cookie.partitionKey?.topLevelSite &&
-    extractMainDomain(trimDot(obj.cookie.domain)) !== obj.cookie.mainDomain;
   const r =
-    !isCrossSitePartitioned &&
+    !isCrossSitePartitioned(obj.cookie) &&
     (notInAnyLists || (notProtectedByOpenTab && canCleanSiteData)) &&
     nonBlankCookieHostName;
   cadLog(

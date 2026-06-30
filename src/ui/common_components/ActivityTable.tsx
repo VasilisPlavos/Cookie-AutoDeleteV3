@@ -91,6 +91,15 @@ const returnReasonMessages = (cleanReasonObject: CleanReasonObject) => {
       return browser.i18n.getMessage(reason, [hostname]);
     }
 
+    case ReasonClean.PartitionedThirdParty: {
+      // hostname holds the partition top-level site (set by prepareCookie),
+      // while cookie.domain is the cookie's own host (the third party).
+      return browser.i18n.getMessage(reason, [
+        cleanReasonObject.cookie.domain || '',
+        hostname,
+      ]);
+    }
+
     case ReasonClean.StartupCleanupAndGreyList: {
       return browser.i18n.getMessage(reason, [
         matchedExpression ? matchedExpression.expression : '',
