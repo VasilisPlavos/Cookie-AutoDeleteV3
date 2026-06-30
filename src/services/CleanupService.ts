@@ -240,131 +240,123 @@ export const isSafeToClean = (
     }
   }
 
-  // Startup cleanup checks
-  if (greyCleanup && !matchedExpression) {
-    cadLog(
-      {
-        msg: 'CleanupService.isSafeToClean:  unmatched and greyCleanup.  Safe to Clean',
-        x: partialCookieInfo,
-      },
-      debug,
-    );
-    return {
-      cached: false,
-      cleanCookie: true,
-      cookie: cookieProperties,
-      openTabStatus,
-      reason: ReasonClean.StartupNoMatchedExpression,
-    };
-  }
-
-  if (
-    greyCleanup &&
-    matchedExpression &&
-    matchedExpression.listType === ListType.GREY &&
-    // Tests the cleanAllCookies flag and if it doesn't include that name or if there is no cookieNames
-    (undefinedIsTrue(matchedExpression.cleanAllCookies) ||
-      (matchedExpression.cookieNames &&
-        !matchedExpression.cookieNames.includes(cookieProperties.name)))
-  ) {
-    cadLog(
-      {
-        msg: 'CleanupService.isSafeToClean:  greyCleanup - matching Expression and cookie name was unchecked.  Safe to Clean.',
-        x: { partialCookieInfo, matchedExpression },
-      },
-      debug,
-    );
-    return {
-      cached: false,
-      cleanCookie: true,
-      cookie: cookieProperties,
-      expression: matchedExpression,
-      openTabStatus,
-      reason: ReasonClean.StartupCleanupAndGreyList,
-    };
-  }
-
-  // Normal cleanup checks
-  if (!matchedExpression) {
-    cadLog(
-      {
-        msg: 'CleanupService.isSafeToClean:  unmatched Expression.  Safe to Clean.',
-        x: partialCookieInfo,
-      },
-      debug,
-    );
-    return {
-      cached: false,
-      cleanCookie: true,
-      cookie: cookieProperties,
-      openTabStatus,
-      reason: ReasonClean.NoMatchedExpression,
-    };
-  }
-  if (
-    matchedExpression &&
-    !undefinedIsTrue(matchedExpression.cleanAllCookies) &&
-    matchedExpression.cookieNames &&
-    !matchedExpression.cookieNames.includes(cookieProperties.name)
-  ) {
-    cadLog(
-      {
-        msg: 'CleanupService.isSafeToClean:  matched Expression but unchecked cookie name.  Safe to Clean.',
-        x: { partialCookieInfo, matchedExpression },
-      },
-      debug,
-    );
-    return {
-      cached: false,
-      cleanCookie: true,
-      cookie: cookieProperties,
-      expression: matchedExpression,
-      openTabStatus,
-      reason: ReasonClean.MatchedExpressionButNoCookieName,
-    };
-  }
-  // CHIPS: the match above kept this cookie based on its partition's top-level
-  // site. But a partitioned cookie is kept only when BOTH its partition site AND
-  // its own host are protected. A cross-site partitioned cookie (host main domain
-  // != partition main domain) whose host is not protected is third-party state —
-  // e.g. an ad/tracker host partitioned under a whitelisted site — and must be
-  // cleaned. The host is protected when it is whitelisted, or greylisted during a
-  // normal (non-restart) cleanup, mirroring how greylisted cookies are otherwise
-  // kept until restart. Open tabs above still grant the usual grace period, and
-  // same-site partitioned cookies (host == partition) are unaffected.
-  if (isCrossSitePartitioned(cookieProperties)) {
-    // hostname now always holds the cookie's own host (see prepareCookie), so
-    // the host-level whitelist/greylist check keys on it directly.
-    const hostMatchedExpression = returnMatchedExpressionObject(
-      state,
-      storeId,
-      hostname,
-    );
-    const isHostProtected =
-      !!hostMatchedExpression &&
-      (hostMatchedExpression.listType === ListType.WHITE ||
-        (!greyCleanup && hostMatchedExpression.listType === ListType.GREY));
-    if (!isHostProtected) {
-      cadLog(
-        {
-          msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie whose host is not whitelisted (nor greylisted during normal cleanup).  Safe to Clean.',
-          x: { partialCookieInfo, matchedExpression },
-        },
-        debug,
-      );
+  // Evaluate the keep/clean verdict for a single site through the shared list
+  // rules: startup (greyCleanup) cleanup, whitelist/greylist matching, and the
+  // cleanAllCookies/cookieNames name filter. Open-tab grace and expiry are
+  // decided once for the whole cookie above, so they are not repeated here.
+  // Running this for both the partition top-level site AND the cookie's own host
+  // lets a cross-site (CHIPS) cookie reuse the exact same protection logic for
+  // both sides instead of a partial duplicate.
+  const decideForSite = (
+    matched: Expression | undefined,
+  ): {
+    clean: boolean;
+    reason: ReasonKeep | ReasonClean;
+    expression?: Expression;
+  } => {
+    // Unmatched by any list: clean. Startup and normal cleanup differ only in
+    // the reason reported. Returning here also narrows `matched` to defined for
+    // the remaining checks.
+    if (!matched) {
       return {
-        cached: false,
-        cleanCookie: true,
-        cookie: cookieProperties,
-        expression: matchedExpression,
-        openTabStatus,
-        reason: ReasonClean.PartitionedThirdParty,
+        clean: true,
+        reason: greyCleanup
+          ? ReasonClean.StartupNoMatchedExpression
+          : ReasonClean.NoMatchedExpression,
       };
     }
+    // Startup cleanup of a greylisted match whose cookie name is not kept.
+    if (
+      greyCleanup &&
+      matched.listType === ListType.GREY &&
+      // Tests the cleanAllCookies flag and if it doesn't include that name or if there is no cookieNames
+      (undefinedIsTrue(matched.cleanAllCookies) ||
+        (matched.cookieNames && !matched.cookieNames.includes(name)))
+    ) {
+      return {
+        clean: true,
+        reason: ReasonClean.StartupCleanupAndGreyList,
+        expression: matched,
+      };
+    }
+    // Matched, but the cookie name is not on the keep-list.
+    if (
+      !undefinedIsTrue(matched.cleanAllCookies) &&
+      matched.cookieNames &&
+      !matched.cookieNames.includes(name)
+    ) {
+      return {
+        clean: true,
+        reason: ReasonClean.MatchedExpressionButNoCookieName,
+        expression: matched,
+      };
+    }
+    return {
+      clean: false,
+      reason: ReasonKeep.MatchedExpression,
+      expression: matched,
+    };
+  };
+
+  // matchedExpression was looked up against decisionHostname (the partition
+  // top-level site for partitioned cookies, the host otherwise), so this is the
+  // partition/decision-site verdict.
+  const partitionDecision = decideForSite(matchedExpression);
+
+  // The partition (or single-site) verdict governs directly when the cookie is
+  // not cross-site partitioned, or when the partition site itself is unprotected
+  // (its verdict cleans the cookie regardless of the host). Only a cross-site
+  // partitioned cookie whose partition IS protected needs the host re-check
+  // below — a CHIPS cookie is kept only when BOTH sites are protected.
+  if (!isCrossSitePartitioned(cookieProperties) || partitionDecision.clean) {
+    cadLog(
+      {
+        msg: `CleanupService.isSafeToClean:  Partition/single-site verdict governs: ${partitionDecision.reason}.`,
+        x: { partialCookieInfo, matchedExpression },
+      },
+      debug,
+    );
+    return {
+      cached: false,
+      cleanCookie: partitionDecision.clean,
+      cookie: cookieProperties,
+      expression: partitionDecision.expression,
+      openTabStatus,
+      reason: partitionDecision.reason,
+    };
   }
+
+  // Partition is protected; re-run the same rules against the cookie's own host.
+  // hostname always holds the cookie's own host (see prepareCookie), so the
+  // host-level check keys on it directly. Because the decision flows through
+  // decideForSite, cleanAllCookies/cookieNames apply to the host exactly as they
+  // do to the partition, and the expression attached is the host's — the one
+  // that actually drives the clean.
+  const hostDecision = decideForSite(
+    returnMatchedExpressionObject(state, storeId, hostname),
+  );
+  if (hostDecision.clean) {
+    cadLog(
+      {
+        msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie whose host is not protected (host verdict drives the clean).  Safe to Clean.',
+        x: { partialCookieInfo, hostExpression: hostDecision.expression },
+      },
+      debug,
+    );
+    return {
+      cached: false,
+      cleanCookie: true,
+      cookie: cookieProperties,
+      expression: hostDecision.expression,
+      openTabStatus,
+      reason: ReasonClean.PartitionedThirdParty,
+    };
+  }
+
+  // Both the partition site and the host are protected → keep.
   cadLog(
     {
-      msg: 'CleanupService.isSafeToClean:  Matched Expression and cookie name.  Cookie stays!',
+      msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie protected on both host and partition.  Cookie stays!',
       x: { partialCookieInfo, matchedExpression },
     },
     debug,
@@ -373,7 +365,7 @@ export const isSafeToClean = (
     cached: false,
     cleanCookie: false,
     cookie: cookieProperties,
-    expression: matchedExpression,
+    expression: partitionDecision.expression,
     openTabStatus,
     reason: ReasonKeep.MatchedExpression,
   };
