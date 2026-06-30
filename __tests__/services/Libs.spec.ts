@@ -58,6 +58,7 @@ import ipaddr from 'ipaddr.js';
 
 const mockCookie: browser.cookies.Cookie = {
   domain: 'domain.com',
+  firstPartyDomain: '',
   hostOnly: true,
   httpOnly: true,
   name: 'blah',
@@ -493,6 +494,7 @@ describe('Library Functions', () => {
 
     const testCookie: browser.cookies.Cookie = {
       domain: 'domain.com',
+      firstPartyDomain: '',
       hostOnly: true,
       httpOnly: true,
       name: 'blah',
@@ -516,7 +518,6 @@ describe('Library Functions', () => {
       isInReaderMode: false,
       lastAccessed: 12345678,
       pinned: false,
-      selected: true,
       url: 'https://www.example.com',
       windowId: 1,
     };

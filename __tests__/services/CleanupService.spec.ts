@@ -51,7 +51,6 @@ const sampleTab: browser.tabs.Tab = {
   isInReaderMode: false,
   lastAccessed: 12345678,
   pinned: false,
-  selected: true,
   url: 'https://example.com',
   windowId: 1,
 };
@@ -169,6 +168,7 @@ const sampleState: State = {
 
 const mockCookie: CookiePropertiesCleanup = {
   domain: 'test.com',
+  firstPartyDomain: '',
   hostOnly: true,
   hostname: 'test.com',
   httpOnly: true,
