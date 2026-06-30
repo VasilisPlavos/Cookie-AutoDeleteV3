@@ -553,6 +553,28 @@ describe('CleanupService', () => {
         expect(ffResult.setOfDeletedDomainCookies).toEqual([]);
       });
 
+      it('reports the third-party host (not the whitelisted partition site) for a cross-site partitioned deletion', async () => {
+        when(global.browser.cookies.getAll)
+          .calledWith({ storeId: 'firefox-default' })
+          .mockResolvedValue([
+            {
+              ...mockCookie,
+              domain: 'tracker.com',
+              name: 'p2',
+              partitionKey: { topLevelSite: 'https://youtube.com' },
+            },
+          ] as never);
+        const ffResult = await cleanCookiesOperation(
+          firefoxState,
+          cleanupProperties,
+        );
+        expect(global.browser.cookies.remove).toHaveBeenCalledTimes(1);
+        // The actual removed host must be reported, and the whitelisted
+        // partition site (youtube.com) must NOT appear in the summary.
+        expect(ffResult.setOfDeletedDomainCookies).toEqual(['tracker.com']);
+        expect(ffResult.setOfDeletedDomainCookies).not.toContain('youtube.com');
+      });
+
       it('Regular clean, exclude open tabs to catch errors during browser.cookies.getAll', async () => {
         when(global.browser.cookies.getAll)
           .calledWith(expect.any(Object))
@@ -2330,7 +2352,7 @@ describe('CleanupService', () => {
       expect(result.mainDomain).toBe('file:///folder/file.html');
     });
 
-    it('should evaluate a partitioned cookie against the partition top-level site', () => {
+    it('should keep the cookie own host as hostname and expose the partition site separately', () => {
       const partitionedCookie = {
         ...mockCookie,
         domain: 'youtube.com',
@@ -2339,10 +2361,14 @@ describe('CleanupService', () => {
 
       const result = prepareCookie(partitionedCookie);
 
-      // Decision identity follows the partition's top-level site...
-      expect(result.hostname).toBe('whosampled.com');
-      expect(result.mainDomain).toBe('whosampled.com');
-      // ...but the removal target stays the cookie's own host.
+      // hostname/mainDomain always reflect the cookie's own host (used for
+      // reporting); the partition site is exposed via dedicated fields and is
+      // what the keep/delete decision keys on.
+      expect(result.hostname).toBe('youtube.com');
+      expect(result.mainDomain).toBe('youtube.com');
+      expect(result.partitionHostname).toBe('whosampled.com');
+      expect(result.partitionMainDomain).toBe('whosampled.com');
+      // The removal target stays the cookie's own host.
       expect(result.preparedCookieDomain).toBe('https://youtube.com/');
     });
 
