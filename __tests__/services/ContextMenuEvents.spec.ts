@@ -141,7 +141,7 @@ describe('ContextMenuEvents', () => {
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
       await ContextMenuEvents.menuInit();
       expect(TestContextMenuEvents.getIsInitialized()).toBe(true);
-      expect(global.browser.contextMenus.create).toHaveBeenCalledTimes(35);
+      expect(global.browser.contextMenus.create).toHaveBeenCalledTimes(36);
       // onClicked listener is now registered at the background module top level,
       // not inside menuInit — so menuInit must NOT call addListener.
       expect(

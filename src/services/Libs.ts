@@ -19,6 +19,7 @@ import shortid from 'shortid';
 export const CADCOOKIENAME = 'CookieAutoDeleteBrowsingDataCleanup';
 export const SITEDATATYPES = [
   SiteDataType.CACHE,
+  SiteDataType.FILESYSTEMS,
   SiteDataType.INDEXEDDB,
   SiteDataType.LOCALSTORAGE,
   SiteDataType.PLUGINDATA,

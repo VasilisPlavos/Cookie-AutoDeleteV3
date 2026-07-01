@@ -2363,6 +2363,52 @@ describe('CleanupService', () => {
         expect(spyCleanupService.cleanSiteData).toHaveBeenCalledTimes(1);
       });
     });
+
+    const fileSystemsState = {
+      ...ffState,
+      cache: {
+        browserDetect: browserName.Chrome,
+      },
+      settings: {
+        ...initialState.settings,
+        [SettingID.CLEANUP_FILESYSTEMS]: {
+          name: SettingID.CLEANUP_FILESYSTEMS,
+          value: true,
+        },
+      },
+    };
+
+    describe('FileSystems', () => {
+      it('should not call cleanSiteData for: Chrome, fileSystemsCleanup false', async () => {
+        await otherBrowsingDataCleanup(
+          {
+            ...ffState,
+            cache: { browserDetect: browserName.Chrome },
+          },
+          [],
+        );
+        expect(spyCleanupService.cleanSiteData).not.toHaveBeenCalled();
+      });
+
+      it('should not call cleanSiteData for: Firefox 78, fileSystemsCleanup true', async () => {
+        await otherBrowsingDataCleanup(
+          {
+            ...fileSystemsState,
+            cache: {
+              ...ffState.cache,
+              browserVersion: '78',
+            },
+          },
+          [],
+        );
+        expect(spyCleanupService.cleanSiteData).not.toHaveBeenCalled();
+      });
+
+      it('should call cleanSiteData for: Chrome, fileSystemsCleanup true', async () => {
+        await otherBrowsingDataCleanup(fileSystemsState, []);
+        expect(spyCleanupService.cleanSiteData).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 
   describe('prepareCookie()', () => {
