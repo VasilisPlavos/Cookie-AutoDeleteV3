@@ -21,6 +21,7 @@ import {
   clearLocalStorageForThisDomain,
 } from '../../../services/CleanupService';
 import { ReduxAction } from '../../../typings/ReduxConstants';
+import { isChrome, isFirefoxNotAndroid } from '../../../services/Libs';
 import CleanDataButton from './CleanDataButton';
 
 interface DispatchProps {
@@ -101,11 +102,20 @@ const CleanCollapseGroup: React.FunctionComponent<CleanCollapseComponentProps> =
             siteData={SiteDataType.LOCALSTORAGE}
             hostname={hostname}
           />
-          <CleanDataButton
-            altColor
-            siteData={SiteDataType.PLUGINDATA}
-            hostname={hostname}
-          />
+          {isChrome(state.cache) && (
+            <CleanDataButton
+              altColor
+              siteData={SiteDataType.FILESYSTEMS}
+              hostname={hostname}
+            />
+          )}
+          {isFirefoxNotAndroid(state.cache) && (
+            <CleanDataButton
+              altColor
+              siteData={SiteDataType.PLUGINDATA}
+              hostname={hostname}
+            />
+          )}
           <CleanDataButton
             siteData={SiteDataType.SERVICEWORKERS}
             hostname={hostname}
