@@ -547,6 +547,7 @@ export const clearSiteDataForThisDomain = async (
   if (siteData === 'All') {
     const siteDataAll: string[] = [];
     for (const sd of SITEDATATYPES) {
+      if (sd === SiteDataType.FILESYSTEMS && !isChrome(state.cache)) continue;
       await removeSiteData(
         state,
         sd,

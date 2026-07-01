@@ -1084,6 +1084,43 @@ describe('CleanupService', () => {
         ),
       ).toBe(false);
     });
+    it('should NOT clear fileSystems in the All loop on Firefox', async () => {
+      when(global.browser.browsingData.remove)
+        .calledWith(expect.any(Object), expect.any(Object))
+        .mockResolvedValue(undefined as never);
+      const ffAllState = {
+        ...initialState,
+        cache: {
+          browserDetect: browserName.Firefox,
+          browserVersion: '78',
+          platformOs: 'desktop',
+        },
+      };
+      await clearSiteDataForThisDomain(ffAllState, 'All', 'example.com');
+      expect(global.browser.browsingData.remove).not.toHaveBeenCalledWith(
+        expect.any(Object),
+        { fileSystems: true },
+      );
+    });
+
+    it('should clear fileSystems in the All loop on Chrome', async () => {
+      when(global.browser.browsingData.remove)
+        .calledWith(expect.any(Object), expect.any(Object))
+        .mockResolvedValue(undefined as never);
+      const chromeAllState = {
+        ...initialState,
+        cache: {
+          browserDetect: browserName.Chrome,
+          browserVersion: '120',
+          platformOs: 'desktop',
+        },
+      };
+      await clearSiteDataForThisDomain(chromeAllState, 'All', 'example.com');
+      expect(global.browser.browsingData.remove).toHaveBeenCalledWith(
+        expect.any(Object),
+        { fileSystems: true },
+      );
+    });
   });
 
   describe('filterSiteData()', () => {
