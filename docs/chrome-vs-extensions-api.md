@@ -21,6 +21,22 @@ storage (cache, IndexedDB, service workers) untouched.
 | **Permissions** (camera, microphone, location, pop-ups, etc.) | Full | Full (read, write) | `chrome.contentSettings` | **Surgical.** An extension can allow / block / ask per site, exactly like the settings menu. |
 | **Passwords / Autofill** (often shown in a site's data) | Full | Strictly restricted | No public API (`chrome.passwordsPrivate` is Google-internal only) | Extensions cannot read or delete Chrome's saved passwords. They can only read the page DOM (e.g. password managers like Bitwarden). |
 
+> **"By host" ≠ "by partition".** The `origins` / `hostnames` filter narrows a
+> deletion to a *host*, never to a single *partition*. Clearing `google.com` wipes
+> its data across **every** partition, including its legitimate first-party copy —
+> which is exactly why no non-cookie row above can be "surgical". The only
+> partition-aware tools are `chrome.cookies` (`partitionKey`, cookies only) and the
+> server-sent `Clear-Site-Data` header (clears one partition only) — neither lets an
+> extension delete just one third party's partitioned storage *or* cache.
+
+> **Browser caveat (cache).** The table describes **Chrome** (CAD's MV3 target),
+> where `origins` *does* cover the HTTP cache. **Firefox** differs:
+> `browsingData.removeCache()` ignores every filter and always clears the whole
+> cache, and its `hostnames` filter never applies to cache at all. So "you can
+> host-scope Web Storage but not the HTTP Cache" is a *Firefox* limitation — on
+> Chrome the cache is host-scopable like the rest. CAD ships Chrome-only but keeps
+> the Firefox `hostnames` branch in `removeSiteData` for the legacy path.
+
 ## Why it matters for Cookie AutoDelete
 
 - **Cookies** → `chrome.cookies.remove` accepts `partitionKey`, so CAD can delete
