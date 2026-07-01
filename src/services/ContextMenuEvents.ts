@@ -26,6 +26,8 @@ import {
   cadLog,
   getHostname,
   getSetting,
+  isChrome,
+  isFirefoxNotAndroid,
   localFileToRegex,
   parseCookieStoreId,
   showNotification,
@@ -127,7 +129,16 @@ export default class ContextMenuEvents extends StoreUser {
     });
     // Clean all available site data for domain.
     // SiteDataType (declare enum via Global.d.ts) somehow doesn't exist through the browser...
-    [...SITEDATATYPES, 'All', 'Cookies'].sort().forEach((sd) => {
+    // File System is Chrome-only (Firefox has no fileSystems browsingData type);
+    // Plugin Data is a no-op on Chromium, so show it on Firefox only.
+    const menuState = StoreUser.store.getState();
+    const menuSiteData = SITEDATATYPES.filter((sd) => {
+      if (sd === SiteDataType.FILESYSTEMS) return isChrome(menuState.cache);
+      if (sd === SiteDataType.PLUGINDATA)
+        return isFirefoxNotAndroid(menuState.cache);
+      return true;
+    });
+    [...menuSiteData, 'All', 'Cookies'].sort().forEach((sd) => {
       ContextMenuEvents.menuCreate({
         id: `${ContextMenuEvents.MenuID.MANUAL_CLEAN_SITEDATA}${sd}`,
         parentId: ContextMenuEvents.MenuID.PARENT_CLEAN,
@@ -419,6 +430,7 @@ export default class ContextMenuEvents extends StoreUser {
       switch (siteData) {
         case 'All':
         case SiteDataType.CACHE:
+        case SiteDataType.FILESYSTEMS:
         case SiteDataType.INDEXEDDB:
         case SiteDataType.PLUGINDATA:
         case SiteDataType.SERVICEWORKERS:

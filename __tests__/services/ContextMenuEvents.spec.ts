@@ -138,10 +138,14 @@ describe('ContextMenuEvents', () => {
       expect(global.browser.contextMenus.create).not.toHaveBeenCalled();
     });
     it('should create its menus contextMenus setting is enabled and none was created beforehand', async () => {
+      // Pin the browser to Chrome so the menu-builder's browser gating is
+      // deterministic: File System shows (Chrome-only), Plugin Data is
+      // hidden (Firefox-only) - the shipping target for Chrome.
+      TestStore.addCache({ key: 'browserDetect', value: browserName.Chrome });
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, true);
       await ContextMenuEvents.menuInit();
       expect(TestContextMenuEvents.getIsInitialized()).toBe(true);
-      expect(global.browser.contextMenus.create).toHaveBeenCalledTimes(36);
+      expect(global.browser.contextMenus.create).toHaveBeenCalledTimes(35);
       // onClicked listener is now registered at the background module top level,
       // not inside menuInit — so menuInit must NOT call addListener.
       expect(
@@ -340,6 +344,20 @@ describe('ContextMenuEvents', () => {
       expect(spyCleanupService.clearSiteDataForThisDomain).toHaveBeenCalledWith(
         expect.any(Object),
         'PluginData',
+        expect.any(String),
+      );
+    });
+    it('Trigger Clear File System For This Domain', () => {
+      ContextMenuEvents.onContextMenuClicked(
+        {
+          ...defaultOnClickData,
+          menuItemId: `${ContextMenuEvents.MenuID.MANUAL_CLEAN_SITEDATA}FileSystems`,
+        },
+        sampleTab,
+      );
+      expect(spyCleanupService.clearSiteDataForThisDomain).toHaveBeenCalledWith(
+        expect.any(Object),
+        'FileSystems',
         expect.any(String),
       );
     });
