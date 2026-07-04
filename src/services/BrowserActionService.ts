@@ -18,7 +18,6 @@ import StoreUser from './StoreUser';
 // BrowserActionService has no `state` in scope and its functions can run during
 // early service-worker startup, so read DEBUG_MODE defensively (null-tolerant)
 // and stay silent — via cadLog's output gate — unless debug logging is enabled.
-// Normalizing the Error keeps cadLog's JSON.stringify from flattening it to `{}`.
 function bacWarn(msg: string, err: unknown): void {
   // Never let diagnostic logging throw out of the catch block it runs in.
   let debug = false;
@@ -26,13 +25,13 @@ function bacWarn(msg: string, err: unknown): void {
     const state = StoreUser.safeState;
     debug = state ? (getSetting(state, SettingID.DEBUG_MODE) as boolean) : false;
   } catch {
-    debug = false;
+    // store not ready or settings malformed → stay silent (debug already false)
   }
-  // Normalize Error-like objects (incl. DOMException, whose props live on the
-  // prototype) so cadLog's JSON.stringify doesn't flatten them to `{}`.
+  // Normalize Error-like objects — real Errors and DOMException both expose
+  // `message` on the prototype — so cadLog's JSON.stringify doesn't flatten
+  // them to `{}`.
   const isErrorLike =
-    err instanceof Error ||
-    (typeof err === 'object' && err !== null && 'message' in err);
+    typeof err === 'object' && err !== null && 'message' in err;
   const x = isErrorLike
     ? {
         name: (err as { name?: unknown }).name,
