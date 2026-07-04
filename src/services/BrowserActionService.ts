@@ -12,7 +12,22 @@
  * SOFTWARE.
  */
 
-import { getHostname, returnMatchedExpressionObject } from './Libs';
+import { cadLog, getHostname, getSetting, returnMatchedExpressionObject } from './Libs';
+import StoreUser from './StoreUser';
+
+// BrowserActionService has no `state` in scope and its functions can run during
+// early service-worker startup, so read DEBUG_MODE defensively (null-tolerant)
+// and stay silent — via cadLog's output gate — unless debug logging is enabled.
+// Normalizing the Error keeps cadLog's JSON.stringify from flattening it to `{}`.
+function bacWarn(msg: string, err: unknown): void {
+  const state = StoreUser.safeState;
+  const debug = state ? (getSetting(state, SettingID.DEBUG_MODE) as boolean) : false;
+  const x =
+    err instanceof Error
+      ? { name: err.name, message: err.message, stack: err.stack }
+      : err;
+  cadLog({ msg, type: 'warn', x }, debug);
+}
 
 // MV3 service workers can't reliably resolve relative icon paths during early
 // startup (Chromium bug #40058177). Convert paths to ImageData up-front via
@@ -37,8 +52,7 @@ async function loadIconData(path: string): Promise<ImageData | null> {
     iconCache.set(path, data);
     return data;
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn(`[CAD] loadIconData failed for ${path}:`, err);
+    bacWarn(`[CAD] loadIconData failed for ${path}`, err);
     return null;
   }
 }
@@ -55,8 +69,7 @@ export const showNumberOfCookiesInIcon = (
         text: `${cookieLength === 0 ? '' : cookieLength.toString()}`,
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[CAD] browser.action.setBadgeText failed:', err);
+      bacWarn('[CAD] browser.action.setBadgeText failed', err);
     }
   }
   if (browser.action.setBadgeTextColor) {
@@ -66,8 +79,7 @@ export const showNumberOfCookiesInIcon = (
         tabId: tab.id,
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[CAD] browser.action.setBadgeTextColor failed:', err);
+      bacWarn('[CAD] browser.action.setBadgeTextColor failed', err);
     }
   }
 };
@@ -95,8 +107,7 @@ export const showNumberOfCookiesInTitle = async (
       }),
     );
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('[CAD] browser.action.getTitle failed:', err);
+    bacWarn('[CAD] browser.action.getTitle failed', err);
   }
   const newData = {
     cookies: otherInfo.cookieLength || (curData && curData[2]) || 0,
@@ -109,8 +120,7 @@ export const showNumberOfCookiesInTitle = async (
       title: `${tabTitle} [${newData.list}] (${newData.cookies})`,
     });
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('[CAD] browser.action.setTitle failed:', err);
+    bacWarn('[CAD] browser.action.setTitle failed', err);
   }
 };
 
@@ -128,8 +138,7 @@ const setBadgeColor = (tab: browser.tabs.Tab, color = 'default') => {
         tabId: tab.id,
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[CAD] browser.action.setBadgeBackgroundColor failed:', err);
+      bacWarn('[CAD] browser.action.setBadgeBackgroundColor failed', err);
     }
   }
 };
@@ -149,8 +158,7 @@ const setIconColor = async (
       try {
         await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
+        bacWarn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}`, err);
       }
     }
   }
@@ -169,8 +177,7 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
   try {
     await browser.action.setIcon({ imageData: { 48: imageData } });
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn(`[CAD] browser.action.setIcon (global) failed for ${iconPath}:`, err);
+    bacWarn(`[CAD] browser.action.setIcon (global) failed for ${iconPath}`, err);
   }
 
   const tabAwait = await browser.tabs.query({ windowType: 'normal' });
@@ -179,8 +186,7 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
       try {
         await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}:`, err);
+        bacWarn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}`, err);
       }
     }
   }
