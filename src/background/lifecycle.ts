@@ -29,6 +29,8 @@ let _store: Store<State, ReduxAction> | null = null;
 export function ready(): Promise<void> {
   if (!_ready) {
     _ready = init().catch((err) => {
+      // Intentional always-on error: init failed, so the store/DEBUG_MODE may not
+      // exist yet to gate on, and this belongs in bug reports regardless.
       // eslint-disable-next-line no-console
       console.error('[CAD] background init failed (will retry on next ready()):', err);
       _ready = null; // Allow retry on next call.
@@ -164,6 +166,8 @@ function saveSubscriber(): void {
   _saveTimer = setTimeout(() => {
     _saveTimer = null;
     flushSave().catch((err) => {
+      // Intentional always-on error: a failed save is a genuine problem worth
+      // surfacing even when DEBUG_MODE is off.
       // eslint-disable-next-line no-console
       console.error('flushSave failed:', err);
     });
