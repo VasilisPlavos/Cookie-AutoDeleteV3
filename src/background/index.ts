@@ -242,8 +242,14 @@ browser.runtime.onMessage.addListener((msg: any, _sender: browser.runtime.Messag
         const arg = Object.keys(actionData).length ? payload : undefined;
         getStore().dispatch(actionFn(arg));
       } else {
-        // eslint-disable-next-line no-console
-        console.warn('[CAD] redux-webext DISPATCH received unknown action type:', type);
+        cadLog(
+          {
+            msg: '[CAD] redux-webext DISPATCH received unknown action type',
+            type: 'warn',
+            x: { type },
+          },
+          getSetting(getStore().getState(), SettingID.DEBUG_MODE) as boolean,
+        );
       }
       sendResponse(undefined);
     })();
@@ -320,6 +326,9 @@ ready().then(async () => {
     await ContextMenuEvents.menuInit();
   }
 }).catch((err) => {
+  // Intentional always-on error: a genuine init failure must surface even when
+  // DEBUG_MODE is off (it belongs in bug reports), and the store may not be ready
+  // here to gate on. Deliberately not routed through cadLog.
   // eslint-disable-next-line no-console
   console.error('[CAD] context menu init failed:', err);
 });
