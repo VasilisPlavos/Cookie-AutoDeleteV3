@@ -5,9 +5,11 @@
 import { Store } from 'redux';
 import StoreUser from '../../src/services/StoreUser';
 
-// NOTE: order matters — the "before init()" case must run first, because
-// StoreUser holds the store in module-level static state for the whole file.
 describe('StoreUser.safeState', () => {
+  beforeEach(() => {
+    StoreUser._resetForTests();
+  });
+
   it('returns null before init()', () => {
     expect.assertions(1);
     expect(StoreUser.safeState).toBeNull();

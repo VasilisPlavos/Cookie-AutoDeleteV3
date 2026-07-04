@@ -27,5 +27,10 @@ export default class StoreUser {
     return StoreUser._store ? StoreUser._store.getState() : null;
   }
 
+  /** Test-only: reset the module-level store so tests don't depend on order. */
+  public static _resetForTests(): void {
+    StoreUser._store = null;
+  }
+
   private static _store: Store<State, ReduxAction> | null = null;
 }
