@@ -22,5 +22,10 @@ export default class StoreUser {
     return StoreUser._store;
   }
 
+  /** Non-throwing state read for modules that may run before ready(). Null if store not initialized. */
+  public static get safeState(): State | null {
+    return StoreUser._store ? StoreUser._store.getState() : null;
+  }
+
   private static _store: Store<State, ReduxAction> | null = null;
 }
