@@ -16,7 +16,7 @@
     "build:firefox": "npm run compile && node ./tools/buildFilesDev.js --target=firefox",
     "compile": "webpack --config webpack.config.js --color",
     "dev": "webpack --config webpack.config.js --progress --color --watch",
-    "lint": "eslint -c .eslintrc.json --ext .ts src/",
+    "lint": "eslint -c .eslintrc.json --max-warnings 0 --ext .ts src/",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test-all": "npm run test && npm run lint"
