@@ -99,6 +99,7 @@ declare const enum SettingID {
   DEBUG_MODE = 'debugMode',
   ENABLE_GREYLIST = 'enableGreyListCleanup',
   ENABLE_NEW_POPUP = 'enableNewVersionPopup',
+  DISABLE_NEW_VERSION_POPUP = 'disableNewVersionPopup',
   KEEP_DEFAULT_ICON = 'keepDefaultIcon',
   NOTIFY_AUTO = 'showNotificationAfterCleanup',
   NOTIFY_MANUAL = 'manualNotifications',
