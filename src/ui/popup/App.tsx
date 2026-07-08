@@ -174,10 +174,9 @@ class App extends Component<PopupAppComponentProps, InitialState> {
         }}
       >
         <div
-          className="row pt-2"
+          className="row pt-2 cad-band"
           style={{
             alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.05)',
             justifyContent: 'center',
           }}
         >
@@ -188,11 +187,9 @@ class App extends Component<PopupAppComponentProps, InitialState> {
           </span>
         </div>
         <div
-          className="row justify-content-center p-1"
+          className="row justify-content-center p-1 cad-band-bordered"
           style={{
             alignItems: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.05)',
-            borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
           }}
         >
           <IconButton
