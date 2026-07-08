@@ -64,7 +64,6 @@ const settingOrder = [
   SettingID.NOTIFY_AUTO,
   SettingID.NOTIFY_MANUAL,
   SettingID.NOTIFY_DURATION,
-  SettingID.ENABLE_NEW_POPUP,
   SettingID.SIZE_POPUP,
   SettingID.SIZE_SETTING,
   SettingID.CONTEXT_MENUS,

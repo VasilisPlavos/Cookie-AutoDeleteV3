@@ -297,6 +297,10 @@
     "message": "Enable Popup when New Version is Released",
     "description": "Enable Popup when New Version is Released"
   },
+  "disableNewVersionPopup": {
+    "message": "Disable Popup when New Version is Released",
+    "description": "Disable Popup when New Version is Released"
+  },
   "errorText": {
     "message": "Error!",
     "description": "Error!"

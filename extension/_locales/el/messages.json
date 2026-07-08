@@ -79,6 +79,10 @@
     "message": "Εναλλαγή για απενεργοποίηση του αυτόματου καθαρισμού (χειροκίνητη λειτουργία)",
     "description": "Toggle to disable automatic cleanup (manual mode)"
   },
+  "disableNewVersionPopup": {
+    "message": "Απενεργοποίηση αναδυόμενου παραθύρου όταν κυκλοφορεί νέα έκδοση",
+    "description": "Disable Popup when New Version is Released"
+  },
   "documentationText": {
     "message": "Τεκμηρίωση",
     "description": "Documentation"
