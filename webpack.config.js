@@ -1,6 +1,5 @@
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const CopyPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
@@ -53,28 +52,6 @@ module.exports = {
     // new BundleAnalyzerPlugin({
     //   analyzerMode: 'static',
     // }),
-    new CopyPlugin({
-      patterns: [
-        {
-          force: true,
-          from: 'bootstrap/dist/css/bootstrap.min.css*',
-          to: '../../extension/global_files/[name][ext]',
-          context: `${__dirname}/node_modules`,
-        },
-        {
-          force: true,
-          from: 'bootstrap/dist/js/bootstrap.bundle.min.js*',
-          to: '../../extension/global_files/[name][ext]',
-          context: `${__dirname}/node_modules`,
-        },
-        {
-          force: true,
-          from: 'jquery/dist/jquery.slim.min*',
-          to: '../../extension/global_files/[name][ext]',
-          context: `${__dirname}/node_modules`,
-        },
-      ],
-    }),
   ],
   resolve: {
     extensions: ['.mjs', '.tsx', '.ts', '.js', '.json', '.png'],
