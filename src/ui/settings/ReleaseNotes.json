@@ -3,7 +3,7 @@
     {
       "version": "1.0.4",
       "notes": [
-        "Whitelisted sites now have a 'First-party cookies only' option — delete third-party partitioned (CHIPS) cookies stored under a site even when their own domain is whitelisted."
+        "Whitelisted sites now have a 'First-party cookies only' cookie option (Chromium browsers) — delete third-party partitioned (CHIPS) cookies stored under a site even when their own domain is whitelisted."
       ]
     },
     {
