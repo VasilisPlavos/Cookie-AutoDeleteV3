@@ -54,6 +54,7 @@ class InitialState {
   public cookieCount = 0;
   public tab: browser.tabs.Tab | undefined = undefined;
   public storeId = 'default';
+  public cleanOptionsOpen = false;
 }
 
 type PopupAppComponentProps = DispatchProps & StateProps;
@@ -165,12 +166,10 @@ class App extends Component<PopupAppComponentProps, InitialState> {
           overflow: 'auto',
         }}
         onClick={(e) => {
-          const _t = e.target as HTMLElement;
-          const _ccg = document.getElementById('cleanCollapse');
-          if (!_ccg || !_ccg.classList.contains('show')) return;
-          const _dt = _t.attributes.getNamedItem('data-target');
-          if (!_dt || _dt.value !== '#cleanCollapse') {
-            _ccg.classList.remove('show');
+          if (!this.state.cleanOptionsOpen) return;
+          const target = e.target as HTMLElement;
+          if (!target.closest('[data-clean-toggle]')) {
+            this.setState({ cleanOptionsOpen: false });
           }
         }}
       >
@@ -264,12 +263,15 @@ class App extends Component<PopupAppComponentProps, InitialState> {
 
             <button
               aria-controls="cleanCollapse"
-              aria-expanded="false"
+              aria-expanded={this.state.cleanOptionsOpen}
               className="btn btn-warning dropdown-toggle dropdown-toggle-split"
-              data-disabled="true"
-              data-target="#cleanCollapse"
-              data-toggle="collapse"
-              role="button"
+              data-clean-toggle="true"
+              onClick={() =>
+                this.setState((prev) => ({
+                  cleanOptionsOpen: !prev.cleanOptionsOpen,
+                }))
+              }
+              type="button"
               style={{
                 borderLeftColor: 'rgb(176, 132, 0)',
                 transform: 'translate3d(-3px, 0px, 0px)',
@@ -302,7 +304,12 @@ class App extends Component<PopupAppComponentProps, InitialState> {
             text={browser.i18n.getMessage('preferencesText')}
           />
         </div>
-        <CleanCollapseGroup hostname={hostname || ''} tab={tab} />
+        <CleanCollapseGroup
+          hostname={hostname || ''}
+          tab={tab}
+          open={this.state.cleanOptionsOpen}
+          onCloseCleanOptions={() => this.setState({ cleanOptionsOpen: false })}
+        />
 
         <div
           className="row no-gutters"
