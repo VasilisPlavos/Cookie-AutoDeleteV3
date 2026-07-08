@@ -67,10 +67,6 @@ export const initialState: State = {
       name: SettingID.ENABLE_GREYLIST,
       value: true,
     },
-    [SettingID.ENABLE_NEW_POPUP]: {
-      name: SettingID.ENABLE_NEW_POPUP,
-      value: false,
-    },
     [SettingID.DISABLE_NEW_VERSION_POPUP]: {
       name: SettingID.DISABLE_NEW_VERSION_POPUP,
       value: false,
