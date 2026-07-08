@@ -1639,6 +1639,19 @@ describe('CleanupService', () => {
       expect(result.reason).toBe(ReasonKeep.MatchedExpression);
     });
 
+    it('should report PartitionedThirdParty (not FirstPartyOnly) when the host is not whitelisted under a first-party-only partition', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'tracker.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(true), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(true);
+      expect(result.reason).toBe(ReasonClean.PartitionedThirdParty);
+    });
+
     it('should keep a cross-site partitioned cookie whose host is greylisted during normal cleanup', () => {
       const cookieProperty = prepareCookie({
         ...mockCookie,
