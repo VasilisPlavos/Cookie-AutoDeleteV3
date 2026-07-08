@@ -251,6 +251,7 @@ const restoreCookies = async (
 
 const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
   const { activityLog, cache, numberToShow, state, onRemoveActivity } = props;
+  const [expandedIndex, setExpandedIndex] = React.useState<number | null>(null);
   if (props.activityLog.length === 0) {
     return (
       <div className="alert alert-primary" role="alert">
@@ -303,11 +304,14 @@ const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
                 }}
               >
                 <button
-                  className="btn btn-link collapsed"
+                  className={`btn btn-link${
+                    expandedIndex === index ? '' : ' collapsed'
+                  }`}
                   type="button"
-                  data-toggle="collapse"
-                  data-target={`#collapse${index}`}
-                  aria-expanded="false"
+                  onClick={() =>
+                    setExpandedIndex((prev) => (prev === index ? null : index))
+                  }
+                  aria-expanded={expandedIndex === index}
                   aria-controls={`collapse${index}`}
                 >
                   {`${new Date(log.dateTime).toLocaleString([], {
@@ -324,9 +328,8 @@ const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
             </div>
             <div
               id={`collapse${index}`}
-              className="collapse"
+              className={`collapse${expandedIndex === index ? ' show' : ''}`}
               aria-labelledby={`heading${index}`}
-              data-parent="#accordion"
             >
               <div className="card-body">
                 {browsingDataEntries.map(([siteData, domains]) => {
