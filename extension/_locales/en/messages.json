@@ -257,6 +257,10 @@
     "message": "Toggle to disable automatic cleanup (manual mode)",
     "description": "Toggle to disable automatic cleanup (manual mode)"
   },
+  "disableNewVersionPopup": {
+    "message": "Disable Popup when New Version is Released",
+    "description": "Disable Popup when New Version is Released"
+  },
   "documentationText": {
     "message": "Documentation",
     "description": "Documentation"
@@ -296,10 +300,6 @@
   "enableNewVersionPopup": {
     "message": "Enable Popup when New Version is Released",
     "description": "Enable Popup when New Version is Released"
-  },
-  "disableNewVersionPopup": {
-    "message": "Disable Popup when New Version is Released",
-    "description": "Disable Popup when New Version is Released"
   },
   "errorText": {
     "message": "Error!",
