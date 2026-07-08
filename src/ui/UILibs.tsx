@@ -51,3 +51,30 @@ export const downloadObjectAsJSON = (
     downloadName: downloadNode.getAttribute('download'),
   };
 };
+
+// #58: the "Cookies to keep" dropdown in ExpressionOptions is a presentation
+// layer over two stored fields — cleanAllCookies (existing) and firstPartyOnly
+// (new). These pure helpers translate both directions.
+export type CookiePolicy = 'all' | 'firstPartyOnly' | 'selected';
+
+export const cookiePolicyFromExpression = (
+  expression: Expression,
+): CookiePolicy => {
+  if (expression.cleanAllCookies === false) return 'selected';
+  if (expression.firstPartyOnly) return 'firstPartyOnly';
+  return 'all';
+};
+
+export const expressionFieldsForCookiePolicy = (
+  policy: CookiePolicy,
+): { cleanAllCookies: boolean; firstPartyOnly: boolean } => {
+  switch (policy) {
+    case 'selected':
+      return { cleanAllCookies: false, firstPartyOnly: false };
+    case 'firstPartyOnly':
+      return { cleanAllCookies: true, firstPartyOnly: true };
+    case 'all':
+    default:
+      return { cleanAllCookies: true, firstPartyOnly: false };
+  }
+};
