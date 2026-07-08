@@ -15,7 +15,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import * as React from 'react';
 const styles = {
   hamburger: {
-    color: 'white',
+    color: 'var(--color-on-accent)',
   },
 };
 
