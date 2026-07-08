@@ -342,7 +342,12 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
                 }Text`,
               )}
             </option>
-            {isChrome(state.cache) && (
+            {/* Non-Chrome browsers can't newly opt into First-party-only, but if an
+                expression already has firstPartyOnly set (e.g. imported/synced from
+                Chrome), still render the matching option so the controlled <select>
+                isn't left in an inconsistent state and the user can turn it off. */}
+            {(isChrome(state.cache) ||
+              cookiePolicyFromExpression(expression) === 'firstPartyOnly') && (
               <option value={'firstPartyOnly'}>
                 {browser.i18n.getMessage(
                   `keepFirstPartyOnly${
