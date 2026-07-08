@@ -893,6 +893,20 @@
       }
     }
   },
+  "reasonCleanFirstPartyOnly": {
+    "message": "Clean because $partition$ keeps first-party cookies only ($cookieDomain$ is a cross-site partitioned cookie)",
+    "description": "Clean because the partition site is set to keep first-party cookies only. Found in Activity Log Detailed Entries.",
+    "placeholders": {
+      "cookieDomain": {
+        "content": "$1",
+        "example": "youtube.com"
+      },
+      "partition": {
+        "content": "$2",
+        "example": "x.com"
+      }
+    }
+  },
   "reasonCleanStartupNoList": {
     "message": "Clean because of startup cleanup and $hostname$ is not in the White or Grey lists",
     "description": "Clean because of startup cleanup and $hostname$ is not in the White or Grey lists",
