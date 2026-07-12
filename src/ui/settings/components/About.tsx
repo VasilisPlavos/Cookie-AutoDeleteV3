@@ -97,41 +97,28 @@ class About extends React.Component<AboutProps> {
         </a>
         <br />
         <br />{' '}
-        <a
-          href="https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <span>{`${browser.i18n.getMessage('versionText', [
-            'Google Chrome',
-          ])}`}</span>{' '}
+        <a href="https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd" target="_blank" rel="noreferrer">
+          <span>{`${browser.i18n.getMessage('versionText', ['Google Chrome',])}`}</span>{' '}
         </a>
         <br />
-        <a
-          href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <span>{`${browser.i18n.getMessage('versionText', [
-            'Microsoft Edge Chromium',
-          ])}`}</span>{' '}
+        <a href="https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd" target="_blank" rel="noreferrer">
+          <span>{`${browser.i18n.getMessage('versionText', ['Microsoft Edge and other Chromium-based browsers',])}`}</span>{' '}
         </a>{' '}
         <br />
-        <a
-          href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <span>{`${browser.i18n.getMessage('versionText', [
-            'Mozilla Firefox',
-          ])}`}</span>{' '}
+        <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases" target="_blank" rel="noreferrer">
+          <span>{`${browser.i18n.getMessage('firefoxBuildText')}`}</span>{' '}
         </a>{' '}
         <br />
         <br />
         <span>{`${browser.i18n.getMessage('contributorsText')}`}:</span>
         <ul>
           <li>
-            <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/graphs/contributors">
+            <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/graphs/contributors" target="_blank" rel="noreferrer"            >
+              {`${browser.i18n.getMessage('contributorsPageText')}`}
+            </a>
+          </li>
+          <li>
+            <a href="https://plavos.com/dev" target="_blank" rel="noreferrer">
               Vasilis Plavos
             </a>
           </li>
@@ -146,15 +133,12 @@ class About extends React.Component<AboutProps> {
           readOnly={true}
           style={{ resize: 'none' }}
         >
-          {`- OS: ${platformInfo.arch} ${
-            platformOS[platformInfo.os]
-          } (Please add OS version on paste)\n- Browser Info: ${bName} ${
-            isFirefox(cache)
+          {`- OS: ${platformInfo.arch} ${platformOS[platformInfo.os]
+            } (Please add OS version on paste)\n- Browser Info: ${bName} ${isFirefox(cache)
               ? `${cache.browserVersion} (${cache.browserInfo.buildID})`
               : `(Please add version number on paste)`
-          }\n- CookieAutoDelete Version: ${
-            browser.runtime.getManifest().version
-          }`}
+            }\n- CookieAutoDelete Version: ${browser.runtime.getManifest().version
+            }`}
         </textarea>
         <br />
         <IconButton

@@ -175,6 +175,10 @@
     "message": "Contribute",
     "description": "Contribute"
   },
+  "contributorsPageText": {
+    "message": "Contributors page",
+    "description": "Link text on the About page pointing to the GitHub contributors graph for the project."
+  },
   "contributorsText": {
     "message": "Contributors",
     "description": "Contributors"
@@ -336,6 +340,10 @@
   "filterText": {
     "message": "Filter",
     "description": "Filter"
+  },
+  "firefoxBuildText": {
+    "message": "Mozilla Firefox build",
+    "description": ""
   },
   "greyListWordText": {
     "message": "Greylist",
