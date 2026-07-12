@@ -1,7 +1,7 @@
 {
   "name": "cookie-autodelete-v3",
-  "version": "1.0.3",
-  "description": "Firefox and Chrome browser extension that manages Cookies and other site data",
+  "version": "1.0.8",
+  "description": "Chrome browser extension that auto-deletes unwanted cookies and site data",
   "keywords": [
     "cookie",
     "browser cookies",
@@ -11,8 +11,7 @@
   ],
   "scripts": {
     "build": "npm run compile && node ./tools/buildFilesDev.js",
-    "prebuild:chrome": "node ./tools/bumpVersion.js",
-    "build:chrome": "npm run compile && node ./tools/buildFilesDev.js --target=chrome",
+    "build:chrome": "node ./tools/buildChrome.js",
     "build:firefox": "npm run compile && node ./tools/buildFilesDev.js --target=firefox",
     "compile": "webpack --config webpack.config.js --color",
     "dev": "webpack --config webpack.config.js --progress --color --watch",

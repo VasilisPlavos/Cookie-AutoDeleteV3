@@ -21,6 +21,7 @@ import {
 } from '../services/Libs';
 import { ReduxConstants } from '../typings/ReduxConstants';
 import { flushSave, getStore, ready } from './lifecycle';
+import { openWhatsNewOnUpdate } from './whatsNew';
 
 // --- Tabs ---
 
@@ -144,9 +145,7 @@ browser.runtime.onInstalled.addListener(async (details) => {
       if (convertVersionToNumber(details.previousVersion) < 300) {
         store.dispatch({ type: ReduxConstants.RESET_COOKIE_DELETED_COUNTER });
       }
-      if (getSetting(store.getState(), SettingID.ENABLE_NEW_POPUP)) {
-        await browser.runtime.openOptionsPage();
-      }
+      await openWhatsNewOnUpdate(store.getState());
       break;
     default:
       break;
