@@ -301,10 +301,6 @@
     "message": "Enable Greylist Cleanup on Browser Restart",
     "description": "Enable Greylist Cleanup on Browser Restart"
   },
-  "enableNewVersionPopup": {
-    "message": "Enable Popup when New Version is Released",
-    "description": "Enable Popup when New Version is Released"
-  },
   "errorText": {
     "message": "Error!",
     "description": "Error!"
@@ -343,7 +339,7 @@
   },
   "firefoxBuildText": {
     "message": "Mozilla Firefox build",
-    "description": ""
+    "description": "Link text on the About page pointing to the Firefox build on GitHub Releases."
   },
   "greyListWordText": {
     "message": "Greylist",

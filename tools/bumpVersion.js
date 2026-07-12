@@ -48,7 +48,9 @@ function readVersion(fp) {
 function writeVersion(fp, version) {
   const txt = fs.readFileSync(fp, 'utf8');
   if (!VERSION_RE.test(txt)) {
-    console.warn(`WARN: no version field found in ${path.basename(fp)}, skipping.`);
+    console.warn(
+      `WARN: no version field found in ${path.basename(fp)}, skipping.`,
+    );
     return;
   }
   fs.writeFileSync(fp, txt.replace(VERSION_RE, `$1${version}$5`));
@@ -70,7 +72,9 @@ function bumpVersion(releaseType) {
 
   const current = readVersion(PACKAGE_JSON);
   if (!current) {
-    console.error('ERROR: could not find a "version": "X.Y.Z" field in package.json');
+    console.error(
+      'ERROR: could not find a "version": "X.Y.Z" field in package.json',
+    );
     process.exit(1);
   }
 
@@ -80,7 +84,9 @@ function bumpVersion(releaseType) {
   writeVersion(MANIFEST_JSON, next);
 
   if (next === current) {
-    console.log(`Version unchanged at ${next} (manifest.json synced to package.json).`);
+    console.log(
+      `Version unchanged at ${next} (manifest.json synced to package.json).`,
+    );
   } else {
     console.log(`Version bumped ${current} -> ${next} (${releaseType}).`);
   }

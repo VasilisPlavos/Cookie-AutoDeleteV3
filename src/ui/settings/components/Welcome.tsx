@@ -53,7 +53,6 @@ const getReviewLink = (bName: browserName = browserDetect() as browserName) => {
     case browserName.Chrome:
       return 'https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd/reviews';
     case browserName.EdgeChromium:
-      return 'https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases';
     case browserName.Firefox:
       return 'https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases';
     default:
@@ -152,8 +151,12 @@ const mapDispatchToProps = (dispatch: Dispatch<ReduxAction>) => ({
 });
 
 const mapStateToProps = (state: State) => {
-  const { cookieDeletedCounterTotal, cookieDeletedCounterSession, cache, settings } =
-    state;
+  const {
+    cookieDeletedCounterTotal,
+    cookieDeletedCounterSession,
+    cache,
+    settings,
+  } = state;
   return {
     bName: cache.browserDetect || (browserDetect() as browserName),
     cookieDeletedCounterSession,

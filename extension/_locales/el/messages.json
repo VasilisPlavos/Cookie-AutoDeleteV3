@@ -55,6 +55,10 @@
     "message": "Συνεισφορά",
     "description": "Contribute"
   },
+  "contributorsPageText": {
+    "message": "Σελίδα συντελεστών",
+    "description": "Link text on the About page pointing to the GitHub contributors graph for the project."
+  },
   "contributorsText": {
     "message": "Συντελεστής",
     "description": "Contributors"
@@ -111,10 +115,6 @@
     "message": "Ενεργοποίηση Greylist Cleanup στην επανεκκίνηση του προγράμματος περιήγησης",
     "description": "Enable Greylist Cleanup on Browser Restart"
   },
-  "enableNewVersionPopup": {
-    "message": "Ενεργοποιήστε το αναδυόμενο παράθυρο όταν κυκλοφορήσει η νέα έκδοση",
-    "description": "Enable Popup when New Version is Released"
-  },
   "errorText": {
     "message": "Σφάλμα! ",
     "description": "Error!"
@@ -150,6 +150,10 @@
   "filterText": {
     "message": "Φίλτρο",
     "description": "Filter"
+  },
+  "firefoxBuildText": {
+    "message": "Έκδοση Mozilla Firefox",
+    "description": "Link text on the About page pointing to the Firefox build on GitHub Releases."
   },
   "greyListWordText": {
     "message": "Greylist",

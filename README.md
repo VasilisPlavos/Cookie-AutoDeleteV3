@@ -44,12 +44,14 @@ For Firefox, or to sideload an unpacked build on any supported browser, use the 
 
 > **Officially supported: Google Chrome only.** Chrome is the only browser that is actively maintained and tested (via the Chrome Web Store). Other Chromium browsers (Edge, Brave, Vivaldi, Opera, …) can install the same extension from the Web Store and it will likely work, but they are **not supported**. A Firefox `.xpi` build is published on GitHub Releases for those who want it, but it is unsigned and unsupported.
 
-## release
+## Release
 
-  npm run build:chrome           # no bump:    1.0.0 → 1.0.0
-  npm run build:chrome patch     # patch bump: 1.0.0 → 1.0.1
-  npm run build:chrome minor     # minor bump: 1.0.0 → 1.1.0
-  npm run build:chrome major     # major bump: 1.0.0 → 2.0.0
+```sh
+npm run build:chrome           # no bump:    1.0.0 → 1.0.0
+npm run build:chrome patch     # patch bump: 1.0.0 → 1.0.1
+npm run build:chrome minor     # minor bump: 1.0.0 → 1.1.0
+npm run build:chrome major     # major bump: 1.0.0 → 2.0.0
+```
 
 ## Attribution
 
