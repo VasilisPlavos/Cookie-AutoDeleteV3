@@ -44,6 +44,13 @@ For Firefox, or to sideload an unpacked build on any supported browser, use the 
 
 > Officially supported browsers: Chrome, Firefox, Edge Chromium. Other Chromium/Gecko variants may work but are not tested.
 
+## release
+
+  npm run build:chrome           # no bump:    1.0.0 → 1.0.0
+  npm run build:chrome patch     # patch bump: 1.0.0 → 1.0.1
+  npm run build:chrome minor     # minor bump: 1.0.0 → 1.1.0
+  npm run build:chrome major     # major bump: 1.0.0 → 2.0.0
+
 ## Attribution
 
 This project is distributed under the MIT License (see [`LICENSE`](LICENSE)). It builds on prior MIT-licensed work whose original copyright notices are retained in the [`LICENSE`](LICENSE) file and in every source file's header, alongside this fork's copyright (© 2026 Vasilis Plavos).
