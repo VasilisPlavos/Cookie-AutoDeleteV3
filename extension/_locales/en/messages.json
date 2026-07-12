@@ -481,6 +481,26 @@
     "message": "Keep All Cookies until restart",
     "description": "Keep All Cookies until restart. Found in Expression Options. For Greylist entries."
   },
+  "cookiesToKeepText": {
+    "message": "Cookies to keep",
+    "description": "Label for the cookie-keeping policy dropdown. Found in Expression Options."
+  },
+  "keepFirstPartyOnlyText": {
+    "message": "First-party cookies only",
+    "description": "Keep only first-party cookies; delete cross-site partitioned (CHIPS) cookies. For Whitelist entries. Found in Expression Options."
+  },
+  "keepFirstPartyOnlyGreyText": {
+    "message": "First-party cookies only until restart",
+    "description": "Greylist variant of keepFirstPartyOnlyText. Found in Expression Options."
+  },
+  "keepSelectedCookiesText": {
+    "message": "Keep selected cookies…",
+    "description": "Keep only the individually selected cookie names. For Whitelist entries. Found in Expression Options."
+  },
+  "keepSelectedCookiesGreyText": {
+    "message": "Keep selected cookies until restart…",
+    "description": "Greylist variant of keepSelectedCookiesText. Found in Expression Options."
+  },
   "keepCacheText": {
     "message": "Keep Cache",
     "description": "Keep Cache. Found in Expression Options. For Whitelist entries."
@@ -898,6 +918,20 @@
       "partition": {
         "content": "$2",
         "example": "youtube.com"
+      }
+    }
+  },
+  "reasonCleanFirstPartyOnly": {
+    "message": "Clean because $partition$ keeps first-party cookies only ($cookieDomain$ is a cross-site partitioned cookie)",
+    "description": "Clean because the partition site is set to keep first-party cookies only. Found in Activity Log Detailed Entries.",
+    "placeholders": {
+      "cookieDomain": {
+        "content": "$1",
+        "example": "youtube.com"
+      },
+      "partition": {
+        "content": "$2",
+        "example": "x.com"
       }
     }
   },

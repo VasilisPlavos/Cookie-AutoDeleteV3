@@ -1578,6 +1578,80 @@ describe('CleanupService', () => {
       expect(result.cleanCookie).toBe(false);
     });
 
+    // #58: when the partition (top-level) site is set to keep first-party cookies
+    // only, a Case-5 cross-site partitioned cookie is deleted even though its own
+    // host is whitelisted.
+    const firstPartyOnlyState = (firstPartyOnly: boolean): State => ({
+      ...sampleState,
+      lists: {
+        ...sampleState.lists,
+        default: [
+          ...sampleState.lists.default,
+          {
+            expression: 'vimeo.com',
+            id: '99',
+            listType: ListType.WHITE,
+            storeId: 'default',
+            firstPartyOnly,
+          },
+        ],
+      },
+    });
+
+    it('should clean a Case-5 partitioned cookie when the partition site is first-party only', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(true), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(true);
+      expect(result.reason).toBe(ReasonClean.FirstPartyOnly);
+      // The expression attached reflects the cookie's own host (what actually gets removed).
+      expect(result.expression?.expression).toBe('youtube.com');
+    });
+
+    it('should keep a Case-5 partitioned cookie when the partition site is NOT first-party only', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(false), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(false);
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+    });
+
+    it('should keep a first-party cookie under a first-party-only partition site', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'vimeo.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(true), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(false);
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+    });
+
+    it('should report PartitionedThirdParty (not FirstPartyOnly) when the host is not whitelisted under a first-party-only partition', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'tracker.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(true), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(true);
+      expect(result.reason).toBe(ReasonClean.PartitionedThirdParty);
+    });
+
     it('should keep a cross-site partitioned cookie whose host is greylisted during normal cleanup', () => {
       const cookieProperty = prepareCookie({
         ...mockCookie,

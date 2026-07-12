@@ -60,6 +60,10 @@ type Expression = Readonly<{
   // Deprecated as of 3.5.0, but kept for backwards-compatibility for pre-3.4.0.
   cleanLocalStorage?: boolean;
   cleanSiteData?: SiteDataType[];
+  // #58 CHIPS: when set on a partition (top-level) site's expression, delete
+  // cross-site partitioned cookies stored under it even if the cookie's own host
+  // is whitelisted. undefined = false = keep cross-site (current behaviour).
+  firstPartyOnly?: boolean;
   listType: ListType;
   storeId: string;
   id?: string;

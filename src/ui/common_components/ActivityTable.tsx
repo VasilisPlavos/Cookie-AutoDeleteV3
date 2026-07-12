@@ -91,6 +91,7 @@ const returnReasonMessages = (cleanReasonObject: CleanReasonObject) => {
       return browser.i18n.getMessage(reason, [hostname]);
     }
 
+    case ReasonClean.FirstPartyOnly:
     case ReasonClean.PartitionedThirdParty: {
       // cookie.domain is the cookie's own host (the third party); the partition
       // top-level site is exposed separately via partitionHostname (hostname now

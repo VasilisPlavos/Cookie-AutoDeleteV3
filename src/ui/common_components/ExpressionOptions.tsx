@@ -25,6 +25,11 @@ import {
   returnOptionalCookieAPIAttributes,
 } from '../../services/Libs';
 import { ReduxAction } from '../../typings/ReduxConstants';
+import {
+  cookiePolicyFromExpression,
+  expressionFieldsForCookiePolicy,
+  CookiePolicy,
+} from '../UILibs';
 interface DispatchProps {
   onUpdateExpression: (payload: Expression) => void;
 }
@@ -209,14 +214,16 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
     });
   }
 
-  public toggleCleanAllCookies(checked: boolean) {
+  public setCookiePolicy(policy: CookiePolicy) {
     const { expression, onUpdateExpression } = this.props;
-    if (!coerceBoolean(expression.cleanAllCookies)) {
+    // Fetch the cookie name list when switching into "Keep selected…" so the
+    // droplist has data, mirroring the old toggleCleanAllCookies behaviour.
+    if (policy === 'selected') {
       this.getAllCookies();
     }
     onUpdateExpression({
       ...expression,
-      cleanAllCookies: checked,
+      ...expressionFieldsForCookiePolicy(policy),
     });
   }
 
@@ -286,7 +293,7 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
   public render() {
     const { cookies } = this.state;
     const { expression, state } = this.props;
-    const keyCleanAllCookies = `${expression.id}-cleanAllCookies`;
+    const keyCookiePolicy = `${expression.id}-cookiePolicy`;
     const ffVersion = Number.parseInt(state.cache.browserVersion);
 
     const dropList = coerceBoolean(expression.cleanAllCookies);
@@ -318,44 +325,45 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
             isChrome(state.cache)) &&
           this.createSiteDataCheckbox(SiteDataType.SERVICEWORKERS)}
         <div className={'checkbox'}>
-          <span
-            className={'addHover'}
-            onClick={() =>
-              this.toggleCleanAllCookies(
-                !(
-                  expression.cleanAllCookies === undefined ||
-                  expression.cleanAllCookies
-                ),
-              )
+          <label htmlFor={keyCookiePolicy} style={{ marginRight: '5px' }}>
+            {browser.i18n.getMessage('cookiesToKeepText')}
+          </label>
+          <select
+            id={keyCookiePolicy}
+            value={cookiePolicyFromExpression(expression)}
+            onChange={(e) =>
+              this.setCookiePolicy(e.target.value as CookiePolicy)
             }
           >
-            <FontAwesomeIcon
-              id={keyCleanAllCookies}
-              style={styles.checkbox}
-              size={'lg'}
-              icon={[
-                'far',
-                expression.cleanAllCookies === undefined ||
-                  expression.cleanAllCookies
-                  ? 'check-square'
-                  : 'square',
-              ]}
-              role="checkbox"
-              aria-checked={
-                (expression.cleanAllCookies === undefined ||
-                  expression.cleanAllCookies) as boolean
-              }
-            />
-            <label
-              htmlFor={keyCleanAllCookies}
-              aria-labelledby={keyCleanAllCookies}
-            >
+            <option value={'all'}>
               {browser.i18n.getMessage(
-                `keepAllCookies${expression.listType === ListType.GREY ? 'Grey' : ''
+                `keepAllCookies${
+                  expression.listType === ListType.GREY ? 'Grey' : ''
                 }Text`,
               )}
-            </label>
-          </span>
+            </option>
+            {/* Non-Chrome browsers can't newly opt into First-party-only, but if an
+                expression already has firstPartyOnly set (e.g. imported/synced from
+                Chrome), still render the matching option so the controlled <select>
+                isn't left in an inconsistent state and the user can turn it off. */}
+            {(isChrome(state.cache) ||
+              cookiePolicyFromExpression(expression) === 'firstPartyOnly') && (
+              <option value={'firstPartyOnly'}>
+                {browser.i18n.getMessage(
+                  `keepFirstPartyOnly${
+                    expression.listType === ListType.GREY ? 'Grey' : ''
+                  }Text`,
+                )}
+              </option>
+            )}
+            <option value={'selected'}>
+              {browser.i18n.getMessage(
+                `keepSelectedCookies${
+                  expression.listType === ListType.GREY ? 'Grey' : ''
+                }Text`,
+              )}
+            </option>
+          </select>
         </div>
         {dropList && (
           <div style={{ maxHeight: '150px', overflow: 'auto' }}>
