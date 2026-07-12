@@ -175,6 +175,10 @@
     "message": "Contribute",
     "description": "Contribute"
   },
+  "contributorsPageText": {
+    "message": "Contributors page",
+    "description": "Link text on the About page pointing to the GitHub contributors graph for the project."
+  },
   "contributorsText": {
     "message": "Contributors",
     "description": "Contributors"
@@ -257,6 +261,10 @@
     "message": "Toggle to disable automatic cleanup (manual mode)",
     "description": "Toggle to disable automatic cleanup (manual mode)"
   },
+  "disableNewVersionPopup": {
+    "message": "Disable Popup when New Version is Released",
+    "description": "Disable Popup when New Version is Released"
+  },
   "documentationText": {
     "message": "Documentation",
     "description": "Documentation"
@@ -293,10 +301,6 @@
     "message": "Enable Greylist Cleanup on Browser Restart",
     "description": "Enable Greylist Cleanup on Browser Restart"
   },
-  "enableNewVersionPopup": {
-    "message": "Enable Popup when New Version is Released",
-    "description": "Enable Popup when New Version is Released"
-  },
   "errorText": {
     "message": "Error!",
     "description": "Error!"
@@ -332,6 +336,10 @@
   "filterText": {
     "message": "Filter",
     "description": "Filter"
+  },
+  "firefoxBuildText": {
+    "message": "Mozilla Firefox build",
+    "description": "Link text on the About page pointing to the Firefox build on GitHub Releases."
   },
   "greyListWordText": {
     "message": "Greylist",

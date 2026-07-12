@@ -17,8 +17,12 @@ import { Dispatch } from 'redux';
 // tslint:disable-next-line: import-name
 import ReleaseNotes from '../ReleaseNotes.json';
 import IconButton from '../../common_components/IconButton';
+import CheckboxSetting from '../../common_components/CheckboxSetting';
 import { ReduxAction } from '../../../typings/ReduxConstants';
-import { resetCookieDeletedCounter } from '../../../redux/Actions';
+import {
+  resetCookieDeletedCounter,
+  updateSetting,
+} from '../../../redux/Actions';
 
 const displayReleaseNotes = (releases: ReleaseNote[]) => {
   return (
@@ -49,7 +53,6 @@ const getReviewLink = (bName: browserName = browserDetect() as browserName) => {
     case browserName.Chrome:
       return 'https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd/reviews';
     case browserName.EdgeChromium:
-      return 'https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases';
     case browserName.Firefox:
       return 'https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases';
     default:
@@ -62,10 +65,12 @@ interface OwnProps {
   cookieDeletedCounterSession: number;
   cookieDeletedCounterTotal: number;
   bName: browserName;
+  settings: MapToSettingObject;
 }
 
 interface DispatchProps {
   onResetCounterButtonClick: () => void;
+  onUpdateSetting: (payload: Setting) => void;
 }
 
 type WelcomeProps = OwnProps & DispatchProps;
@@ -75,7 +80,9 @@ const Welcome: React.FunctionComponent<WelcomeProps> = ({
   cookieDeletedCounterTotal,
   cookieDeletedCounterSession,
   bName,
+  settings,
   onResetCounterButtonClick,
+  onUpdateSetting,
 }) => {
   const { releases } = ReleaseNotes as { releases: ReleaseNote[] };
   return (
@@ -110,6 +117,15 @@ const Welcome: React.FunctionComponent<WelcomeProps> = ({
       <hr />
       <h2>{browser.i18n.getMessage('releaseNotesText')}</h2>
 
+      <div className="form-group">
+        <CheckboxSetting
+          text={browser.i18n.getMessage(SettingID.DISABLE_NEW_VERSION_POPUP)}
+          settingObject={settings[SettingID.DISABLE_NEW_VERSION_POPUP]}
+          inline={true}
+          updateSetting={(payload) => onUpdateSetting(payload)}
+        />
+      </div>
+
       <div className="row">{displayReleaseNotes(releases.slice(0, 5))}</div>
       <p>
         {browser.i18n.getMessage('oldReleasesText')}{' '}
@@ -129,15 +145,23 @@ const mapDispatchToProps = (dispatch: Dispatch<ReduxAction>) => ({
   onResetCounterButtonClick() {
     dispatch(resetCookieDeletedCounter());
   },
+  onUpdateSetting(payload: Setting) {
+    dispatch(updateSetting(payload));
+  },
 });
 
 const mapStateToProps = (state: State) => {
-  const { cookieDeletedCounterTotal, cookieDeletedCounterSession, cache } =
-    state;
+  const {
+    cookieDeletedCounterTotal,
+    cookieDeletedCounterSession,
+    cache,
+    settings,
+  } = state;
   return {
     bName: cache.browserDetect || (browserDetect() as browserName),
     cookieDeletedCounterSession,
     cookieDeletedCounterTotal,
+    settings,
   };
 };
 

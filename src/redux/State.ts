@@ -67,8 +67,8 @@ export const initialState: State = {
       name: SettingID.ENABLE_GREYLIST,
       value: true,
     },
-    [SettingID.ENABLE_NEW_POPUP]: {
-      name: SettingID.ENABLE_NEW_POPUP,
+    [SettingID.DISABLE_NEW_VERSION_POPUP]: {
+      name: SettingID.DISABLE_NEW_VERSION_POPUP,
       value: false,
     },
     [SettingID.OLD_GREY_CLEAN_LOCALSTORAGE]: {
