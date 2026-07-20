@@ -30,6 +30,7 @@ import {
   isFirstPartyIsolate,
   returnOptionalCookieAPIAttributes,
 } from './Libs';
+import { addDomainToCleanUI } from '../redux/Actions';
 import StoreUser from './StoreUser';
 
 export default class TabEvents extends StoreUser {
@@ -284,8 +285,7 @@ export default class TabEvents extends StoreUser {
       return c.name === CADCOOKIENAME;
     });
 
-    if (
-      internalCookies.length === 0 &&
+    const siteDataCleanupEnabled =
       (getSetting(StoreUser.store.getState(), SettingID.CLEANUP_CACHE) ||
         getSetting(StoreUser.store.getState(), SettingID.CLEANUP_INDEXEDDB) ||
         getSetting(
@@ -296,7 +296,29 @@ export default class TabEvents extends StoreUser {
         getSetting(
           StoreUser.store.getState(),
           SettingID.CLEANUP_SERVICEWORKERS,
-        )) &&
+        )) as boolean;
+
+    // Durable startup safety-net: record every first-party hostname visited
+    // while a site-data cleanup is enabled, so its non-cookie site data can be
+    // cleaned on the next startup even if it leaves no cookie (real or marker).
+    // Site data is global, so a flat hostname list (no storeId) is sufficient;
+    // private stores are excluded because their data does not persist.
+    const privateStores = ['firefox-private', 'private', '1'];
+    if (
+      siteDataCleanupEnabled &&
+      isAWebpage(tab.url) &&
+      !tab.url.startsWith('file:') &&
+      !privateStores.includes(tab.cookieStoreId || '')
+    ) {
+      const registryHostname = getHostname(tab.url);
+      if (registryHostname.trim() !== '') {
+        StoreUser.store.dispatch(addDomainToCleanUI(registryHostname));
+      }
+    }
+
+    if (
+      internalCookies.length === 0 &&
+      siteDataCleanupEnabled &&
       isAWebpage(tab.url) &&
       !tab.url.startsWith('file:')
     ) {
