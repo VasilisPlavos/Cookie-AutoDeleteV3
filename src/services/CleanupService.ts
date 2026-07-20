@@ -671,6 +671,49 @@ export const removeSiteData = async (
   }
 };
 
+/**
+ * Build synthetic CleanReasonObjects for the hostnames recorded in the
+ * site-data registry (state.domainsToClean). Each hostname is evaluated by the
+ * SAME isSafeToClean logic through a synthetic cookie, so whitelist/greylist
+ * and open-tab protection apply identically to registry domains. The returned
+ * objects must be passed ONLY to otherBrowsingDataCleanup — never to
+ * cleanCookies (there is no real cookie to remove).
+ *
+ * Site data is global, so the synthetic cookie uses the normalised 'default'
+ * store for list matching, and open-tab protection is widened to span every
+ * container (a hostname open in ANY store is kept).
+ */
+export const buildRegistrySiteDataObjects = (
+  state: State,
+  cleanupProperties: CleanupPropertiesInternal,
+): CleanReasonObject[] => {
+  const unionOpenDomains = new Set<string>();
+  Object.values(cleanupProperties.openTabDomains).forEach((domains) =>
+    domains.forEach((d) => unionOpenDomains.add(d)),
+  );
+  const registryProps: CleanupPropertiesInternal = {
+    ...cleanupProperties,
+    openTabDomains: { default: Array.from(unionOpenDomains) },
+  };
+  return (state.domainsToClean || [])
+    .filter((hostname) => hostname.trim() !== '')
+    .map((hostname) => {
+      const syntheticCookie: CookiePropertiesCleanup = {
+        domain: hostname,
+        hostname,
+        mainDomain: extractMainDomain(hostname),
+        name: 'CADSiteDataRegistry',
+        path: '/',
+        preparedCookieDomain: `https://${hostname}`,
+        secure: true,
+        session: false,
+        storeId: 'default',
+        value: '',
+      } as CookiePropertiesCleanup;
+      return isSafeToClean(state, syntheticCookie, registryProps);
+    });
+};
+
 /** This will use the browsingData's hostname/origin attribute to delete any extra browsing data */
 export const otherBrowsingDataCleanup = async (
   state: State,
@@ -1102,6 +1145,31 @@ export const cleanCookiesOperation = async (
         deletedSiteDataArrays[sd] = (deletedSiteDataArrays[sd] || []).concat(
           (storeResults[sd] as string[]).map((domain) => trimDot(domain)),
         );
+      }
+    }
+  }
+
+  // Startup safety-net: clean non-cookie site data for domains recorded in the
+  // registry (first-party sites visited during the previous session that may
+  // have left no cookie). Registry entries are global, so this runs once,
+  // outside the per-store loop. Only on startup (greyCleanup).
+  if (cleanupProperties.greyCleanup && (state.domainsToClean || []).length > 0) {
+    const registryObjects = buildRegistrySiteDataObjects(
+      state,
+      newCleanupProperties,
+    );
+    const registryResults = await otherBrowsingDataCleanup(
+      state,
+      registryObjects,
+    );
+    if (registryResults) {
+      for (const sd of SITEDATATYPES) {
+        if ((registryResults[sd] || []).length > 0) {
+          cachedResults.siteDataCleaned = true;
+          deletedSiteDataArrays[sd] = (deletedSiteDataArrays[sd] || []).concat(
+            (registryResults[sd] as string[]).map((domain) => trimDot(domain)),
+          );
+        }
       }
     }
   }
