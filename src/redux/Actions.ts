@@ -355,6 +355,14 @@ export const cookieCleanup: ActionCreator<ThunkAction<
 ) => async (dispatch, getState) => {
   const cleanupDoneObject = await cleanCookiesOperation(getState(), options);
   if (!cleanupDoneObject) return;
+
+  // Consume-and-clear: a startup (greyCleanup) run has now processed every
+  // recorded domain, so drop the registry. It repopulates as the user browses.
+  // Reached only after cleanCookiesOperation returned successfully.
+  if (options.greyCleanup) {
+    dispatch(clearDomainsToCleanUI());
+  }
+
   const { setOfDeletedDomainCookies, cachedResults } = cleanupDoneObject;
   const {
     browsingDataCleanup,

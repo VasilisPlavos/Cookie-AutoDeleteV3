@@ -11,12 +11,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import { when } from 'jest-when';
 import { Store } from 'redux';
 import * as Actions from '../../src/redux/Actions';
 import { initialState } from '../../src/redux/State';
 // tslint:disable-next-line: import-name
 import createStore from '../../src/redux/Store';
+import * as CleanupService from '../../src/services/CleanupService';
 import { ReduxAction } from '../../src/typings/ReduxConstants';
+
+const spyCleanupService: JestSpyObject = global.generateSpies(CleanupService);
 
 describe('validateSettings', () => {
   it('adds a missing setting even when the key count is unchanged (swap case)', () => {
@@ -44,5 +48,48 @@ describe('validateSettings', () => {
       name: SettingID.DISABLE_NEW_VERSION_POPUP,
       value: false,
     });
+  });
+});
+
+describe('cookieCleanup', () => {
+  beforeEach(() => {
+    when(spyCleanupService.cleanCookiesOperation)
+      .calledWith(expect.any(Object), expect.any(Object))
+      .mockResolvedValue({
+        setOfDeletedDomainCookies: [],
+        cachedResults: {
+          dateTime: 'now',
+          recentlyCleaned: 0,
+          storeIds: {},
+          browsingDataCleanup: {},
+          siteDataCleaned: false,
+        },
+      } as never);
+  });
+
+  it('clears domainsToClean after a successful startup (greyCleanup) cleanup', async () => {
+    const store: Store<State, ReduxAction> = createStore({
+      ...initialState,
+      domainsToClean: ['a.com', 'b.com'],
+    });
+
+    await store.dispatch<any>(
+      Actions.cookieCleanup({ greyCleanup: true, ignoreOpenTabs: false }),
+    );
+
+    expect(store.getState().domainsToClean).toEqual([]);
+  });
+
+  it('does NOT clear domainsToClean on a non-startup (greyCleanup=false) cleanup', async () => {
+    const store: Store<State, ReduxAction> = createStore({
+      ...initialState,
+      domainsToClean: ['a.com'],
+    });
+
+    await store.dispatch<any>(
+      Actions.cookieCleanup({ greyCleanup: false, ignoreOpenTabs: false }),
+    );
+
+    expect(store.getState().domainsToClean).toEqual(['a.com']);
   });
 });
