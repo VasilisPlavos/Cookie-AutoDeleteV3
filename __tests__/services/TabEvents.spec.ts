@@ -277,6 +277,78 @@ describe('TabEvents', () => {
         'firstPartyDomain',
       );
     });
+
+    it('should record the hostname in domainsToClean when a site-data cleanup is enabled', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'nocookie.net', storeId: 'firefox-default' })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, true);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        url: 'http://nocookie.net',
+      });
+      expect(store.getState().domainsToClean).toContain('nocookie.net');
+    });
+
+    it('should NOT record the hostname when all site-data cleanups are disabled', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'plain.net', storeId: 'firefox-default' })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_CACHE, false);
+      TestStore.changeSetting(SettingID.CLEANUP_INDEXEDDB, false);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, false);
+      TestStore.changeSetting(SettingID.CLEANUP_PLUGINDATA, false);
+      TestStore.changeSetting(SettingID.CLEANUP_SERVICEWORKERS, false);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        url: 'http://plain.net',
+      });
+      expect(store.getState().domainsToClean).not.toContain('plain.net');
+    });
+
+    it('should NOT record the hostname when ACTIVE_MODE is disabled, even if a site-data cleanup is enabled', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'inactive.net', storeId: 'firefox-default' })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, true);
+      TestStore.changeSetting(SettingID.ACTIVE_MODE, false);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        url: 'http://inactive.net',
+      });
+      expect(store.getState().domainsToClean).not.toContain('inactive.net');
+    });
+
+    it('should NOT record the hostname when ENABLE_GREYLIST is disabled, even if a site-data cleanup is enabled', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'nogreylist.net', storeId: 'firefox-default' })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, true);
+      TestStore.changeSetting(SettingID.ENABLE_GREYLIST, false);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        url: 'http://nogreylist.net',
+      });
+      expect(store.getState().domainsToClean).not.toContain('nogreylist.net');
+    });
+
+    it('should NOT record the hostname for a Chrome incognito tab (no cookieStoreId, incognito=true)', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'chromeincognito.net', storeId: undefined })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, true);
+      TestStore.changeSetting(SettingID.ACTIVE_MODE, true);
+      TestStore.changeSetting(SettingID.ENABLE_GREYLIST, true);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        cookieStoreId: undefined,
+        incognito: true,
+        url: 'http://chromeincognito.net',
+      });
+      expect(store.getState().domainsToClean).not.toContain(
+        'chromeincognito.net',
+      );
+    });
   });
 
   describe('onTabDiscarded', () => {
