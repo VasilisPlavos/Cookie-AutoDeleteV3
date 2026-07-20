@@ -28,6 +28,7 @@ import {
   getSetting,
   isAWebpage,
   isFirstPartyIsolate,
+  PRIVATE_STORE_IDS,
   returnOptionalCookieAPIAttributes,
 } from './Libs';
 import { addDomainToCleanUI } from '../redux/Actions';
@@ -285,38 +286,42 @@ export default class TabEvents extends StoreUser {
       return c.name === CADCOOKIENAME;
     });
 
-    const siteDataCleanupEnabled =
-      (getSetting(StoreUser.store.getState(), SettingID.CLEANUP_CACHE) ||
-        getSetting(StoreUser.store.getState(), SettingID.CLEANUP_INDEXEDDB) ||
-        getSetting(
-          StoreUser.store.getState(),
-          SettingID.CLEANUP_LOCALSTORAGE,
-        ) ||
-        getSetting(StoreUser.store.getState(), SettingID.CLEANUP_PLUGINDATA) ||
-        getSetting(
-          StoreUser.store.getState(),
-          SettingID.CLEANUP_SERVICEWORKERS,
-        )) as boolean;
+    const siteDataCleanupEnabled = (getSetting(
+      StoreUser.store.getState(),
+      SettingID.CLEANUP_CACHE,
+    ) ||
+      getSetting(StoreUser.store.getState(), SettingID.CLEANUP_INDEXEDDB) ||
+      getSetting(StoreUser.store.getState(), SettingID.CLEANUP_LOCALSTORAGE) ||
+      getSetting(StoreUser.store.getState(), SettingID.CLEANUP_PLUGINDATA) ||
+      getSetting(
+        StoreUser.store.getState(),
+        SettingID.CLEANUP_SERVICEWORKERS,
+      )) as boolean;
 
     // Durable startup safety-net: record every first-party hostname visited
     // while a site-data cleanup is enabled, so its non-cookie site data can be
     // cleaned on the next startup even if it leaves no cookie (real or marker).
     // Site data is global, so a flat hostname list (no storeId) is sufficient;
-    // private stores are excluded because their data does not persist.
+    // private stores are excluded because their data does not persist. Chrome
+    // has no tab.cookieStoreId, so tab.incognito is used to detect its private
+    // browsing tabs.
     // Only record when a future startup run will actually consume and clear
     // the registry (ACTIVE_MODE + ENABLE_GREYLIST), otherwise the list would
     // grow unbounded with no consumer.
-    const privateStores = ['firefox-private', 'private', '1'];
+    const effectiveStoreId = tab.cookieStoreId || (tab.incognito ? '1' : '0');
     if (
       siteDataCleanupEnabled &&
       getSetting(StoreUser.store.getState(), SettingID.ACTIVE_MODE) &&
       getSetting(StoreUser.store.getState(), SettingID.ENABLE_GREYLIST) &&
       isAWebpage(tab.url) &&
       !tab.url.startsWith('file:') &&
-      !privateStores.includes(tab.cookieStoreId || '')
+      !PRIVATE_STORE_IDS.includes(effectiveStoreId)
     ) {
       const registryHostname = getHostname(tab.url);
-      if (registryHostname.trim() !== '') {
+      if (
+        registryHostname.trim() !== '' &&
+        !StoreUser.store.getState().domainsToClean.includes(registryHostname)
+      ) {
         StoreUser.store.dispatch(addDomainToCleanUI(registryHostname));
       }
     }

@@ -331,6 +331,24 @@ describe('TabEvents', () => {
       });
       expect(store.getState().domainsToClean).not.toContain('nogreylist.net');
     });
+
+    it('should NOT record the hostname for a Chrome incognito tab (no cookieStoreId, incognito=true)', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'chromeincognito.net', storeId: undefined })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, true);
+      TestStore.changeSetting(SettingID.ACTIVE_MODE, true);
+      TestStore.changeSetting(SettingID.ENABLE_GREYLIST, true);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        cookieStoreId: undefined,
+        incognito: true,
+        url: 'http://chromeincognito.net',
+      });
+      expect(store.getState().domainsToClean).not.toContain(
+        'chromeincognito.net',
+      );
+    });
   });
 
   describe('onTabDiscarded', () => {

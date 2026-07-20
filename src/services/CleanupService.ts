@@ -25,6 +25,7 @@ import {
   isFirefoxNotAndroid,
   prepareCleanupDomains,
   prepareCookieDomain,
+  PRIVATE_STORE_IDS,
   returnMatchedExpressionObject,
   returnOptionalCookieAPIAttributes,
   showNotification,
@@ -956,7 +957,7 @@ export const cleanCookiesOperation = async (
     siteDataCleaned: false,
   };
   // Scrub private cookieStores
-  const storesIdsToScrub = ['firefox-private', 'private', '1'];
+  const storesIdsToScrub = PRIVATE_STORE_IDS;
   const openTabDomains = await returnContainersOfOpenTabDomains(
     cleanupProperties.ignoreOpenTabs,
     getSetting(state, SettingID.CLEAN_DISCARDED) as boolean,
