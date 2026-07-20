@@ -836,6 +836,100 @@ describe('CleanupService', () => {
     });
   });
 
+  describe('cleanCookiesOperation() with domainsToClean registry', () => {
+    const firefoxRegistryState = {
+      ...sampleState,
+      cache: {
+        browserDetect: browserName.Firefox,
+        browserVersion: '77',
+        platformOs: 'desktop',
+      },
+      settings: {
+        ...sampleState.settings,
+        [SettingID.CLEANUP_LOCALSTORAGE]: {
+          name: SettingID.CLEANUP_LOCALSTORAGE,
+          value: true,
+        },
+      },
+      domainsToClean: ['registry-only.com'],
+    };
+
+    beforeEach(() => {
+      when(global.browser.tabs.query)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue([] as never);
+      when(global.browser.extension.isAllowedIncognitoAccess)
+        .calledWith()
+        .mockResolvedValue(false as never);
+      when(global.browser.cookies.getAllCookieStores)
+        .calledWith()
+        .mockResolvedValue([{ id: 'firefox-default' }] as never);
+      when(global.browser.cookies.getAll)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue([] as never);
+      when(global.browser.browsingData.remove)
+        .calledWith(expect.any(Object), expect.any(Object))
+        .mockResolvedValue(undefined as never);
+    });
+
+    it('cleans site data for a registry hostname that left no cookie (startup)', async () => {
+      await cleanCookiesOperation(firefoxRegistryState, {
+        greyCleanup: true,
+        ignoreOpenTabs: false,
+      });
+      const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
+        .calls;
+      const cleanedHostnames = removeCalls.reduce(
+        (acc: string[], c: unknown[]) =>
+          acc.concat((c[0] as { hostnames?: string[] }).hostnames || []),
+        [] as string[],
+      );
+      expect(cleanedHostnames).toContain('registry-only.com');
+    });
+
+    it('does NOT consume the registry during a non-startup (greyCleanup=false) run', async () => {
+      await cleanCookiesOperation(firefoxRegistryState, {
+        greyCleanup: false,
+        ignoreOpenTabs: false,
+      });
+      const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
+        .calls;
+      const cleanedHostnames = removeCalls.reduce(
+        (acc: string[], c: unknown[]) =>
+          acc.concat((c[0] as { hostnames?: string[] }).hostnames || []),
+        [] as string[],
+      );
+      expect(cleanedHostnames).not.toContain('registry-only.com');
+    });
+
+    it('does NOT clean a registry hostname that is whitelisted', async () => {
+      const whitelistedState = {
+        ...firefoxRegistryState,
+        lists: {
+          default: [
+            {
+              expression: 'registry-only.com',
+              listType: ListType.WHITE,
+              storeId: 'default',
+            },
+          ],
+        },
+      };
+      await cleanCookiesOperation(whitelistedState, {
+        greyCleanup: true,
+        ignoreOpenTabs: false,
+      });
+      const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
+        .calls;
+      const cleanedHostnames = removeCalls.reduce(
+        (acc: string[], c: unknown[]) =>
+          acc.concat((c[0] as { hostnames?: string[] }).hostnames || []),
+        [] as string[],
+      );
+      expect(cleanedHostnames).not.toContain('registry-only.com');
+    });
+  });
+
   describe('cleanSiteData()', () => {
     afterEach(() => {
       spyCleanupService.removeSiteData.mockRestore();

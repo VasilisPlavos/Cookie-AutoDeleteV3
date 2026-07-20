@@ -145,4 +145,5 @@ export const initialState: State = {
   },
   activityLog: [],
   cache: {},
+  domainsToClean: [],
 };
