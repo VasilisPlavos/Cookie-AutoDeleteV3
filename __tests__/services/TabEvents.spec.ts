@@ -305,6 +305,32 @@ describe('TabEvents', () => {
       });
       expect(store.getState().domainsToClean).not.toContain('plain.net');
     });
+
+    it('should NOT record the hostname when ACTIVE_MODE is disabled, even if a site-data cleanup is enabled', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'inactive.net', storeId: 'firefox-default' })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, true);
+      TestStore.changeSetting(SettingID.ACTIVE_MODE, false);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        url: 'http://inactive.net',
+      });
+      expect(store.getState().domainsToClean).not.toContain('inactive.net');
+    });
+
+    it('should NOT record the hostname when ENABLE_GREYLIST is disabled, even if a site-data cleanup is enabled', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'nogreylist.net', storeId: 'firefox-default' })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, true);
+      TestStore.changeSetting(SettingID.ENABLE_GREYLIST, false);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        url: 'http://nogreylist.net',
+      });
+      expect(store.getState().domainsToClean).not.toContain('nogreylist.net');
+    });
   });
 
   describe('onTabDiscarded', () => {

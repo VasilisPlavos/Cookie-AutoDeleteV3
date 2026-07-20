@@ -303,9 +303,14 @@ export default class TabEvents extends StoreUser {
     // cleaned on the next startup even if it leaves no cookie (real or marker).
     // Site data is global, so a flat hostname list (no storeId) is sufficient;
     // private stores are excluded because their data does not persist.
+    // Only record when a future startup run will actually consume and clear
+    // the registry (ACTIVE_MODE + ENABLE_GREYLIST), otherwise the list would
+    // grow unbounded with no consumer.
     const privateStores = ['firefox-private', 'private', '1'];
     if (
       siteDataCleanupEnabled &&
+      getSetting(StoreUser.store.getState(), SettingID.ACTIVE_MODE) &&
+      getSetting(StoreUser.store.getState(), SettingID.ENABLE_GREYLIST) &&
       isAWebpage(tab.url) &&
       !tab.url.startsWith('file:') &&
       !privateStores.includes(tab.cookieStoreId || '')
