@@ -52,6 +52,7 @@ type State = Readonly<{
   settings: MapToSettingObject;
   activityLog: ReadonlyArray<ActivityLog>;
   cache: CacheMap;
+  domainsToClean: ReadonlyArray<string>;
 }>;
 
 type Expression = Readonly<{

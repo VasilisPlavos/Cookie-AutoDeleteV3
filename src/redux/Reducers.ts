@@ -239,11 +239,33 @@ export const cache = (
   }
 };
 
+export const domainsToClean = (
+  state: ReadonlyArray<string> = [],
+  action: ReduxAction,
+): ReadonlyArray<string> => {
+  switch (action.type) {
+    case ReduxConstants.ADD_DOMAIN_TO_CLEAN: {
+      if (action.payload.trim() === '' || state.includes(action.payload)) {
+        return state;
+      }
+      return [...state, action.payload];
+    }
+
+    case ReduxConstants.RESET_ALL:
+    case ReduxConstants.CLEAR_DOMAINS_TO_CLEAN:
+      return [];
+
+    default:
+      return state;
+  }
+};
+
 export default combineReducers<State, ReduxAction>({
   activityLog,
   cache,
   cookieDeletedCounterSession,
   cookieDeletedCounterTotal,
+  domainsToClean,
   lists,
   settings,
 });

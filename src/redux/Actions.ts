@@ -27,8 +27,10 @@ import {
 } from '../services/Libs';
 import {
   ADD_ACTIVITY_LOG,
+  ADD_DOMAIN_TO_CLEAN,
   ADD_EXPRESSION,
   CLEAR_ACTIVITY_LOG,
+  CLEAR_DOMAINS_TO_CLEAN,
   CLEAR_EXPRESSIONS,
   COOKIE_CLEANUP,
   INCREMENT_COOKIE_DELETED_COUNTER,
@@ -331,6 +333,15 @@ export const cookieCleanupUI = (
 ): COOKIE_CLEANUP => ({
   payload,
   type: ReduxConstants.COOKIE_CLEANUP,
+});
+
+export const addDomainToCleanUI = (payload: string): ADD_DOMAIN_TO_CLEAN => ({
+  payload,
+  type: ReduxConstants.ADD_DOMAIN_TO_CLEAN,
+});
+
+export const clearDomainsToCleanUI = (): CLEAR_DOMAINS_TO_CLEAN => ({
+  type: ReduxConstants.CLEAR_DOMAINS_TO_CLEAN,
 });
 
 // Cookie Cleanup operation that is to be called from the React UI
