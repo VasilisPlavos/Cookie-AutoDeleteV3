@@ -47,7 +47,8 @@ declare const enum ReasonClean {
   ExpiredCookieRestart = 'reasonCleanCookieExpiredRestart',
   CADSiteDataCookie = 'reasonCADSiteDataCookie',
   CADSiteDataCookieRestart = 'reasonCADSiteDataCookieRestart',
-  PartitionedThirdParty = 'reasonCleanPartitionedThirdParty'
+  PartitionedThirdParty = 'reasonCleanPartitionedThirdParty',
+  FirstPartyOnly = 'reasonCleanFirstPartyOnly',
 }
 
 declare const enum OpenTabStatus {

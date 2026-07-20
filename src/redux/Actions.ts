@@ -260,17 +260,16 @@ export const validateSettings: ActionCreator<ThunkAction<
     }
   });
 
-  // Missing a setting
-  if (settingKeys.length !== initialSettingKeys.length) {
-    initialSettingKeys.forEach((k) => {
-      if (settings[k] === undefined) {
-        dispatch({
-          payload: initialSettings[k],
-          type: ReduxConstants.UPDATE_SETTING,
-        });
-      }
-    });
-  }
+  // Add any setting missing from the stored state (e.g. a newly introduced
+  // setting, or one that replaced another so the key count did not change).
+  initialSettingKeys.forEach((k) => {
+    if (settings[k] === undefined) {
+      dispatch({
+        payload: initialSettings[k],
+        type: ReduxConstants.UPDATE_SETTING,
+      });
+    }
+  });
 
   function disableSettingIfTrue(s: Setting) {
     if (s && s.value) {

@@ -353,6 +353,28 @@ export const isSafeToClean = (
     };
   }
 
+  // #58: the partition (top-level) site is protected but is configured to keep
+  // first-party cookies only, so this cross-site (CHIPS) cookie is deleted even
+  // though its own host is whitelisted (Case 5 override). matchedExpression is the
+  // partition site's expression (looked up against decisionHostname above).
+  if (matchedExpression?.firstPartyOnly) {
+    cadLog(
+      {
+        msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie under a first-party-only partition site.  Safe to Clean.',
+        x: { partialCookieInfo, hostExpression: hostDecision.expression },
+      },
+      debug,
+    );
+    return {
+      cached: false,
+      cleanCookie: true,
+      cookie: cookieProperties,
+      expression: hostDecision.expression,
+      openTabStatus,
+      reason: ReasonClean.FirstPartyOnly,
+    };
+  }
+
   // Both the partition site and the host are protected → keep.
   cadLog(
     {

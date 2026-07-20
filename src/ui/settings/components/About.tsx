@@ -64,7 +64,7 @@ const settingOrder = [
   SettingID.NOTIFY_AUTO,
   SettingID.NOTIFY_MANUAL,
   SettingID.NOTIFY_DURATION,
-  SettingID.ENABLE_NEW_POPUP,
+  SettingID.DISABLE_NEW_VERSION_POPUP,
   SettingID.SIZE_POPUP,
   SettingID.SIZE_SETTING,
   SettingID.CONTEXT_MENUS,
@@ -109,12 +109,12 @@ class About extends React.Component<AboutProps> {
         </a>
         <br />
         <a
-          href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/releases"
+          href="https://chromewebstore.google.com/detail/cookie-autodelete-v3/jofioghmpdcgiiobkhmdojhjbjiejfbd"
           target="_blank"
           rel="noreferrer"
         >
           <span>{`${browser.i18n.getMessage('versionText', [
-            'Microsoft Edge Chromium',
+            'Microsoft Edge and other Chromium-based browsers',
           ])}`}</span>{' '}
         </a>{' '}
         <br />
@@ -123,16 +123,23 @@ class About extends React.Component<AboutProps> {
           target="_blank"
           rel="noreferrer"
         >
-          <span>{`${browser.i18n.getMessage('versionText', [
-            'Mozilla Firefox',
-          ])}`}</span>{' '}
+          <span>{`${browser.i18n.getMessage('firefoxBuildText')}`}</span>{' '}
         </a>{' '}
         <br />
         <br />
         <span>{`${browser.i18n.getMessage('contributorsText')}`}:</span>
         <ul>
           <li>
-            <a href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/graphs/contributors">
+            <a
+              href="https://github.com/vasilisplavos/Cookie-AutoDeleteV3/graphs/contributors"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {`${browser.i18n.getMessage('contributorsPageText')}`}
+            </a>
+          </li>
+          <li>
+            <a href="https://plavos.com/dev" target="_blank" rel="noreferrer">
               Vasilis Plavos
             </a>
           </li>
