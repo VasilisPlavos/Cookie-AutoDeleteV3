@@ -27,6 +27,10 @@ export const initialState: State = {
       name: SettingID.CLEANUP_CACHE,
       value: false,
     },
+    [SettingID.CLEANUP_FILESYSTEMS]: {
+      name: SettingID.CLEANUP_FILESYSTEMS,
+      value: false,
+    },
     [SettingID.CLEAN_OPEN_TABS_STARTUP]: {
       name: SettingID.CLEAN_OPEN_TABS_STARTUP,
       value: false,

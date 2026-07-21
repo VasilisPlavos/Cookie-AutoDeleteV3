@@ -570,6 +570,7 @@ export const clearSiteDataForThisDomain = async (
   if (siteData === 'All') {
     const siteDataAll: string[] = [];
     for (const sd of SITEDATATYPES) {
+      if (sd === SiteDataType.FILESYSTEMS && !isChrome(state.cache)) continue;
       await removeSiteData(
         state,
         sd,
@@ -779,6 +780,15 @@ export const otherBrowsingDataCleanup = async (
     browsingDataResult[SiteDataType.SERVICEWORKERS] = await cleanSiteData(
       state,
       SiteDataType.SERVICEWORKERS,
+      isSafeToCleanObjects,
+      state.cache.browserDetect,
+      debug,
+    );
+  }
+  if (getSetting(state, SettingID.CLEANUP_FILESYSTEMS) && chrome) {
+    browsingDataResult[SiteDataType.FILESYSTEMS] = await cleanSiteData(
+      state,
+      SiteDataType.FILESYSTEMS,
       isSafeToCleanObjects,
       state.cache.browserDetect,
       debug,

@@ -73,6 +73,7 @@ type Expression = Readonly<{
 
 declare const enum SiteDataType {
   CACHE = 'Cache',
+  FILESYSTEMS = 'FileSystems',
   INDEXEDDB = 'IndexedDB',
   LOCALSTORAGE = 'LocalStorage',
   PLUGINDATA = 'PluginData',
@@ -93,6 +94,7 @@ declare const enum SettingID {
   CLEAN_EXPIRED = 'cleanExpiredCookies',
   CLEAN_OPEN_TABS_STARTUP = 'cleanCookiesFromOpenTabsOnStartup',
   CLEANUP_CACHE = 'cacheCleanup',
+  CLEANUP_FILESYSTEMS = 'fileSystemsCleanup',
   CLEANUP_INDEXEDDB = 'indexedDBCleanup',
   CLEANUP_LOCALSTORAGE = 'localStorageCleanup',
   CLEANUP_LOCALSTORAGE_OLD = 'localstorageCleanup',

@@ -290,6 +290,23 @@ describe('TabEvents', () => {
       expect(store.getState().domainsToClean).toContain('nocookie.net');
     });
 
+    it('should record the hostname in domainsToClean when only File System cleanup is enabled', async () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: 'fsonly.net', storeId: 'firefox-default' })
+        .mockResolvedValue([] as never);
+      TestStore.changeSetting(SettingID.CLEANUP_CACHE, false);
+      TestStore.changeSetting(SettingID.CLEANUP_INDEXEDDB, false);
+      TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, false);
+      TestStore.changeSetting(SettingID.CLEANUP_PLUGINDATA, false);
+      TestStore.changeSetting(SettingID.CLEANUP_SERVICEWORKERS, false);
+      TestStore.changeSetting(SettingID.CLEANUP_FILESYSTEMS, true);
+      await TabEvents.getAllCookieActions({
+        ...sampleTab,
+        url: 'http://fsonly.net',
+      });
+      expect(store.getState().domainsToClean).toContain('fsonly.net');
+    });
+
     it('should NOT record the hostname when all site-data cleanups are disabled', async () => {
       when(global.browser.cookies.getAll)
         .calledWith({ domain: 'plain.net', storeId: 'firefox-default' })
@@ -298,6 +315,7 @@ describe('TabEvents', () => {
       TestStore.changeSetting(SettingID.CLEANUP_INDEXEDDB, false);
       TestStore.changeSetting(SettingID.CLEANUP_LOCALSTORAGE, false);
       TestStore.changeSetting(SettingID.CLEANUP_PLUGINDATA, false);
+      TestStore.changeSetting(SettingID.CLEANUP_FILESYSTEMS, false);
       TestStore.changeSetting(SettingID.CLEANUP_SERVICEWORKERS, false);
       await TabEvents.getAllCookieActions({
         ...sampleTab,

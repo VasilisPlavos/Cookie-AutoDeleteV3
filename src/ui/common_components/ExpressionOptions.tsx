@@ -305,6 +305,9 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
             isChrome(state.cache)) &&
           this.createSiteDataCheckbox(SiteDataType.CACHE)}
         {!expression.expression.startsWith('file:') &&
+          isChrome(state.cache) &&
+          this.createSiteDataCheckbox(SiteDataType.FILESYSTEMS)}
+        {!expression.expression.startsWith('file:') &&
           ((isFirefoxNotAndroid(state.cache) &&
             ffVersion >= 77) ||
             isChrome(state.cache)) &&
@@ -315,9 +318,8 @@ class ExpressionOptions extends React.Component<ExpressionOptionsProps> {
             isChrome(state.cache)) &&
           this.createSiteDataCheckbox(SiteDataType.LOCALSTORAGE)}
         {!expression.expression.startsWith('file:') &&
-          ((isFirefoxNotAndroid(state.cache) &&
-            ffVersion >= 78) ||
-            isChrome(state.cache)) &&
+          isFirefoxNotAndroid(state.cache) &&
+          ffVersion >= 78 &&
           this.createSiteDataCheckbox(SiteDataType.PLUGINDATA)}
         {!expression.expression.startsWith('file:') &&
           ((isFirefoxNotAndroid(state.cache) &&

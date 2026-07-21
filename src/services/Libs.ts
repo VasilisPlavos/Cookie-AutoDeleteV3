@@ -20,6 +20,7 @@ export const CADCOOKIENAME = 'CookieAutoDeleteBrowsingDataCleanup';
 export const PRIVATE_STORE_IDS = ['firefox-private', 'private', '1'];
 export const SITEDATATYPES = [
   SiteDataType.CACHE,
+  SiteDataType.FILESYSTEMS,
   SiteDataType.INDEXEDDB,
   SiteDataType.LOCALSTORAGE,
   SiteDataType.PLUGINDATA,

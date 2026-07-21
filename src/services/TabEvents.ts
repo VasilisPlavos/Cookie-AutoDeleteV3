@@ -293,6 +293,7 @@ export default class TabEvents extends StoreUser {
       getSetting(StoreUser.store.getState(), SettingID.CLEANUP_INDEXEDDB) ||
       getSetting(StoreUser.store.getState(), SettingID.CLEANUP_LOCALSTORAGE) ||
       getSetting(StoreUser.store.getState(), SettingID.CLEANUP_PLUGINDATA) ||
+      getSetting(StoreUser.store.getState(), SettingID.CLEANUP_FILESYSTEMS) ||
       getSetting(
         StoreUser.store.getState(),
         SettingID.CLEANUP_SERVICEWORKERS,

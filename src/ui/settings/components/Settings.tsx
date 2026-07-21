@@ -429,6 +429,19 @@ class Settings extends React.Component<SettingProps> {
                 />
               </div>
             )}
+            {isChrome(cache) && (
+              <div className="form-group">
+                <CheckboxSetting
+                  text={browser.i18n.getMessage('fileSystemsCleanupText')}
+                  settingObject={settings[SettingID.CLEANUP_FILESYSTEMS]}
+                  inline={true}
+                  updateSetting={(payload) => onUpdateSetting(payload)}
+                />
+                <SettingsTooltip
+                  hrefURL={'#other-browsing-data-cleanup-options'}
+                />
+              </div>
+            )}
             {((isFirefoxNotAndroid(cache) && ffVersion >= 77) ||
               isChrome(cache)) && (
               <div className="form-group">
@@ -457,8 +470,7 @@ class Settings extends React.Component<SettingProps> {
                 />
               </div>
             )}
-            {((isFirefoxNotAndroid(cache) && ffVersion >= 78) ||
-              isChrome(cache)) && (
+            {isFirefoxNotAndroid(cache) && ffVersion >= 78 && (
               <div className="form-group">
                 <CheckboxSetting
                   text={browser.i18n.getMessage('pluginDataCleanupText')}
