@@ -31,7 +31,6 @@ import {
   showNotification,
   siteDataToBrowser,
   SITEDATATYPES,
-  sleep,
   throwErrorNotification,
   trimDot,
   undefinedIsTrue,
@@ -500,57 +499,6 @@ export const clearCookiesForThisDomain = async (
   );
 
   return cookies.length > 0;
-};
-
-export const clearLocalStorageForThisDomain = async (
-  state: State,
-  tab: browser.tabs.Tab,
-): Promise<boolean> => {
-  // Using this method to ensure cross browser compatibility
-  try {
-    let local = 0;
-    let session = 0;
-    const result = await browser.tabs.executeScript({
-      code: `var cad_r = {local: window.localStorage.length, session: window.sessionStorage.length};window.localStorage.clear();window.sessionStorage.clear();cad_r;`,
-    });
-    result.forEach((frame: { [key: string]: any }) => {
-      local += frame.local;
-      session += frame.session;
-    });
-    showNotification(
-      {
-        duration: getSetting(state, SettingID.NOTIFY_DURATION) as number,
-        msg: `${browser.i18n.getMessage('manualCleanSuccess', [
-          browser.i18n.getMessage('localStorageText'),
-          getHostname(tab.url),
-        ])}\n${browser.i18n.getMessage('removeStorageCount', [
-          local.toString(),
-          browser.i18n.getMessage('localStorageText'),
-        ])}\n${browser.i18n.getMessage('removeStorageCount', [
-          session.toString(),
-          browser.i18n.getMessage('sessionStorageText'),
-        ])}`,
-      },
-      getSetting(state, SettingID.NOTIFY_MANUAL) as boolean,
-    );
-    return true;
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      throwErrorNotification(
-        e,
-        getSetting(state, SettingID.NOTIFY_DURATION) as number,
-      );
-    }
-    await sleep(750);
-    showNotification({
-      duration: getSetting(state, SettingID.NOTIFY_DURATION) as number,
-      msg: `${browser.i18n.getMessage('manualCleanNothing', [
-        browser.i18n.getMessage('localStorageText'),
-        getHostname(tab.url),
-      ])}`,
-    });
-    return false;
-  }
 };
 
 export const clearSiteDataForThisDomain = async (

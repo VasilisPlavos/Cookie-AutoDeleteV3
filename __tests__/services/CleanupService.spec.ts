@@ -19,7 +19,6 @@ import {
   cleanCookiesOperation,
   cleanSiteData,
   clearCookiesForThisDomain,
-  clearLocalStorageForThisDomain,
   clearSiteDataForThisDomain,
   filterSiteData,
   isSafeToClean,
@@ -1125,41 +1124,6 @@ describe('CleanupService', () => {
         storeId: 'firefox-default',
         partitionKey: {},
       });
-    });
-  });
-
-  describe('clearLocalStorageForThisDomain()', () => {
-    it('should clear localstorage from active tab (via tabs.executeScript)', async () => {
-      when(global.browser.tabs.executeScript)
-        .calledWith(expect.any(Object))
-        .mockResolvedValue([{ local: 2, session: 0 }] as never);
-      expect(
-        await clearLocalStorageForThisDomain(initialState, sampleTab),
-      ).toBe(true);
-      expect(global.browser.tabs.executeScript).toHaveBeenCalledTimes(1);
-      expect(global.browser.notifications.create).toHaveBeenCalledTimes(1);
-    });
-    it('should show error notification if browser.tabs.executeScript threw an error', async () => {
-      when(global.browser.tabs.executeScript)
-        .calledWith(expect.any(Object))
-        .mockRejectedValue(new Error('test') as never);
-      expect(
-        await clearLocalStorageForThisDomain(initialState, sampleTab),
-      ).toBe(false);
-      expect(global.browser.tabs.executeScript).toHaveBeenCalledTimes(1);
-      expect(spyLib.throwErrorNotification).toHaveBeenCalledTimes(1);
-      expect(spyLib.showNotification).toHaveBeenCalledTimes(1);
-    });
-    it('should only show the no cleanup done notification if browser.tabs.executeScript threw a non-error type', async () => {
-      when(global.browser.tabs.executeScript)
-        .calledWith(expect.any(Object))
-        .mockRejectedValue('error' as never);
-      expect(
-        await clearLocalStorageForThisDomain(initialState, sampleTab),
-      ).toBe(false);
-      expect(global.browser.tabs.executeScript).toHaveBeenCalledTimes(1);
-      expect(spyLib.throwErrorNotification).not.toHaveBeenCalled();
-      expect(spyLib.showNotification).toHaveBeenCalledTimes(1);
     });
   });
 
