@@ -213,9 +213,6 @@ describe('ContextMenuEvents', () => {
       when(spyCleanupService.clearCookiesForThisDomain)
         .calledWith(expect.any(Object), expect.any(Object))
         .mockResolvedValue(true as never);
-      when(spyCleanupService.clearLocalStorageForThisDomain)
-        .calledWith(expect.any(Object), expect.any(Object))
-        .mockResolvedValue(true as never);
     });
     it('should show warning through cadLog if menuId given is unknown', () => {
       ContextMenuEvents.onContextMenuClicked(defaultOnClickData, sampleTab);
@@ -329,9 +326,11 @@ describe('ContextMenuEvents', () => {
         },
         sampleTab,
       );
-      expect(
-        spyCleanupService.clearLocalStorageForThisDomain,
-      ).toHaveBeenCalledTimes(1);
+      expect(spyCleanupService.clearSiteDataForThisDomain).toHaveBeenCalledWith(
+        expect.any(Object),
+        'LocalStorage',
+        expect.any(String),
+      );
     });
     it('Trigger Clear Plugin Data For This Domain', () => {
       ContextMenuEvents.onContextMenuClicked(

@@ -19,7 +19,6 @@ import {
 } from '../redux/Actions';
 import {
   clearCookiesForThisDomain,
-  clearLocalStorageForThisDomain,
   clearSiteDataForThisDomain,
 } from './CleanupService';
 import {
@@ -432,6 +431,7 @@ export default class ContextMenuEvents extends StoreUser {
         case SiteDataType.CACHE:
         case SiteDataType.FILESYSTEMS:
         case SiteDataType.INDEXEDDB:
+        case SiteDataType.LOCALSTORAGE:
         case SiteDataType.PLUGINDATA:
         case SiteDataType.SERVICEWORKERS:
           await clearSiteDataForThisDomain(
@@ -439,9 +439,6 @@ export default class ContextMenuEvents extends StoreUser {
             siteData,
             hostname,
           );
-          break;
-        case SiteDataType.LOCALSTORAGE:
-          await clearLocalStorageForThisDomain(StoreUser.store.getState(), tab);
           break;
         default:
           cadLog(
