@@ -1,13 +1,6 @@
 {
   "releases": [
     {
-      "version": "1.2.1",
-      "notes": [
-        "Manual 'Clean LocalStorage' for a site now works again on Chromium browsers — it previously relied on a Manifest V2 API that no longer exists in MV3, so the button silently did nothing.",
-        "Removed the non-functional sessionStorage cleanup — sessionStorage is per-tab and is already cleared by the browser when the tab closes."
-      ]
-    },
-    {
       "version": "1.2.0",
       "notes": [
         "New 'File System' site-data cleanup (Chromium browsers) — clears File System API data that sites like mega.nz leave behind in your profile. Plugin Data cleanup is now hidden on Chromium, since it's deprecated there and no longer has any effect.",
