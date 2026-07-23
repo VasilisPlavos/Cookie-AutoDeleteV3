@@ -16,10 +16,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 import { cookieCleanupUI } from '../../../redux/Actions';
-import {
-  clearCookiesForThisDomain,
-  clearLocalStorageForThisDomain,
-} from '../../../services/CleanupService';
+import { clearCookiesForThisDomain } from '../../../services/CleanupService';
 import { ReduxAction } from '../../../typings/ReduxConstants';
 import { isChrome, isFirefoxNotAndroid } from '../../../services/Libs';
 import CleanDataButton from './CleanDataButton';
@@ -96,9 +93,6 @@ const CleanCollapseGroup: React.FunctionComponent<CleanCollapseComponentProps> =
             hostname={hostname}
           />
           <CleanDataButton
-            onClick={async () => {
-              return await clearLocalStorageForThisDomain(state, tab);
-            }}
             siteData={SiteDataType.LOCALSTORAGE}
             hostname={hostname}
           />
