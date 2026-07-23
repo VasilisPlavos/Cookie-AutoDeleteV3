@@ -30,6 +30,7 @@ export const enum ReduxConstants {
   REMOVE_ACTIVITY_LOG = 'REMOVE_ACTIVITY_LOG',
   ADD_DOMAIN_TO_CLEAN = 'ADD_DOMAIN_TO_CLEAN',
   CLEAR_DOMAINS_TO_CLEAN = 'CLEAR_DOMAINS_TO_CLEAN',
+  REMOVE_DOMAINS_TO_CLEAN = 'REMOVE_DOMAINS_TO_CLEAN',
   RESET_ALL = 'RESET_ALL',
 }
 
@@ -51,6 +52,7 @@ export type ReduxAction =
   | REMOVE_ACTIVITY_LOG
   | ADD_DOMAIN_TO_CLEAN
   | CLEAR_DOMAINS_TO_CLEAN
+  | REMOVE_DOMAINS_TO_CLEAN
   | RESET_ALL;
 
 export type ADD_EXPRESSION = Readonly<{
@@ -118,4 +120,8 @@ export type ADD_DOMAIN_TO_CLEAN = Readonly<{
 }>;
 export type CLEAR_DOMAINS_TO_CLEAN = Readonly<{
   type: ReduxConstants.CLEAR_DOMAINS_TO_CLEAN;
+}>;
+export type REMOVE_DOMAINS_TO_CLEAN = Readonly<{
+  type: ReduxConstants.REMOVE_DOMAINS_TO_CLEAN;
+  payload: ReadonlyArray<string>;
 }>;

@@ -80,16 +80,53 @@ describe('cookieCleanup', () => {
     expect(store.getState().domainsToClean).toEqual([]);
   });
 
-  it('does NOT clear domainsToClean on a non-startup (greyCleanup=false) cleanup', async () => {
+  it('keeps registry domains that were not cleaned on a non-startup (greyCleanup=false) cleanup', async () => {
     const store: Store<State, ReduxAction> = createStore({
       ...initialState,
       domainsToClean: ['a.com'],
+    });
+
+    // browsingDataCleanup is empty (nothing cleaned), so nothing is dropped.
+    await store.dispatch<any>(
+      Actions.cookieCleanup({ greyCleanup: false, ignoreOpenTabs: false }),
+    );
+
+    expect(store.getState().domainsToClean).toEqual(['a.com']);
+  });
+
+  it('on a non-startup cleanup, drops only the registry domains that were actually cleaned', async () => {
+    when(spyCleanupService.cleanCookiesOperation)
+      .calledWith(expect.any(Object), expect.any(Object))
+      .mockResolvedValue({
+        setOfDeletedDomainCookies: [],
+        cachedResults: {
+          dateTime: 'now',
+          recentlyCleaned: 0,
+          storeIds: {},
+          browsingDataCleanup: {
+            [SiteDataType.LOCALSTORAGE]: ['a.com'],
+          },
+          siteDataCleaned: true,
+        },
+      } as never);
+    const store: Store<State, ReduxAction> = createStore({
+      ...initialState,
+      settings: {
+        ...initialState.settings,
+        [SettingID.NOTIFY_AUTO]: {
+          name: SettingID.NOTIFY_AUTO,
+          value: false,
+        },
+      },
+      domainsToClean: ['a.com', 'protected.com'],
     });
 
     await store.dispatch<any>(
       Actions.cookieCleanup({ greyCleanup: false, ignoreOpenTabs: false }),
     );
 
-    expect(store.getState().domainsToClean).toEqual(['a.com']);
+    // 'a.com' was cleaned so it is dropped; 'protected.com' (e.g. open tab or
+    // whitelisted, hence not cleaned) is kept for a later run.
+    expect(store.getState().domainsToClean).toEqual(['protected.com']);
   });
 });

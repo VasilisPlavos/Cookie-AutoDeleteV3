@@ -12,7 +12,6 @@
  * SOFTWARE.
  */
 
-import shortid from 'shortid';
 import AlarmEvents from './AlarmEvents';
 import {
   checkIfProtected,
@@ -27,9 +26,7 @@ import {
   getHostname,
   getSetting,
   isAWebpage,
-  isFirstPartyIsolate,
   PRIVATE_STORE_IDS,
-  returnOptionalCookieAPIAttributes,
 } from './Libs';
 import { addDomainToCleanUI } from '../redux/Actions';
 import StoreUser from './StoreUser';
@@ -299,21 +296,9 @@ export default class TabEvents extends StoreUser {
         SettingID.CLEANUP_SERVICEWORKERS,
       )) as boolean;
 
-    // Durable startup safety-net: record every first-party hostname visited
-    // while a site-data cleanup is enabled, so its non-cookie site data can be
-    // cleaned on the next startup even if it leaves no cookie (real or marker).
-    // Site data is global, so a flat hostname list (no storeId) is sufficient;
-    // private stores are excluded because their data does not persist. Chrome
-    // has no tab.cookieStoreId, so tab.incognito is used to detect its private
-    // browsing tabs.
-    // Only record when a future startup run will actually consume and clear
-    // the registry (ACTIVE_MODE + ENABLE_GREYLIST), otherwise the list would
-    // grow unbounded with no consumer.
     const effectiveStoreId = tab.cookieStoreId || (tab.incognito ? '1' : '0');
     if (
       siteDataCleanupEnabled &&
-      getSetting(StoreUser.store.getState(), SettingID.ACTIVE_MODE) &&
-      getSetting(StoreUser.store.getState(), SettingID.ENABLE_GREYLIST) &&
       isAWebpage(tab.url) &&
       !tab.url.startsWith('file:') &&
       !PRIVATE_STORE_IDS.includes(effectiveStoreId)
@@ -327,36 +312,6 @@ export default class TabEvents extends StoreUser {
       }
     }
 
-    if (
-      internalCookies.length === 0 &&
-      siteDataCleanupEnabled &&
-      isAWebpage(tab.url) &&
-      !tab.url.startsWith('file:')
-    ) {
-      const cookiesAttributes = returnOptionalCookieAPIAttributes(
-        StoreUser.store.getState(),
-        {
-          expirationDate: Math.floor(Date.now() / 1000 + 31557600),
-          firstPartyDomain: (await isFirstPartyIsolate())
-            ? extractMainDomain(getHostname(tab.url))
-            : '',
-          name: CADCOOKIENAME,
-          path: `/${shortid.generate()}`,
-          storeId: tab.cookieStoreId,
-          url: tab.url,
-          value: CADCOOKIENAME,
-        },
-      );
-      await browser.cookies.set({ ...cookiesAttributes, url: tab.url });
-      cadLog(
-        {
-          msg: 'TabEvents.getAllCookieActions:  A temporary cookie has been set for future BrowsingData cleaning as the site did not set any cookies yet.',
-          x: { partialTabInfo, cadLSCookie: cookiesAttributes },
-        },
-        debug,
-      );
-    }
-    // Filter out cookie(s) that were set by this extension.
     const cookieLength = cookies.length - internalCookies.length;
     if (cookies.length !== cookieLength) {
       cadLog(

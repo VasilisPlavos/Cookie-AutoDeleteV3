@@ -173,7 +173,10 @@ describe('TabEvents', () => {
       expect(spyBrowserActions.checkIfProtected.mock.calls[0][2]).toBe(1);
     });
 
-    it('should create a cookie if clean cache was enabled and no CAD cookie was found', async () => {
+    // CAD no longer plants a marker cookie on cookieless sites; it records the
+    // hostname in the domainsToClean registry instead. One case per site-data
+    // type to confirm every trigger still records without setting a cookie.
+    it('should record the hostname and NOT set a marker cookie when clean cache is enabled and no cookie was found', async () => {
       when(global.browser.cookies.getAll)
         .calledWith({ domain: 'cookie.net', storeId: 'firefox-default' })
         .mockResolvedValue([] as never);
@@ -182,10 +185,11 @@ describe('TabEvents', () => {
         ...sampleTab,
         url: 'http://cookie.net',
       });
-      expect(global.browser.cookies.set).toHaveBeenCalledTimes(1);
+      expect(global.browser.cookies.set).not.toHaveBeenCalled();
+      expect(store.getState().domainsToClean).toContain('cookie.net');
     });
 
-    it('should create a cookie if clean indexedDB was enabled and no CAD cookie was found', async () => {
+    it('should record the hostname and NOT set a marker cookie when clean indexedDB is enabled and no cookie was found', async () => {
       when(global.browser.cookies.getAll)
         .calledWith({ domain: 'cookie.net', storeId: 'firefox-default' })
         .mockResolvedValue([] as never);
@@ -194,10 +198,11 @@ describe('TabEvents', () => {
         ...sampleTab,
         url: 'http://cookie.net',
       });
-      expect(global.browser.cookies.set).toHaveBeenCalledTimes(1);
+      expect(global.browser.cookies.set).not.toHaveBeenCalled();
+      expect(store.getState().domainsToClean).toContain('cookie.net');
     });
 
-    it('should create a cookie if clean localStorage was enabled and no CAD cookie was found', async () => {
+    it('should record the hostname and NOT set a marker cookie when clean localStorage is enabled and no cookie was found', async () => {
       when(global.browser.cookies.getAll)
         .calledWith({ domain: 'cookie.net', storeId: 'firefox-default' })
         .mockResolvedValue([] as never);
@@ -206,10 +211,11 @@ describe('TabEvents', () => {
         ...sampleTab,
         url: 'http://cookie.net',
       });
-      expect(global.browser.cookies.set).toHaveBeenCalledTimes(1);
+      expect(global.browser.cookies.set).not.toHaveBeenCalled();
+      expect(store.getState().domainsToClean).toContain('cookie.net');
     });
 
-    it('should create a cookie if clean plugin data was enabled and no CAD cookie was found', async () => {
+    it('should record the hostname and NOT set a marker cookie when clean plugin data is enabled and no cookie was found', async () => {
       when(global.browser.cookies.getAll)
         .calledWith({ domain: 'cookie.net', storeId: 'firefox-default' })
         .mockResolvedValue([] as never);
@@ -218,10 +224,11 @@ describe('TabEvents', () => {
         ...sampleTab,
         url: 'http://cookie.net',
       });
-      expect(global.browser.cookies.set).toHaveBeenCalledTimes(1);
+      expect(global.browser.cookies.set).not.toHaveBeenCalled();
+      expect(store.getState().domainsToClean).toContain('cookie.net');
     });
 
-    it('should create a cookie if clean service workers was enabled and no CAD cookie was found', async () => {
+    it('should record the hostname and NOT set a marker cookie when clean service workers is enabled and no cookie was found', async () => {
       when(global.browser.cookies.getAll)
         .calledWith({ domain: 'cookie.net', storeId: 'firefox-default' })
         .mockResolvedValue([] as never);
@@ -230,7 +237,8 @@ describe('TabEvents', () => {
         ...sampleTab,
         url: 'http://cookie.net',
       });
-      expect(global.browser.cookies.set).toHaveBeenCalledTimes(1);
+      expect(global.browser.cookies.set).not.toHaveBeenCalled();
+      expect(store.getState().domainsToClean).toContain('cookie.net');
     });
 
     it('should filter out CAD browsingDataCleanup cookie from total cookie count', async () => {
@@ -255,27 +263,6 @@ describe('TabEvents', () => {
       expect(
         spyBrowserActions.showNumberOfCookiesInIcon,
       ).not.toHaveBeenCalled();
-    });
-
-    it('should create a cookie with firstPartyDomain if FPI is enabled', async () => {
-      when(global.browser.cookies.getAll)
-        .calledWith({ domain: 'cookie.net', storeId: 'firefox-default' })
-        .mockResolvedValue([] as never);
-      when(global.browser.cookies.getAll)
-        .calledWith({ domain: '' })
-        .mockResolvedValueOnce([] as never)
-        .mockRejectedValue(new Error('firstPartyDomain') as never);
-      TestStore.changeSetting(SettingID.CLEANUP_CACHE, true);
-      TestStore.addCache({ key: 'browserDetect', value: browserName.Firefox });
-
-      await TabEvents.getAllCookieActions({
-        ...sampleTab,
-        url: 'http://cookie.net',
-      });
-      expect(global.browser.cookies.set).toHaveBeenCalledTimes(1);
-      expect(global.browser.cookies.set.mock.calls[0][0]).toHaveProperty(
-        'firstPartyDomain',
-      );
     });
 
     it('should record the hostname in domainsToClean when a site-data cleanup is enabled', async () => {
@@ -324,7 +311,10 @@ describe('TabEvents', () => {
       expect(store.getState().domainsToClean).not.toContain('plain.net');
     });
 
-    it('should NOT record the hostname when ACTIVE_MODE is disabled, even if a site-data cleanup is enabled', async () => {
+    // The registry replaces the marker cookie, whose gate did not depend on
+    // ACTIVE_MODE/ENABLE_GREYLIST, so recording must not either — otherwise
+    // manual-mode users would lose cookieless site-data cleanup.
+    it('should record the hostname when ACTIVE_MODE is disabled, as long as a site-data cleanup is enabled', async () => {
       when(global.browser.cookies.getAll)
         .calledWith({ domain: 'inactive.net', storeId: 'firefox-default' })
         .mockResolvedValue([] as never);
@@ -334,10 +324,10 @@ describe('TabEvents', () => {
         ...sampleTab,
         url: 'http://inactive.net',
       });
-      expect(store.getState().domainsToClean).not.toContain('inactive.net');
+      expect(store.getState().domainsToClean).toContain('inactive.net');
     });
 
-    it('should NOT record the hostname when ENABLE_GREYLIST is disabled, even if a site-data cleanup is enabled', async () => {
+    it('should record the hostname when ENABLE_GREYLIST is disabled, as long as a site-data cleanup is enabled', async () => {
       when(global.browser.cookies.getAll)
         .calledWith({ domain: 'nogreylist.net', storeId: 'firefox-default' })
         .mockResolvedValue([] as never);
@@ -347,7 +337,7 @@ describe('TabEvents', () => {
         ...sampleTab,
         url: 'http://nogreylist.net',
       });
-      expect(store.getState().domainsToClean).not.toContain('nogreylist.net');
+      expect(store.getState().domainsToClean).toContain('nogreylist.net');
     });
 
     it('should NOT record the hostname for a Chrome incognito tab (no cookieStoreId, incognito=true)', async () => {
