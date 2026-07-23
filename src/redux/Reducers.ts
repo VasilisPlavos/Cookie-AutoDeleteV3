@@ -251,6 +251,12 @@ export const domainsToClean = (
       return [...state, action.payload];
     }
 
+    case ReduxConstants.REMOVE_DOMAINS_TO_CLEAN: {
+      if (action.payload.length === 0) return state;
+      const toRemove = new Set(action.payload);
+      return state.filter((hostname) => !toRemove.has(hostname));
+    }
+
     case ReduxConstants.RESET_ALL:
     case ReduxConstants.CLEAR_DOMAINS_TO_CLEAN:
       return [];

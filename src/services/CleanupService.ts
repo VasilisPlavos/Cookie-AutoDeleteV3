@@ -1160,11 +1160,14 @@ export const cleanCookiesOperation = async (
     }
   }
 
-  // Startup safety-net: clean non-cookie site data for domains recorded in the
-  // registry (first-party sites visited during the previous session that may
-  // have left no cookie). Registry entries are global, so this runs once,
-  // outside the per-store loop. Only on startup (greyCleanup).
-  if (cleanupProperties.greyCleanup && (state.domainsToClean || []).length > 0) {
+  // Safety-net: clean non-cookie site data for domains recorded in the registry
+  // (first-party sites visited that may have left no cookie). This is the single
+  // source of truth for cookieless sites, replacing the old marker cookie, so it
+  // runs on every cleanup — tab-close/active, manual and startup — not just on
+  // startup. Registry entries are global, so this runs once, outside the
+  // per-store loop. isSafeToClean still applies whitelist/greylist and open-tab
+  // protection, so only unprotected domains are cleaned.
+  if ((state.domainsToClean || []).length > 0) {
     const registryObjects = buildRegistrySiteDataObjects(
       state,
       newCleanupProperties,

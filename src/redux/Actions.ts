@@ -37,6 +37,7 @@ import {
   ReduxAction,
   ReduxConstants,
   REMOVE_ACTIVITY_LOG,
+  REMOVE_DOMAINS_TO_CLEAN,
   REMOVE_EXPRESSION,
   REMOVE_LIST,
   RESET_ALL,
@@ -344,6 +345,13 @@ export const clearDomainsToCleanUI = (): CLEAR_DOMAINS_TO_CLEAN => ({
   type: ReduxConstants.CLEAR_DOMAINS_TO_CLEAN,
 });
 
+export const removeDomainsToCleanUI = (
+  payload: ReadonlyArray<string>,
+): REMOVE_DOMAINS_TO_CLEAN => ({
+  payload,
+  type: ReduxConstants.REMOVE_DOMAINS_TO_CLEAN,
+});
+
 // Cookie Cleanup operation that is to be called from the React UI
 export const cookieCleanup: ActionCreator<ThunkAction<
   void,
@@ -356,19 +364,35 @@ export const cookieCleanup: ActionCreator<ThunkAction<
   const cleanupDoneObject = await cleanCookiesOperation(getState(), options);
   if (!cleanupDoneObject) return;
 
-  // Consume-and-clear: a startup (greyCleanup) run has now processed every
-  // recorded domain, so drop the registry. It repopulates as the user browses.
-  // Reached only after cleanCookiesOperation returned successfully.
-  if (options.greyCleanup) {
-    dispatch(clearDomainsToCleanUI());
-  }
-
   const { setOfDeletedDomainCookies, cachedResults } = cleanupDoneObject;
   const {
     browsingDataCleanup,
     recentlyCleaned,
     siteDataCleaned,
   } = cachedResults as ActivityLog;
+
+  // Consume the site-data registry (state.domainsToClean) now that this run has
+  // evaluated it. Reached only after cleanCookiesOperation returned successfully.
+  // A startup (greyCleanup) run processes the whole registry, so drop all of it;
+  // it repopulates as the user browses. An active/manual run only cleaned the
+  // domains that were not open-tab or whitelist protected, so drop exactly those
+  // and keep the rest for a later run (they reset on the next startup anyway).
+  if (options.greyCleanup) {
+    dispatch(clearDomainsToCleanUI());
+  } else if ((getState().domainsToClean || []).length > 0) {
+    const cleanedSiteDataDomains = new Set<string>();
+    if (browsingDataCleanup) {
+      Object.values(browsingDataCleanup).forEach((domains) => {
+        (domains || []).forEach((d) => cleanedSiteDataDomains.add(d));
+      });
+    }
+    const processed = getState().domainsToClean.filter((hostname) =>
+      cleanedSiteDataDomains.has(hostname),
+    );
+    if (processed.length > 0) {
+      dispatch(removeDomainsToCleanUI(processed));
+    }
+  }
 
   // Increment the count
   if (recentlyCleaned !== 0 && getSetting(getState(), SettingID.STAT_LOGGING)) {

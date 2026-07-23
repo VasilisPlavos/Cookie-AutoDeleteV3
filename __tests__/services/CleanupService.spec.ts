@@ -887,7 +887,7 @@ describe('CleanupService', () => {
       expect(cleanedHostnames).toContain('registry-only.com');
     });
 
-    it('does NOT consume the registry during a non-startup (greyCleanup=false) run', async () => {
+    it('also cleans site data for a registry hostname during a non-startup (greyCleanup=false) run', async () => {
       await cleanCookiesOperation(firefoxRegistryState, {
         greyCleanup: false,
         ignoreOpenTabs: false,
@@ -899,7 +899,7 @@ describe('CleanupService', () => {
           acc.concat((c[0] as { hostnames?: string[] }).hostnames || []),
         [] as string[],
       );
-      expect(cleanedHostnames).not.toContain('registry-only.com');
+      expect(cleanedHostnames).toContain('registry-only.com');
     });
 
     it('does NOT clean a registry hostname that is whitelisted', async () => {
