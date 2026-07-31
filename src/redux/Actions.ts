@@ -27,14 +27,17 @@ import {
 } from '../services/Libs';
 import {
   ADD_ACTIVITY_LOG,
+  ADD_DOMAIN_TO_CLEAN,
   ADD_EXPRESSION,
   CLEAR_ACTIVITY_LOG,
+  CLEAR_DOMAINS_TO_CLEAN,
   CLEAR_EXPRESSIONS,
   COOKIE_CLEANUP,
   INCREMENT_COOKIE_DELETED_COUNTER,
   ReduxAction,
   ReduxConstants,
   REMOVE_ACTIVITY_LOG,
+  REMOVE_DOMAINS_TO_CLEAN,
   REMOVE_EXPRESSION,
   REMOVE_LIST,
   RESET_ALL,
@@ -260,17 +263,16 @@ export const validateSettings: ActionCreator<ThunkAction<
     }
   });
 
-  // Missing a setting
-  if (settingKeys.length !== initialSettingKeys.length) {
-    initialSettingKeys.forEach((k) => {
-      if (settings[k] === undefined) {
-        dispatch({
-          payload: initialSettings[k],
-          type: ReduxConstants.UPDATE_SETTING,
-        });
-      }
-    });
-  }
+  // Add any setting missing from the stored state (e.g. a newly introduced
+  // setting, or one that replaced another so the key count did not change).
+  initialSettingKeys.forEach((k) => {
+    if (settings[k] === undefined) {
+      dispatch({
+        payload: initialSettings[k],
+        type: ReduxConstants.UPDATE_SETTING,
+      });
+    }
+  });
 
   function disableSettingIfTrue(s: Setting) {
     if (s && s.value) {
@@ -334,6 +336,22 @@ export const cookieCleanupUI = (
   type: ReduxConstants.COOKIE_CLEANUP,
 });
 
+export const addDomainToCleanUI = (payload: string): ADD_DOMAIN_TO_CLEAN => ({
+  payload,
+  type: ReduxConstants.ADD_DOMAIN_TO_CLEAN,
+});
+
+export const clearDomainsToCleanUI = (): CLEAR_DOMAINS_TO_CLEAN => ({
+  type: ReduxConstants.CLEAR_DOMAINS_TO_CLEAN,
+});
+
+export const removeDomainsToCleanUI = (
+  payload: ReadonlyArray<string>,
+): REMOVE_DOMAINS_TO_CLEAN => ({
+  payload,
+  type: ReduxConstants.REMOVE_DOMAINS_TO_CLEAN,
+});
+
 // Cookie Cleanup operation that is to be called from the React UI
 export const cookieCleanup: ActionCreator<ThunkAction<
   void,
@@ -345,12 +363,36 @@ export const cookieCleanup: ActionCreator<ThunkAction<
 ) => async (dispatch, getState) => {
   const cleanupDoneObject = await cleanCookiesOperation(getState(), options);
   if (!cleanupDoneObject) return;
+
   const { setOfDeletedDomainCookies, cachedResults } = cleanupDoneObject;
   const {
     browsingDataCleanup,
     recentlyCleaned,
     siteDataCleaned,
   } = cachedResults as ActivityLog;
+
+  // Consume the site-data registry (state.domainsToClean) now that this run has
+  // evaluated it. Reached only after cleanCookiesOperation returned successfully.
+  // A startup (greyCleanup) run processes the whole registry, so drop all of it;
+  // it repopulates as the user browses. An active/manual run only cleaned the
+  // domains that were not open-tab or whitelist protected, so drop exactly those
+  // and keep the rest for a later run (they reset on the next startup anyway).
+  if (options.greyCleanup) {
+    dispatch(clearDomainsToCleanUI());
+  } else if ((getState().domainsToClean || []).length > 0) {
+    const cleanedSiteDataDomains = new Set<string>();
+    if (browsingDataCleanup) {
+      Object.values(browsingDataCleanup).forEach((domains) => {
+        (domains || []).forEach((d) => cleanedSiteDataDomains.add(d));
+      });
+    }
+    const processed = getState().domainsToClean.filter((hostname) =>
+      cleanedSiteDataDomains.has(hostname),
+    );
+    if (processed.length > 0) {
+      dispatch(removeDomainsToCleanUI(processed));
+    }
+  }
 
   // Increment the count
   if (recentlyCleaned !== 0 && getSetting(getState(), SettingID.STAT_LOGGING)) {

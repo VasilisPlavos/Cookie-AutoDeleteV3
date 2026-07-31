@@ -52,6 +52,7 @@ type State = Readonly<{
   settings: MapToSettingObject;
   activityLog: ReadonlyArray<ActivityLog>;
   cache: CacheMap;
+  domainsToClean: ReadonlyArray<string>;
 }>;
 
 type Expression = Readonly<{
@@ -60,6 +61,10 @@ type Expression = Readonly<{
   // Deprecated as of 3.5.0, but kept for backwards-compatibility for pre-3.4.0.
   cleanLocalStorage?: boolean;
   cleanSiteData?: SiteDataType[];
+  // #58 CHIPS: when set on a partition (top-level) site's expression, delete
+  // cross-site partitioned cookies stored under it even if the cookie's own host
+  // is whitelisted. undefined = false = keep cross-site (current behaviour).
+  firstPartyOnly?: boolean;
   listType: ListType;
   storeId: string;
   id?: string;
@@ -68,6 +73,7 @@ type Expression = Readonly<{
 
 declare const enum SiteDataType {
   CACHE = 'Cache',
+  FILESYSTEMS = 'FileSystems',
   INDEXEDDB = 'IndexedDB',
   LOCALSTORAGE = 'LocalStorage',
   PLUGINDATA = 'PluginData',
@@ -88,6 +94,7 @@ declare const enum SettingID {
   CLEAN_EXPIRED = 'cleanExpiredCookies',
   CLEAN_OPEN_TABS_STARTUP = 'cleanCookiesFromOpenTabsOnStartup',
   CLEANUP_CACHE = 'cacheCleanup',
+  CLEANUP_FILESYSTEMS = 'fileSystemsCleanup',
   CLEANUP_INDEXEDDB = 'indexedDBCleanup',
   CLEANUP_LOCALSTORAGE = 'localStorageCleanup',
   CLEANUP_LOCALSTORAGE_OLD = 'localstorageCleanup',
@@ -98,7 +105,7 @@ declare const enum SettingID {
   CONTEXTUAL_IDENTITIES_AUTOREMOVE = 'contextualIdentitiesAutoRemove',
   DEBUG_MODE = 'debugMode',
   ENABLE_GREYLIST = 'enableGreyListCleanup',
-  ENABLE_NEW_POPUP = 'enableNewVersionPopup',
+  DISABLE_NEW_VERSION_POPUP = 'disableNewVersionPopup',
   KEEP_DEFAULT_ICON = 'keepDefaultIcon',
   NOTIFY_AUTO = 'showNotificationAfterCleanup',
   NOTIFY_MANUAL = 'manualNotifications',

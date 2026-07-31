@@ -19,7 +19,6 @@ import {
   cleanCookiesOperation,
   cleanSiteData,
   clearCookiesForThisDomain,
-  clearLocalStorageForThisDomain,
   clearSiteDataForThisDomain,
   filterSiteData,
   isSafeToClean,
@@ -836,6 +835,100 @@ describe('CleanupService', () => {
     });
   });
 
+  describe('cleanCookiesOperation() with domainsToClean registry', () => {
+    const firefoxRegistryState = {
+      ...sampleState,
+      cache: {
+        browserDetect: browserName.Firefox,
+        browserVersion: '77',
+        platformOs: 'desktop',
+      },
+      settings: {
+        ...sampleState.settings,
+        [SettingID.CLEANUP_LOCALSTORAGE]: {
+          name: SettingID.CLEANUP_LOCALSTORAGE,
+          value: true,
+        },
+      },
+      domainsToClean: ['registry-only.com'],
+    };
+
+    beforeEach(() => {
+      when(global.browser.tabs.query)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue([] as never);
+      when(global.browser.extension.isAllowedIncognitoAccess)
+        .calledWith()
+        .mockResolvedValue(false as never);
+      when(global.browser.cookies.getAllCookieStores)
+        .calledWith()
+        .mockResolvedValue([{ id: 'firefox-default' }] as never);
+      when(global.browser.cookies.getAll)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue([] as never);
+      when(global.browser.browsingData.remove)
+        .calledWith(expect.any(Object), expect.any(Object))
+        .mockResolvedValue(undefined as never);
+    });
+
+    it('cleans site data for a registry hostname that left no cookie (startup)', async () => {
+      await cleanCookiesOperation(firefoxRegistryState, {
+        greyCleanup: true,
+        ignoreOpenTabs: false,
+      });
+      const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
+        .calls;
+      const cleanedHostnames = removeCalls.reduce(
+        (acc: string[], c: unknown[]) =>
+          acc.concat((c[0] as { hostnames?: string[] }).hostnames || []),
+        [] as string[],
+      );
+      expect(cleanedHostnames).toContain('registry-only.com');
+    });
+
+    it('also cleans site data for a registry hostname during a non-startup (greyCleanup=false) run', async () => {
+      await cleanCookiesOperation(firefoxRegistryState, {
+        greyCleanup: false,
+        ignoreOpenTabs: false,
+      });
+      const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
+        .calls;
+      const cleanedHostnames = removeCalls.reduce(
+        (acc: string[], c: unknown[]) =>
+          acc.concat((c[0] as { hostnames?: string[] }).hostnames || []),
+        [] as string[],
+      );
+      expect(cleanedHostnames).toContain('registry-only.com');
+    });
+
+    it('does NOT clean a registry hostname that is whitelisted', async () => {
+      const whitelistedState = {
+        ...firefoxRegistryState,
+        lists: {
+          default: [
+            {
+              expression: 'registry-only.com',
+              listType: ListType.WHITE,
+              storeId: 'default',
+            },
+          ],
+        },
+      };
+      await cleanCookiesOperation(whitelistedState, {
+        greyCleanup: true,
+        ignoreOpenTabs: false,
+      });
+      const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
+        .calls;
+      const cleanedHostnames = removeCalls.reduce(
+        (acc: string[], c: unknown[]) =>
+          acc.concat((c[0] as { hostnames?: string[] }).hostnames || []),
+        [] as string[],
+      );
+      expect(cleanedHostnames).not.toContain('registry-only.com');
+    });
+  });
+
   describe('cleanSiteData()', () => {
     afterEach(() => {
       spyCleanupService.removeSiteData.mockRestore();
@@ -1034,41 +1127,6 @@ describe('CleanupService', () => {
     });
   });
 
-  describe('clearLocalStorageForThisDomain()', () => {
-    it('should clear localstorage from active tab (via tabs.executeScript)', async () => {
-      when(global.browser.tabs.executeScript)
-        .calledWith(expect.any(Object))
-        .mockResolvedValue([{ local: 2, session: 0 }] as never);
-      expect(
-        await clearLocalStorageForThisDomain(initialState, sampleTab),
-      ).toBe(true);
-      expect(global.browser.tabs.executeScript).toHaveBeenCalledTimes(1);
-      expect(global.browser.notifications.create).toHaveBeenCalledTimes(1);
-    });
-    it('should show error notification if browser.tabs.executeScript threw an error', async () => {
-      when(global.browser.tabs.executeScript)
-        .calledWith(expect.any(Object))
-        .mockRejectedValue(new Error('test') as never);
-      expect(
-        await clearLocalStorageForThisDomain(initialState, sampleTab),
-      ).toBe(false);
-      expect(global.browser.tabs.executeScript).toHaveBeenCalledTimes(1);
-      expect(spyLib.throwErrorNotification).toHaveBeenCalledTimes(1);
-      expect(spyLib.showNotification).toHaveBeenCalledTimes(1);
-    });
-    it('should only show the no cleanup done notification if browser.tabs.executeScript threw a non-error type', async () => {
-      when(global.browser.tabs.executeScript)
-        .calledWith(expect.any(Object))
-        .mockRejectedValue('error' as never);
-      expect(
-        await clearLocalStorageForThisDomain(initialState, sampleTab),
-      ).toBe(false);
-      expect(global.browser.tabs.executeScript).toHaveBeenCalledTimes(1);
-      expect(spyLib.throwErrorNotification).not.toHaveBeenCalled();
-      expect(spyLib.showNotification).toHaveBeenCalledTimes(1);
-    });
-  });
-
   describe('clearSiteDataForThisDomain()', () => {
     it('should return false if hostname is empty', async () => {
       expect(await clearSiteDataForThisDomain(initialState, 'All', '')).toBe(
@@ -1083,6 +1141,43 @@ describe('CleanupService', () => {
           '  ',
         ),
       ).toBe(false);
+    });
+    it('should NOT clear fileSystems in the All loop on Firefox', async () => {
+      when(global.browser.browsingData.remove)
+        .calledWith(expect.any(Object), expect.any(Object))
+        .mockResolvedValue(undefined as never);
+      const ffAllState = {
+        ...initialState,
+        cache: {
+          browserDetect: browserName.Firefox,
+          browserVersion: '78',
+          platformOs: 'desktop',
+        },
+      };
+      await clearSiteDataForThisDomain(ffAllState, 'All', 'example.com');
+      expect(global.browser.browsingData.remove).not.toHaveBeenCalledWith(
+        expect.any(Object),
+        { fileSystems: true },
+      );
+    });
+
+    it('should clear fileSystems in the All loop on Chrome', async () => {
+      when(global.browser.browsingData.remove)
+        .calledWith(expect.any(Object), expect.any(Object))
+        .mockResolvedValue(undefined as never);
+      const chromeAllState = {
+        ...initialState,
+        cache: {
+          browserDetect: browserName.Chrome,
+          browserVersion: '120',
+          platformOs: 'desktop',
+        },
+      };
+      await clearSiteDataForThisDomain(chromeAllState, 'All', 'example.com');
+      expect(global.browser.browsingData.remove).toHaveBeenCalledWith(
+        expect.any(Object),
+        { fileSystems: true },
+      );
     });
   });
 
@@ -1576,6 +1671,80 @@ describe('CleanupService', () => {
       });
       expect(result.reason).toBe(ReasonKeep.MatchedExpression);
       expect(result.cleanCookie).toBe(false);
+    });
+
+    // #58: when the partition (top-level) site is set to keep first-party cookies
+    // only, a Case-5 cross-site partitioned cookie is deleted even though its own
+    // host is whitelisted.
+    const firstPartyOnlyState = (firstPartyOnly: boolean): State => ({
+      ...sampleState,
+      lists: {
+        ...sampleState.lists,
+        default: [
+          ...sampleState.lists.default,
+          {
+            expression: 'vimeo.com',
+            id: '99',
+            listType: ListType.WHITE,
+            storeId: 'default',
+            firstPartyOnly,
+          },
+        ],
+      },
+    });
+
+    it('should clean a Case-5 partitioned cookie when the partition site is first-party only', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(true), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(true);
+      expect(result.reason).toBe(ReasonClean.FirstPartyOnly);
+      // The expression attached reflects the cookie's own host (what actually gets removed).
+      expect(result.expression?.expression).toBe('youtube.com');
+    });
+
+    it('should keep a Case-5 partitioned cookie when the partition site is NOT first-party only', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'youtube.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(false), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(false);
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+    });
+
+    it('should keep a first-party cookie under a first-party-only partition site', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'vimeo.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(true), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(false);
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+    });
+
+    it('should report PartitionedThirdParty (not FirstPartyOnly) when the host is not whitelisted under a first-party-only partition', () => {
+      const cookieProperty = prepareCookie({
+        ...mockCookie,
+        domain: 'tracker.com',
+        partitionKey: { topLevelSite: 'https://vimeo.com' },
+      });
+      const result = isSafeToClean(firstPartyOnlyState(true), cookieProperty, {
+        ...cleanupProperties,
+      });
+      expect(result.cleanCookie).toBe(true);
+      expect(result.reason).toBe(ReasonClean.PartitionedThirdParty);
     });
 
     it('should keep a cross-site partitioned cookie whose host is greylisted during normal cleanup', () => {
@@ -2360,6 +2529,52 @@ describe('CleanupService', () => {
           },
           [],
         );
+        expect(spyCleanupService.cleanSiteData).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    const fileSystemsState = {
+      ...ffState,
+      cache: {
+        browserDetect: browserName.Chrome,
+      },
+      settings: {
+        ...initialState.settings,
+        [SettingID.CLEANUP_FILESYSTEMS]: {
+          name: SettingID.CLEANUP_FILESYSTEMS,
+          value: true,
+        },
+      },
+    };
+
+    describe('FileSystems', () => {
+      it('should not call cleanSiteData for: Chrome, fileSystemsCleanup false', async () => {
+        await otherBrowsingDataCleanup(
+          {
+            ...ffState,
+            cache: { browserDetect: browserName.Chrome },
+          },
+          [],
+        );
+        expect(spyCleanupService.cleanSiteData).not.toHaveBeenCalled();
+      });
+
+      it('should not call cleanSiteData for: Firefox 78, fileSystemsCleanup true', async () => {
+        await otherBrowsingDataCleanup(
+          {
+            ...fileSystemsState,
+            cache: {
+              ...ffState.cache,
+              browserVersion: '78',
+            },
+          },
+          [],
+        );
+        expect(spyCleanupService.cleanSiteData).not.toHaveBeenCalled();
+      });
+
+      it('should call cleanSiteData for: Chrome, fileSystemsCleanup true', async () => {
+        await otherBrowsingDataCleanup(fileSystemsState, []);
         expect(spyCleanupService.cleanSiteData).toHaveBeenCalledTimes(1);
       });
     });

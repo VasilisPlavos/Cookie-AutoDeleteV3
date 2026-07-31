@@ -16,6 +16,7 @@ import {
   cache,
   cookieDeletedCounterSession,
   cookieDeletedCounterTotal,
+  domainsToClean,
   expression,
   expressions,
   lists,
@@ -511,6 +512,63 @@ describe('Reducer', () => {
         type: ReduxConstants.RESET_ALL,
       });
       expect(newState).toEqual({});
+    });
+  });
+
+  describe('domainsToClean', () => {
+    it('should add a new hostname', () => {
+      const result = domainsToClean(['a.com'], {
+        payload: 'b.com',
+        type: ReduxConstants.ADD_DOMAIN_TO_CLEAN,
+      });
+      expect(result).toEqual(['a.com', 'b.com']);
+    });
+
+    it('should not add a duplicate hostname', () => {
+      const result = domainsToClean(['a.com'], {
+        payload: 'a.com',
+        type: ReduxConstants.ADD_DOMAIN_TO_CLEAN,
+      });
+      expect(result).toEqual(['a.com']);
+    });
+
+    it('should not add a blank hostname', () => {
+      const result = domainsToClean([], {
+        payload: '   ',
+        type: ReduxConstants.ADD_DOMAIN_TO_CLEAN,
+      });
+      expect(result).toEqual([]);
+    });
+
+    it('should clear on CLEAR_DOMAINS_TO_CLEAN', () => {
+      const result = domainsToClean(['a.com', 'b.com'], {
+        type: ReduxConstants.CLEAR_DOMAINS_TO_CLEAN,
+      });
+      expect(result).toEqual([]);
+    });
+
+    it('should remove only the listed hostnames on REMOVE_DOMAINS_TO_CLEAN', () => {
+      const result = domainsToClean(['a.com', 'b.com', 'c.com'], {
+        payload: ['a.com', 'c.com'],
+        type: ReduxConstants.REMOVE_DOMAINS_TO_CLEAN,
+      });
+      expect(result).toEqual(['b.com']);
+    });
+
+    it('should be a no-op on REMOVE_DOMAINS_TO_CLEAN with an empty payload', () => {
+      const state = ['a.com', 'b.com'];
+      const result = domainsToClean(state, {
+        payload: [],
+        type: ReduxConstants.REMOVE_DOMAINS_TO_CLEAN,
+      });
+      expect(result).toBe(state);
+    });
+
+    it('should clear on RESET_ALL', () => {
+      const result = domainsToClean(['a.com'], {
+        type: ReduxConstants.RESET_ALL,
+      });
+      expect(result).toEqual([]);
     });
   });
 

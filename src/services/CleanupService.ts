@@ -25,12 +25,12 @@ import {
   isFirefoxNotAndroid,
   prepareCleanupDomains,
   prepareCookieDomain,
+  PRIVATE_STORE_IDS,
   returnMatchedExpressionObject,
   returnOptionalCookieAPIAttributes,
   showNotification,
   siteDataToBrowser,
   SITEDATATYPES,
-  sleep,
   throwErrorNotification,
   trimDot,
   undefinedIsTrue,
@@ -353,6 +353,28 @@ export const isSafeToClean = (
     };
   }
 
+  // #58: the partition (top-level) site is protected but is configured to keep
+  // first-party cookies only, so this cross-site (CHIPS) cookie is deleted even
+  // though its own host is whitelisted (Case 5 override). matchedExpression is the
+  // partition site's expression (looked up against decisionHostname above).
+  if (matchedExpression?.firstPartyOnly) {
+    cadLog(
+      {
+        msg: 'CleanupService.isSafeToClean:  Cross-site partitioned cookie under a first-party-only partition site.  Safe to Clean.',
+        x: { partialCookieInfo, hostExpression: hostDecision.expression },
+      },
+      debug,
+    );
+    return {
+      cached: false,
+      cleanCookie: true,
+      cookie: cookieProperties,
+      expression: hostDecision.expression,
+      openTabStatus,
+      reason: ReasonClean.FirstPartyOnly,
+    };
+  }
+
   // Both the partition site and the host are protected → keep.
   cadLog(
     {
@@ -479,57 +501,6 @@ export const clearCookiesForThisDomain = async (
   return cookies.length > 0;
 };
 
-export const clearLocalStorageForThisDomain = async (
-  state: State,
-  tab: browser.tabs.Tab,
-): Promise<boolean> => {
-  // Using this method to ensure cross browser compatibility
-  try {
-    let local = 0;
-    let session = 0;
-    const result = await browser.tabs.executeScript({
-      code: `var cad_r = {local: window.localStorage.length, session: window.sessionStorage.length};window.localStorage.clear();window.sessionStorage.clear();cad_r;`,
-    });
-    result.forEach((frame: { [key: string]: any }) => {
-      local += frame.local;
-      session += frame.session;
-    });
-    showNotification(
-      {
-        duration: getSetting(state, SettingID.NOTIFY_DURATION) as number,
-        msg: `${browser.i18n.getMessage('manualCleanSuccess', [
-          browser.i18n.getMessage('localStorageText'),
-          getHostname(tab.url),
-        ])}\n${browser.i18n.getMessage('removeStorageCount', [
-          local.toString(),
-          browser.i18n.getMessage('localStorageText'),
-        ])}\n${browser.i18n.getMessage('removeStorageCount', [
-          session.toString(),
-          browser.i18n.getMessage('sessionStorageText'),
-        ])}`,
-      },
-      getSetting(state, SettingID.NOTIFY_MANUAL) as boolean,
-    );
-    return true;
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      throwErrorNotification(
-        e,
-        getSetting(state, SettingID.NOTIFY_DURATION) as number,
-      );
-    }
-    await sleep(750);
-    showNotification({
-      duration: getSetting(state, SettingID.NOTIFY_DURATION) as number,
-      msg: `${browser.i18n.getMessage('manualCleanNothing', [
-        browser.i18n.getMessage('localStorageText'),
-        getHostname(tab.url),
-      ])}`,
-    });
-    return false;
-  }
-};
-
 export const clearSiteDataForThisDomain = async (
   state: State,
   siteData: SiteDataType | 'All',
@@ -547,6 +518,7 @@ export const clearSiteDataForThisDomain = async (
   if (siteData === 'All') {
     const siteDataAll: string[] = [];
     for (const sd of SITEDATATYPES) {
+      if (sd === SiteDataType.FILESYSTEMS && !isChrome(state.cache)) continue;
       await removeSiteData(
         state,
         sd,
@@ -649,6 +621,49 @@ export const removeSiteData = async (
   }
 };
 
+/**
+ * Build synthetic CleanReasonObjects for the hostnames recorded in the
+ * site-data registry (state.domainsToClean). Each hostname is evaluated by the
+ * SAME isSafeToClean logic through a synthetic cookie, so whitelist/greylist
+ * and open-tab protection apply identically to registry domains. The returned
+ * objects must be passed ONLY to otherBrowsingDataCleanup — never to
+ * cleanCookies (there is no real cookie to remove).
+ *
+ * Site data is global, so the synthetic cookie uses the normalised 'default'
+ * store for list matching, and open-tab protection is widened to span every
+ * container (a hostname open in ANY store is kept).
+ */
+export const buildRegistrySiteDataObjects = (
+  state: State,
+  cleanupProperties: CleanupPropertiesInternal,
+): CleanReasonObject[] => {
+  const unionOpenDomains = new Set<string>();
+  Object.values(cleanupProperties.openTabDomains).forEach((domains) =>
+    domains.forEach((d) => unionOpenDomains.add(d)),
+  );
+  const registryProps: CleanupPropertiesInternal = {
+    ...cleanupProperties,
+    openTabDomains: { default: Array.from(unionOpenDomains) },
+  };
+  return (state.domainsToClean || [])
+    .filter((hostname) => hostname.trim() !== '')
+    .map((hostname) => {
+      const syntheticCookie: CookiePropertiesCleanup = {
+        domain: hostname,
+        hostname,
+        mainDomain: extractMainDomain(hostname),
+        name: 'CADSiteDataRegistry',
+        path: '/',
+        preparedCookieDomain: `https://${hostname}`,
+        secure: true,
+        session: false,
+        storeId: 'default',
+        value: '',
+      } as CookiePropertiesCleanup;
+      return isSafeToClean(state, syntheticCookie, registryProps);
+    });
+};
+
 /** This will use the browsingData's hostname/origin attribute to delete any extra browsing data */
 export const otherBrowsingDataCleanup = async (
   state: State,
@@ -713,6 +728,15 @@ export const otherBrowsingDataCleanup = async (
     browsingDataResult[SiteDataType.SERVICEWORKERS] = await cleanSiteData(
       state,
       SiteDataType.SERVICEWORKERS,
+      isSafeToCleanObjects,
+      state.cache.browserDetect,
+      debug,
+    );
+  }
+  if (getSetting(state, SettingID.CLEANUP_FILESYSTEMS) && chrome) {
+    browsingDataResult[SiteDataType.FILESYSTEMS] = await cleanSiteData(
+      state,
+      SiteDataType.FILESYSTEMS,
       isSafeToCleanObjects,
       state.cache.browserDetect,
       debug,
@@ -891,7 +915,7 @@ export const cleanCookiesOperation = async (
     siteDataCleaned: false,
   };
   // Scrub private cookieStores
-  const storesIdsToScrub = ['firefox-private', 'private', '1'];
+  const storesIdsToScrub = PRIVATE_STORE_IDS;
   const openTabDomains = await returnContainersOfOpenTabDomains(
     cleanupProperties.ignoreOpenTabs,
     getSetting(state, SettingID.CLEAN_DISCARDED) as boolean,
@@ -1080,6 +1104,34 @@ export const cleanCookiesOperation = async (
         deletedSiteDataArrays[sd] = (deletedSiteDataArrays[sd] || []).concat(
           (storeResults[sd] as string[]).map((domain) => trimDot(domain)),
         );
+      }
+    }
+  }
+
+  // Safety-net: clean non-cookie site data for domains recorded in the registry
+  // (first-party sites visited that may have left no cookie). This is the single
+  // source of truth for cookieless sites, replacing the old marker cookie, so it
+  // runs on every cleanup — tab-close/active, manual and startup — not just on
+  // startup. Registry entries are global, so this runs once, outside the
+  // per-store loop. isSafeToClean still applies whitelist/greylist and open-tab
+  // protection, so only unprotected domains are cleaned.
+  if ((state.domainsToClean || []).length > 0) {
+    const registryObjects = buildRegistrySiteDataObjects(
+      state,
+      newCleanupProperties,
+    );
+    const registryResults = await otherBrowsingDataCleanup(
+      state,
+      registryObjects,
+    );
+    if (registryResults) {
+      for (const sd of SITEDATATYPES) {
+        if ((registryResults[sd] || []).length > 0) {
+          cachedResults.siteDataCleaned = true;
+          deletedSiteDataArrays[sd] = (deletedSiteDataArrays[sd] || []).concat(
+            (registryResults[sd] as string[]).map((domain) => trimDot(domain)),
+          );
+        }
       }
     }
   }

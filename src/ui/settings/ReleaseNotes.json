@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "1.2.0",
+      "notes": [
+        "New 'File System' site-data cleanup (Chromium browsers) — clears File System API data that sites like mega.nz leave behind in your profile. Plugin Data cleanup is now hidden on Chromium, since it's deprecated there and no longer has any effect.",
+        "Non-cookie site data (cache, IndexedDB, local storage, service workers, File System) from the sites you visit is now also cleaned on browser startup — covering sites that leave no cookie behind and were previously missed by tab-close cleanup."
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "notes": [
+        "Whitelisted sites now have a 'First-party cookies only' cookie option (Chromium browsers) — delete third-party partitioned (CHIPS) cookies stored under a site even when their own domain is whitelisted."
+      ]
+    },
+    {
       "version": "1.0.3",
       "notes": [
         "Now deletes partitioned cookies (CHIPS) too — third-party cookies that Chrome's Privacy Sandbox isolates per top-level site are now cleaned just like regular cookies on tab close."

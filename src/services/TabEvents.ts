@@ -12,7 +12,6 @@
  * SOFTWARE.
  */
 
-import shortid from 'shortid';
 import AlarmEvents from './AlarmEvents';
 import {
   checkIfProtected,
@@ -27,9 +26,9 @@ import {
   getHostname,
   getSetting,
   isAWebpage,
-  isFirstPartyIsolate,
-  returnOptionalCookieAPIAttributes,
+  PRIVATE_STORE_IDS,
 } from './Libs';
+import { addDomainToCleanUI } from '../redux/Actions';
 import StoreUser from './StoreUser';
 
 export default class TabEvents extends StoreUser {
@@ -284,46 +283,35 @@ export default class TabEvents extends StoreUser {
       return c.name === CADCOOKIENAME;
     });
 
-    if (
-      internalCookies.length === 0 &&
-      (getSetting(StoreUser.store.getState(), SettingID.CLEANUP_CACHE) ||
-        getSetting(StoreUser.store.getState(), SettingID.CLEANUP_INDEXEDDB) ||
-        getSetting(
-          StoreUser.store.getState(),
-          SettingID.CLEANUP_LOCALSTORAGE,
-        ) ||
-        getSetting(StoreUser.store.getState(), SettingID.CLEANUP_PLUGINDATA) ||
-        getSetting(
-          StoreUser.store.getState(),
-          SettingID.CLEANUP_SERVICEWORKERS,
-        )) &&
-      isAWebpage(tab.url) &&
-      !tab.url.startsWith('file:')
-    ) {
-      const cookiesAttributes = returnOptionalCookieAPIAttributes(
+    const siteDataCleanupEnabled = (getSetting(
+      StoreUser.store.getState(),
+      SettingID.CLEANUP_CACHE,
+    ) ||
+      getSetting(StoreUser.store.getState(), SettingID.CLEANUP_INDEXEDDB) ||
+      getSetting(StoreUser.store.getState(), SettingID.CLEANUP_LOCALSTORAGE) ||
+      getSetting(StoreUser.store.getState(), SettingID.CLEANUP_PLUGINDATA) ||
+      getSetting(StoreUser.store.getState(), SettingID.CLEANUP_FILESYSTEMS) ||
+      getSetting(
         StoreUser.store.getState(),
-        {
-          expirationDate: Math.floor(Date.now() / 1000 + 31557600),
-          firstPartyDomain: (await isFirstPartyIsolate())
-            ? extractMainDomain(getHostname(tab.url))
-            : '',
-          name: CADCOOKIENAME,
-          path: `/${shortid.generate()}`,
-          storeId: tab.cookieStoreId,
-          url: tab.url,
-          value: CADCOOKIENAME,
-        },
-      );
-      await browser.cookies.set({ ...cookiesAttributes, url: tab.url });
-      cadLog(
-        {
-          msg: 'TabEvents.getAllCookieActions:  A temporary cookie has been set for future BrowsingData cleaning as the site did not set any cookies yet.',
-          x: { partialTabInfo, cadLSCookie: cookiesAttributes },
-        },
-        debug,
-      );
+        SettingID.CLEANUP_SERVICEWORKERS,
+      )) as boolean;
+
+    const effectiveStoreId = tab.cookieStoreId || (tab.incognito ? '1' : '0');
+    if (
+      siteDataCleanupEnabled &&
+      isAWebpage(tab.url) &&
+      !tab.url.startsWith('file:') &&
+      !PRIVATE_STORE_IDS.includes(effectiveStoreId)
+    ) {
+      const registryHostname = getHostname(tab.url);
+      if (
+        registryHostname.trim() !== '' &&
+        !StoreUser.store.getState().domainsToClean.includes(registryHostname)
+      ) {
+        StoreUser.store.dispatch(addDomainToCleanUI(registryHostname));
+      }
     }
-    // Filter out cookie(s) that were set by this extension.
+
     const cookieLength = cookies.length - internalCookies.length;
     if (cookies.length !== cookieLength) {
       cadLog(

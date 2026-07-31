@@ -27,6 +27,10 @@ export const initialState: State = {
       name: SettingID.CLEANUP_CACHE,
       value: false,
     },
+    [SettingID.CLEANUP_FILESYSTEMS]: {
+      name: SettingID.CLEANUP_FILESYSTEMS,
+      value: false,
+    },
     [SettingID.CLEAN_OPEN_TABS_STARTUP]: {
       name: SettingID.CLEAN_OPEN_TABS_STARTUP,
       value: false,
@@ -67,8 +71,8 @@ export const initialState: State = {
       name: SettingID.ENABLE_GREYLIST,
       value: true,
     },
-    [SettingID.ENABLE_NEW_POPUP]: {
-      name: SettingID.ENABLE_NEW_POPUP,
+    [SettingID.DISABLE_NEW_VERSION_POPUP]: {
+      name: SettingID.DISABLE_NEW_VERSION_POPUP,
       value: false,
     },
     [SettingID.OLD_GREY_CLEAN_LOCALSTORAGE]: {
@@ -141,4 +145,5 @@ export const initialState: State = {
   },
   activityLog: [],
   cache: {},
+  domainsToClean: [],
 };

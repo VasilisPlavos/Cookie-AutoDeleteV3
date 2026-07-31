@@ -62,3 +62,69 @@ describe('downloadObjectAsJSON', () => {
     });
   });
 });
+
+import {
+  cookiePolicyFromExpression,
+  expressionFieldsForCookiePolicy,
+} from '../../src/ui/UILibs';
+
+describe('cookiePolicyFromExpression', () => {
+  const base = {
+    expression: 'x.com',
+    listType: ListType.WHITE,
+    storeId: 'default',
+  } as Expression;
+
+  it('returns "all" when cleanAllCookies is undefined', () => {
+    expect(cookiePolicyFromExpression({ ...base })).toBe('all');
+  });
+  it('returns "all" when cleanAllCookies is true and not firstPartyOnly', () => {
+    expect(cookiePolicyFromExpression({ ...base, cleanAllCookies: true })).toBe(
+      'all',
+    );
+  });
+  it('returns "firstPartyOnly" when firstPartyOnly is true', () => {
+    expect(
+      cookiePolicyFromExpression({
+        ...base,
+        cleanAllCookies: true,
+        firstPartyOnly: true,
+      }),
+    ).toBe('firstPartyOnly');
+  });
+  it('returns "selected" when cleanAllCookies is false', () => {
+    expect(
+      cookiePolicyFromExpression({ ...base, cleanAllCookies: false }),
+    ).toBe('selected');
+  });
+  it('prioritises "selected" over firstPartyOnly when cleanAllCookies is false', () => {
+    expect(
+      cookiePolicyFromExpression({
+        ...base,
+        cleanAllCookies: false,
+        firstPartyOnly: true,
+      }),
+    ).toBe('selected');
+  });
+});
+
+describe('expressionFieldsForCookiePolicy', () => {
+  it('maps "all"', () => {
+    expect(expressionFieldsForCookiePolicy('all')).toEqual({
+      cleanAllCookies: true,
+      firstPartyOnly: false,
+    });
+  });
+  it('maps "firstPartyOnly"', () => {
+    expect(expressionFieldsForCookiePolicy('firstPartyOnly')).toEqual({
+      cleanAllCookies: true,
+      firstPartyOnly: true,
+    });
+  });
+  it('maps "selected"', () => {
+    expect(expressionFieldsForCookiePolicy('selected')).toEqual({
+      cleanAllCookies: false,
+      firstPartyOnly: false,
+    });
+  });
+});

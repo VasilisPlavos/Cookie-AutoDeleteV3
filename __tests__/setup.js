@@ -122,7 +122,6 @@ const apis = {
     fn: [
       'connect',
       'create',
-      'executeScript',
       'get',
       'getCurrent',
       'query',
