@@ -54,9 +54,6 @@ builds/
 /docs/superpowers/plans/
 /docs/superpowers/specs/
 
-# Superpowers brainstorming visual-companion mockups
-.superpowers/
-
 # 3rd-Party Files copied from npm
 extension/global_files/browser-polyfill.min.js*
 /.playwright-mcp
