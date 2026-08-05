@@ -183,10 +183,6 @@
     "message": "ciasteczka",
     "description": "Cookies. Primarily used in popup via alternate clean action dropdown."
   },
-  "cookieCleanUpOnStartText": {
-    "message": "Wyczyść ciasteczka i inne dane witryny z otwartych kart podczas uruchamiania",
-    "description": "Clean Cookies and other Site Data from Open Tabs on Startup"
-  },
   "cookieCleanupIgnoreOpenTabsText": {
     "message": "Uruchom czyszczenie teraz, dołącz domeny z otwartych kart",
     "description": "Run cleanup now, include cookies from open tabs. This is shown on mouseover from the available dropdown buttons."

@@ -352,17 +352,6 @@ class Settings extends React.Component<SettingProps> {
           </div>
           <div className="form-group">
             <CheckboxSetting
-              text={browser.i18n.getMessage('cookieCleanUpOnStartText')}
-              settingObject={settings[SettingID.CLEAN_OPEN_TABS_STARTUP]}
-              inline={true}
-              updateSetting={(payload) => onUpdateSetting(payload)}
-            />
-            <SettingsTooltip
-              hrefURL={'#clean-cookies-from-open-tabs-on-startup'}
-            />
-          </div>
-          <div className="form-group">
-            <CheckboxSetting
               settingObject={settings[SettingID.CLEAN_EXPIRED]}
               inline={true}
               text={browser.i18n.getMessage('cleanExpiredCookiesText')}

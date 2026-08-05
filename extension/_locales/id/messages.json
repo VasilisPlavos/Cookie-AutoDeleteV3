@@ -179,10 +179,6 @@
     "message": "Kuki",
     "description": "Cookies. Primarily used in popup via alternate clean action dropdown."
   },
-  "cookieCleanUpOnStartText": {
-    "message": "Bersihkan Cookies dan Data Situs lainnya dari Tab Terbuka pada Startup",
-    "description": "Clean Cookies and other Site Data from Open Tabs on Startup"
-  },
   "cookieCleanupIgnoreOpenTabsText": {
     "message": "Hapus sekarang, sertakan domain dari tab yang terbuka",
     "description": "Run cleanup now, include cookies from open tabs. This is shown on mouseover from the available dropdown buttons."

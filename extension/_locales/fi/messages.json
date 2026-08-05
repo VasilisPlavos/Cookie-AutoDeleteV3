@@ -179,10 +179,6 @@
     "message": "Evästeet",
     "description": "Cookies. Primarily used in popup via alternate clean action dropdown."
   },
-  "cookieCleanUpOnStartText": {
-    "message": "Puhdista Evästeet ja muut sivuston tiedot Open Tabs -välilehdiltä käynnistettäessä",
-    "description": "Clean Cookies and other Site Data from Open Tabs on Startup"
-  },
   "cookieCleanupIgnoreOpenTabsText": {
     "message": "Suorita siivous nyt, sisällytä verkkotunnukset avoimista välilehdistä",
     "description": "Run cleanup now, include cookies from open tabs. This is shown on mouseover from the available dropdown buttons."

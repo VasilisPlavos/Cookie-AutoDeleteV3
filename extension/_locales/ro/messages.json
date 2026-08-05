@@ -175,10 +175,6 @@
     "message": "Cookie-uri",
     "description": "Cookies. Primarily used in popup via alternate clean action dropdown."
   },
-  "cookieCleanUpOnStartText": {
-    "message": "Curăță Cookie-urile și alte date ale site-ului din file deschise la pornire",
-    "description": "Clean Cookies and other Site Data from Open Tabs on Startup"
-  },
   "cookieCleanupIgnoreOpenTabsText": {
     "message": "Rulează curățarea acum, include domenii din filele deschise",
     "description": "Run cleanup now, include cookies from open tabs. This is shown on mouseover from the available dropdown buttons."

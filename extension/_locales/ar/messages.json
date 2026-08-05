@@ -175,10 +175,6 @@
     "message": "الكعكات",
     "description": "Cookies. Primarily used in popup via alternate clean action dropdown."
   },
-  "cookieCleanUpOnStartText": {
-    "message": "تنظيف ملفات تعريف الارتباط وبيانات الموقع الأخرى من علامات التبويب المفتوحة عند بدء التشغيل",
-    "description": "Clean Cookies and other Site Data from Open Tabs on Startup"
-  },
   "cookieCleanupIgnoreOpenTabsText": {
     "message": "تشغيل التنظيف الآن، يشمل نطاقات من علامات التبويب المفتوحة",
     "description": "Run cleanup now, include cookies from open tabs. This is shown on mouseover from the available dropdown buttons."
