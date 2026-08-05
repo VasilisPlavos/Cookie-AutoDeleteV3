@@ -11,57 +11,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-.addHover:hover {
-  cursor: pointer;
-}
+.addHover:hover { cursor: pointer; }
 
-.alertPreWrap {
-  white-space: pre-wrap;
-}
+.alertPreWrap { white-space: pre-wrap; }
 
-label:hover {
-  background-color: #d3d3d3;
-  cursor: pointer;
-}
+label:hover { background-color: var(--color-surface-2); cursor: pointer; }
 
 @keyframes successAnimation {
-  0% {
-  }
-  10% {
-    background-color: #4caf50;
-    border-color: #4caf50;
-  }
-  50% {
-    background-color: #4caf50;
-    border-color: #4caf50;
-  }
-  100% {
+  10%, 50% {
+    background-color: var(--color-success-solid);
+    border-color: var(--color-success-solid);
   }
 }
-
-.successAnimated button {
-  animation: successAnimation 1.5s ease-in-out;
-}
+.successAnimated button { animation: successAnimation 1.5s ease-in-out; }
 
 @keyframes failureAnimation {
-  0% {
-  }
-  10% {
-    background-color: #f44336;
-    border-color: #f44336;
-  }
-  50% {
-    background-color: #f44336;
-    border-color: #f44336;
-  }
-  100% {
+  10%, 50% {
+    background-color: var(--color-danger-solid);
+    border-color: var(--color-danger-solid);
   }
 }
+.failureAnimated button { animation: failureAnimation 1.5s ease-in-out; }
 
-.failureAnimated button {
-  animation: failureAnimation 1.5s ease-in-out;
-}
+.table { margin-bottom: 0; }
 
-.table {
-  margin-bottom: 0;
+#cadPopup { background-color: var(--color-bg); color: var(--color-text); }
+
+/* Themed header/footer bands (replaces inline rgba overlays) */
+.cad-band { background-color: var(--color-surface-2); }
+.cad-band-bordered {
+  background-color: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
 }

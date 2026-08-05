@@ -252,6 +252,9 @@ const restoreCookies = async (
 
 const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
   const { activityLog, cache, numberToShow, state, onRemoveActivity } = props;
+  const [expandedDateTime, setExpandedDateTime] = React.useState<string | null>(
+    null,
+  );
   if (props.activityLog.length === 0) {
     return (
       <div className="alert alert-primary" role="alert">
@@ -283,7 +286,7 @@ const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
         );
         const storeIdEntries = Object.entries(log.storeIds);
         return (
-          <div key={index} className="card">
+          <div key={log.dateTime} className="card">
             <div
               style={{ display: 'flex' }}
               className="card-header"
@@ -304,11 +307,16 @@ const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
                 }}
               >
                 <button
-                  className="btn btn-link collapsed"
+                  className={`btn btn-link${
+                    expandedDateTime === log.dateTime ? '' : ' collapsed'
+                  }`}
                   type="button"
-                  data-toggle="collapse"
-                  data-target={`#collapse${index}`}
-                  aria-expanded="false"
+                  onClick={() =>
+                    setExpandedDateTime((prev) =>
+                      prev === log.dateTime ? null : log.dateTime,
+                    )
+                  }
+                  aria-expanded={expandedDateTime === log.dateTime}
                   aria-controls={`collapse${index}`}
                 >
                   {`${new Date(log.dateTime).toLocaleString([], {
@@ -325,9 +333,10 @@ const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
             </div>
             <div
               id={`collapse${index}`}
-              className="collapse"
+              className={`collapse${
+                expandedDateTime === log.dateTime ? ' show' : ''
+              }`}
               aria-labelledby={`heading${index}`}
-              data-parent="#accordion"
             >
               <div className="card-body">
                 {browsingDataEntries.map(([siteData, domains]) => {

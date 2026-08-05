@@ -1,0 +1,113 @@
+/**
+ * Copyright (c) 2022 CAD Team (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/graphs/contributors)
+ * Copyright (c) 2026 Vasilis Plavos
+ * Licensed under MIT (https://github.com/Cookie-AutoDelete/Cookie-AutoDelete/blob/3.X.X-Branch/LICENSE)
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Neutrals — light (default) */
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f4f7;
+  --color-border: #e6e8eb;
+  --color-border-strong: #d0d5dd;
+  --color-text: #1a1d21;
+  --color-text-muted: #667085;
+  --color-text-subtle: #98a2b3;
+
+  /* Accent (blue) */
+  --color-accent: #2e90fa;
+  --color-accent-hover: #1570cd;
+  --color-accent-text: #1570cd;
+  --color-accent-soft: #eff8ff;
+  --color-accent-border: #b2ddff;
+  --color-on-accent: #ffffff;
+
+  /* Semantic status */
+  --color-success: #067647; --color-success-soft: #ecfdf3; --color-success-solid: #12b76a;
+  --color-danger:  #b42318; --color-danger-soft:  #fef3f2; --color-danger-solid:  #f04438;
+  --color-warning: #b54708; --color-warning-soft: #fffaeb; --color-warning-solid: #f79009;
+  --color-info:    #026aa2; --color-info-soft:    #f0f9ff; --color-info-solid:    #0ba5ec;
+
+  /* Shape / elevation / rhythm */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto,
+    Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f1218;
+    --color-surface: #171a21;
+    --color-surface-2: #1e2229;
+    --color-border: #262a33;
+    --color-border-strong: #333945;
+    --color-text: #e7e9ee;
+    --color-text-muted: #98a2b3;
+    --color-text-subtle: #667085;
+
+    --color-accent: #2e90fa;
+    --color-accent-hover: #4aa3ff;
+    --color-accent-text: #6cb6ff;
+    --color-accent-soft: rgba(46, 144, 250, 0.16);
+    --color-accent-border: #2a4a6b;
+    --color-on-accent: #ffffff;
+
+    --color-success: #4ade80; --color-success-soft: rgba(34, 197, 94, 0.16); --color-success-solid: #22c55e;
+    --color-danger:  #f87171; --color-danger-soft:  rgba(240, 68, 56, 0.16); --color-danger-solid: #f04438;
+    --color-warning: #fbbf24; --color-warning-soft: rgba(247, 144, 9, 0.16); --color-warning-solid: #f79009;
+    --color-info:    #38bdf8; --color-info-soft:    rgba(56, 189, 248, 0.16); --color-info-solid: #0ba5ec;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Reset / base */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html,
+body { margin: 0; padding: 0; }
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--color-accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea,
+button { font-family: inherit; }

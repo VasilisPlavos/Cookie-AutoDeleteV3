@@ -28,6 +28,7 @@ interface DispatchProps {
 interface OwnProps {
   hostname: string;
   tab: browser.tabs.Tab;
+  open: boolean;
 }
 
 interface StateProps {
@@ -38,16 +39,16 @@ type CleanCollapseComponentProps = DispatchProps & OwnProps & StateProps;
 
 const CleanCollapseGroup: React.FunctionComponent<CleanCollapseComponentProps> =
   (props) => {
-    const { hostname, tab, state, onCookieCleanup } = props;
+    const { hostname, tab, state, onCookieCleanup, open } = props;
     return (
       <div
-        className="row justify-content-center collapse"
+        className={`row justify-content-center collapse cad-band-bordered${
+          open ? ' show' : ''
+        }`}
         id="cleanCollapse"
         role="group"
         style={{
           alignItems: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.05)',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
           padding: '4px 4px 8px 4px',
         }}
       >

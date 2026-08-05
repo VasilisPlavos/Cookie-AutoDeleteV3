@@ -67,13 +67,9 @@ const CleanDataButton: React.FunctionComponent<OwnProps & StateProps> = (
   } = props;
   return (
     <button
-      aria-controls="cleanCollapse"
-      aria-expanded="false"
       className={`btn ${
         btnColor || `btn-${altColor ? 'secondary' : 'primary'}`
       } btn-block px-2 mt-1`}
-      data-target="#cleanCollapse"
-      data-toggle="collapse"
       onClick={async () => {
         let result = true;
         if (onClick) {
