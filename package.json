@@ -16,8 +16,9 @@
     "compile": "webpack --config webpack.config.js --color",
     "dev": "webpack --config webpack.config.js --progress --color --watch",
     "lint": "eslint -c .eslintrc.json --max-warnings 0 --ext .ts src/",
-    "test": "jest",
+    "test": "jest --testPathIgnorePatterns /node_modules/ __tests__.perf",
     "test:coverage": "jest --coverage",
+    "test:perf": "jest __tests__/perf --runInBand",
     "test-all": "npm run test && npm run lint"
   },
   "engines": {

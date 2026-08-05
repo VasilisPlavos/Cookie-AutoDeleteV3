@@ -57,3 +57,6 @@ builds/
 # 3rd-Party Files copied from npm
 extension/global_files/browser-polyfill.min.js*
 /.playwright-mcp
+
+# Perf measurement run data (baseline/ is tracked, ad-hoc runs are not)
+/tools/perf/runs/
