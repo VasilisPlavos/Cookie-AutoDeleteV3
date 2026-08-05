@@ -67,11 +67,11 @@ body { color: var(--color-text); }
   padding: 1em;
   color: var(--color-text-muted);
   border-left: 3px solid transparent;
+  transition: background-color 0.15s;
 }
 .pure-menu-item:hover {
   background-color: var(--color-surface);
   cursor: pointer;
-  transition: background-color 0.15s;
 }
 .pure-menu-item span { color: inherit; }
 

@@ -1,6 +1,14 @@
 {
   "releases": [
     {
+      "version": "1.3.0",
+      "notes": [
+        "Redesigned interface — the popup and settings pages are rebuilt on a single design system, with a lighter sidebar, restyled buttons, tables and dropdowns, and consistent spacing throughout.",
+        "The interface now follows your system's dark mode automatically — no setting to flip.",
+        "Dropped the bundled Bootstrap and jQuery libraries in favor of the extension's own styling, making the download smaller."
+      ]
+    },
+    {
       "version": "1.2.0",
       "notes": [
         "New 'File System' site-data cleanup (Chromium browsers) — clears File System API data that sites like mega.nz leave behind in your profile. Plugin Data cleanup is now hidden on Chromium, since it's deprecated there and no longer has any effect.",

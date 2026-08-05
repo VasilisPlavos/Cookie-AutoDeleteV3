@@ -252,7 +252,9 @@ const restoreCookies = async (
 
 const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
   const { activityLog, cache, numberToShow, state, onRemoveActivity } = props;
-  const [expandedIndex, setExpandedIndex] = React.useState<number | null>(null);
+  const [expandedDateTime, setExpandedDateTime] = React.useState<string | null>(
+    null,
+  );
   if (props.activityLog.length === 0) {
     return (
       <div className="alert alert-primary" role="alert">
@@ -284,7 +286,7 @@ const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
         );
         const storeIdEntries = Object.entries(log.storeIds);
         return (
-          <div key={index} className="card">
+          <div key={log.dateTime} className="card">
             <div
               style={{ display: 'flex' }}
               className="card-header"
@@ -306,13 +308,15 @@ const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
               >
                 <button
                   className={`btn btn-link${
-                    expandedIndex === index ? '' : ' collapsed'
+                    expandedDateTime === log.dateTime ? '' : ' collapsed'
                   }`}
                   type="button"
                   onClick={() =>
-                    setExpandedIndex((prev) => (prev === index ? null : index))
+                    setExpandedDateTime((prev) =>
+                      prev === log.dateTime ? null : log.dateTime,
+                    )
                   }
-                  aria-expanded={expandedIndex === index}
+                  aria-expanded={expandedDateTime === log.dateTime}
                   aria-controls={`collapse${index}`}
                 >
                   {`${new Date(log.dateTime).toLocaleString([], {
@@ -329,7 +333,9 @@ const ActivityTable: React.FunctionComponent<ActivityTableProps> = (props) => {
             </div>
             <div
               id={`collapse${index}`}
-              className={`collapse${expandedIndex === index ? ' show' : ''}`}
+              className={`collapse${
+                expandedDateTime === log.dateTime ? ' show' : ''
+              }`}
               aria-labelledby={`heading${index}`}
             >
               <div className="card-body">

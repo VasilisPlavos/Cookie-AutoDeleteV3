@@ -29,7 +29,6 @@ interface OwnProps {
   hostname: string;
   tab: browser.tabs.Tab;
   open: boolean;
-  onCloseCleanOptions: () => void;
 }
 
 interface StateProps {

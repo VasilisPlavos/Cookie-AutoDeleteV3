@@ -305,7 +305,6 @@ class App extends Component<PopupAppComponentProps, InitialState> {
           hostname={hostname || ''}
           tab={tab}
           open={this.state.cleanOptionsOpen}
-          onCloseCleanOptions={() => this.setState({ cleanOptionsOpen: false })}
         />
 
         <div
