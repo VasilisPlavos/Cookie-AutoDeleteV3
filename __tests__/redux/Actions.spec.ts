@@ -67,20 +67,40 @@ describe('cookieCleanup', () => {
       } as never);
   });
 
-  it('clears domainsToClean after a successful startup (greyCleanup) cleanup', async () => {
+  it('clears domainsToClean after a successful startup cleanup', async () => {
     const store: Store<State, ReduxAction> = createStore({
       ...initialState,
       domainsToClean: ['a.com', 'b.com'],
     });
 
     await store.dispatch<any>(
-      Actions.cookieCleanup({ greyCleanup: true, ignoreOpenTabs: false }),
+      Actions.cookieCleanup({ startup: true, ignoreOpenTabs: false }),
     );
 
     expect(store.getState().domainsToClean).toEqual([]);
   });
 
-  it('keeps registry domains that were not cleaned on a non-startup (greyCleanup=false) cleanup', async () => {
+  it('clears domainsToClean on a startup cleanup even when greylist cleanup is off', async () => {
+    const store: Store<State, ReduxAction> = createStore({
+      ...initialState,
+      settings: {
+        ...initialState.settings,
+        [SettingID.ENABLE_GREYLIST]: {
+          name: SettingID.ENABLE_GREYLIST,
+          value: false,
+        },
+      },
+      domainsToClean: ['a.com', 'b.com'],
+    });
+
+    await store.dispatch<any>(
+      Actions.cookieCleanup({ startup: true, ignoreOpenTabs: false }),
+    );
+
+    expect(store.getState().domainsToClean).toEqual([]);
+  });
+
+  it('keeps registry domains that were not cleaned on a non-startup cleanup', async () => {
     const store: Store<State, ReduxAction> = createStore({
       ...initialState,
       domainsToClean: ['a.com'],
@@ -88,7 +108,7 @@ describe('cookieCleanup', () => {
 
     // browsingDataCleanup is empty (nothing cleaned), so nothing is dropped.
     await store.dispatch<any>(
-      Actions.cookieCleanup({ greyCleanup: false, ignoreOpenTabs: false }),
+      Actions.cookieCleanup({ startup: false, ignoreOpenTabs: false }),
     );
 
     expect(store.getState().domainsToClean).toEqual(['a.com']);
@@ -122,7 +142,7 @@ describe('cookieCleanup', () => {
     });
 
     await store.dispatch<any>(
-      Actions.cookieCleanup({ greyCleanup: false, ignoreOpenTabs: false }),
+      Actions.cookieCleanup({ startup: false, ignoreOpenTabs: false }),
     );
 
     // 'a.com' was cleaned so it is dropped; 'protected.com' (e.g. open tab or

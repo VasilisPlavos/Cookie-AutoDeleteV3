@@ -35,7 +35,7 @@ async function defaultDispatcher(): Promise<void> {
   };
   await ready();
   getStore().dispatch(
-    cookieCleanup({ greyCleanup: false, ignoreOpenTabs: false }) as unknown,
+    cookieCleanup({ startup: false, ignoreOpenTabs: false }) as unknown,
   );
 }
 

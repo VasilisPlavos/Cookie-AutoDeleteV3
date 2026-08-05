@@ -13,7 +13,7 @@
  */
 
 interface CleanupProperties {
-  greyCleanup: boolean;
+  startup: boolean;
   ignoreOpenTabs: boolean;
 }
 

@@ -68,7 +68,7 @@ browser.runtime.onStartup.addListener(async () => {
       if (!isFFSessionRestore) {
         store.dispatch<any>(
           cookieCleanup({
-            greyCleanup: true,
+            startup: true,
             ignoreOpenTabs: getSetting(
               store.getState(),
               SettingID.CLEAN_OPEN_TABS_STARTUP,

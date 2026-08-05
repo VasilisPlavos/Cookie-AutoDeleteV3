@@ -233,7 +233,7 @@ describe('ContextMenuEvents', () => {
       expect(spyCleanupService.cleanCookiesOperation).toHaveBeenCalledWith(
         expect.any(Object),
         {
-          greyCleanup: false,
+          startup: false,
           ignoreOpenTabs: false,
         },
       );
@@ -249,7 +249,7 @@ describe('ContextMenuEvents', () => {
       expect(spyCleanupService.cleanCookiesOperation).toHaveBeenCalledWith(
         expect.any(Object),
         {
-          greyCleanup: false,
+          startup: false,
           ignoreOpenTabs: true,
         },
       );

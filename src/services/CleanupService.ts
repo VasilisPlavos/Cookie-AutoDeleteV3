@@ -134,7 +134,12 @@ export const isSafeToClean = (
     firstPartyDomain,
     session,
   };
-  const { greyCleanup, openTabDomains, ignoreOpenTabs } = cleanupProperties;
+  const { startup, openTabDomains, ignoreOpenTabs } = cleanupProperties;
+  // "Is this the startup run" is the caller's fact; whether greylisted entries
+  // are cleaned is policy, and policy lives in the setting. Keeping them apart
+  // is what lets the startup run happen with greylist cleanup switched off.
+  const cleanGreylist =
+    startup && (getSetting(state, SettingID.ENABLE_GREYLIST) as boolean);
   const openTabStatus = ignoreOpenTabs
     ? OpenTabStatus.TabsWereIgnored
     : OpenTabStatus.TabsWasNotIgnored;
@@ -187,7 +192,7 @@ export const isSafeToClean = (
     cookieProperties.name === CADCOOKIENAME &&
     (matchedExpression.listType === ListType.WHITE ||
       (matchedExpression.listType === ListType.GREY &&
-        (greyCleanup ||
+        (cleanGreylist ||
           (matchedExpression.cleanSiteData &&
             matchedExpression.cleanSiteData.length !== 0))))
   ) {
@@ -207,7 +212,7 @@ export const isSafeToClean = (
       cookie: cookieProperties,
       expression: matchedExpression,
       openTabStatus,
-      reason: greyCleanup
+      reason: startup
         ? ReasonClean.CADSiteDataCookieRestart
         : ReasonClean.CADSiteDataCookie,
     };
@@ -233,7 +238,7 @@ export const isSafeToClean = (
         cookie: cookieProperties,
         expression: matchedExpression,
         openTabStatus,
-        reason: greyCleanup
+        reason: startup
           ? ReasonClean.ExpiredCookieRestart
           : ReasonClean.ExpiredCookie,
       };
@@ -241,7 +246,7 @@ export const isSafeToClean = (
   }
 
   // Evaluate the keep/clean verdict for a single site through the shared list
-  // rules: startup (greyCleanup) cleanup, whitelist/greylist matching, and the
+  // rules: startup cleanup, whitelist/greylist matching, and the
   // cleanAllCookies/cookieNames name filter. Open-tab grace and expiry are
   // decided once for the whole cookie above, so they are not repeated here.
   // Running this for both the partition top-level site AND the cookie's own host
@@ -260,14 +265,14 @@ export const isSafeToClean = (
     if (!matched) {
       return {
         clean: true,
-        reason: greyCleanup
+        reason: startup
           ? ReasonClean.StartupNoMatchedExpression
           : ReasonClean.NoMatchedExpression,
       };
     }
     // Startup cleanup of a greylisted match whose cookie name is not kept.
     if (
-      greyCleanup &&
+      cleanGreylist &&
       matched.listType === ListType.GREY &&
       // Tests the cleanAllCookies flag and if it doesn't include that name or if there is no cookieNames
       (undefinedIsTrue(matched.cleanAllCookies) ||
@@ -900,7 +905,7 @@ export const returnContainersOfOpenTabDomains = async (
 export const cleanCookiesOperation = async (
   state: State,
   cleanupProperties: CleanupProperties = {
-    greyCleanup: false,
+    startup: false,
     ignoreOpenTabs: false,
   },
 ): Promise<Record<string, any>> => {
