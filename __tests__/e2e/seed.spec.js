@@ -1,6 +1,10 @@
 const { test, expect } = require('@playwright/test');
 const { launchWithExtension, closeContext } = require('../../tools/e2e/extension');
-const { seedState, readState, WHITELISTED_SITE } = require('../../tools/e2e/seed');
+const {
+  seedState,
+  readState,
+  WHITELIST_EXPRESSION_GLOB,
+} = require('../../tools/e2e/seed');
 
 test('seeding installs the whitelist and the cleanup settings', async () => {
   const { context, extensionId, userDataDir } = await launchWithExtension();
@@ -10,7 +14,7 @@ test('seeding installs the whitelist and the cleanup settings', async () => {
 
     expect(state.lists.default).toHaveLength(1);
     expect(state.lists.default[0]).toMatchObject({
-      expression: WHITELISTED_SITE,
+      expression: WHITELIST_EXPRESSION_GLOB,
       listType: 'WHITE',
       storeId: 'default',
     });

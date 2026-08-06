@@ -127,6 +127,10 @@ pages can't reliably load webpack's async split chunks.
 a GitHub Release with the Chrome `.zip` + Firefox `.xpi`. So a release is cut by
 merging a version bump to `main` — never by pushing directly.
 
+Before merging that version bump, also run `npm run test:e2e` locally — CI only
+runs the mocked Jest suite, so the real-browser harness (see Tests below) is the
+last check against actual cookie deletion before the release goes out.
+
 ## Tests
 
 Jest + ts-jest. Tests live under `__tests__/` (currently the build tooling and

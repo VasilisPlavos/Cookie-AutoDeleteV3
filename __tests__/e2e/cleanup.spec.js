@@ -9,9 +9,12 @@ const {
 const {
   CleanupError,
   PreconditionError,
+  cookiesFor,
+  expectCookieSetStillPresent,
   expectCookiesGone,
   expectCookiesPresent,
   expectCookiesStillPresent,
+  gotoOrPrecondition,
 } = require('../../tools/e2e/cookies');
 
 let context;
@@ -39,12 +42,16 @@ test.beforeEach(async () => {
 
 test('an unlisted site is cleaned while a whitelisted site survives', async () => {
   const whitelisted = await context.newPage();
-  await whitelisted.goto(`https://${WHITELISTED_SITE}/`);
+  await gotoOrPrecondition(whitelisted, `https://${WHITELISTED_SITE}/`);
   const unlisted = await context.newPage();
-  await unlisted.goto(`https://${CLEANED_SITE}/`);
+  await gotoOrPrecondition(unlisted, `https://${CLEANED_SITE}/`);
 
   await expectCookiesPresent(context, WHITELISTED_SITE);
   await expectCookiesPresent(context, CLEANED_SITE);
+
+  // Snapshot before the tabs close: the whitelist is seeded as *.wikipedia.org
+  // (see seed.js), so every wikipedia cookie should survive, not merely one.
+  const whitelistedBefore = await cookiesFor(context, WHITELISTED_SITE);
 
   await whitelisted.close();
   await unlisted.close();
@@ -53,17 +60,17 @@ test('an unlisted site is cleaned while a whitelisted site survives', async () =
   // assertion meaning. Without it, "the whitelist survived" also passes when
   // cleanup never happened at all.
   await expectCookiesGone(context, CLEANED_SITE);
-  await expectCookiesStillPresent(context, WHITELISTED_SITE);
+  await expectCookieSetStillPresent(context, WHITELISTED_SITE, whitelistedBefore);
 });
 
 test('a domain with a tab still open is not cleaned', async () => {
   const firstTab = await context.newPage();
-  await firstTab.goto(`https://${OPEN_TAB_SITE}/`);
+  await gotoOrPrecondition(firstTab, `https://${OPEN_TAB_SITE}/`);
   const secondTab = await context.newPage();
-  await secondTab.goto(`https://${OPEN_TAB_SITE}/`);
+  await gotoOrPrecondition(secondTab, `https://${OPEN_TAB_SITE}/`);
   // Sacrificial: an unprotected domain whose deletion proves a sweep completed.
   const sacrificial = await context.newPage();
-  await sacrificial.goto(`https://${CLEANED_SITE}/`);
+  await gotoOrPrecondition(sacrificial, `https://${CLEANED_SITE}/`);
 
   await expectCookiesPresent(context, OPEN_TAB_SITE);
   await expectCookiesPresent(context, CLEANED_SITE);
@@ -73,6 +80,8 @@ test('a domain with a tab still open is not cleaned', async () => {
 
   // cleanCookiesOperation sweeps every domain, filtered by open tabs — so the
   // sacrificial domain disappearing proves this domain was evaluated and kept.
+  // bing.com is protected-by-open-tab, not whitelisted, so "at least one
+  // survivor" (not the full set) is the honest property under test here.
   await expectCookiesGone(context, CLEANED_SITE);
   await expectCookiesStillPresent(context, OPEN_TAB_SITE);
 
@@ -119,7 +128,7 @@ async function readSiteData(page) {
 
 test('site data is cleaned for an unlisted domain', async () => {
   const page = await context.newPage();
-  await page.goto(`https://${CLEANED_SITE}/`);
+  await gotoOrPrecondition(page, `https://${CLEANED_SITE}/`);
   await writeSiteData(page);
 
   const before = await readSiteData(page);
@@ -137,7 +146,7 @@ test('site data is cleaned for an unlisted domain', async () => {
   // Re-navigating lets the site set fresh cookies again; harmless, because the
   // cookie assertion already completed and this step only reads site data.
   const verify = await context.newPage();
-  await verify.goto(`https://${CLEANED_SITE}/`);
+  await gotoOrPrecondition(verify, `https://${CLEANED_SITE}/`);
   const after = await readSiteData(verify);
   await verify.close();
 

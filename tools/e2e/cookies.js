@@ -15,6 +15,17 @@ class CleanupError extends Error {
   }
 }
 
+// A navigation failure (DNS, timeout, refused connection) is a site or network
+// problem, not a CAD regression — route it into the taxonomy instead of
+// letting a raw Playwright TimeoutError escape unprefixed.
+async function gotoOrPrecondition(page, url) {
+  try {
+    await page.goto(url);
+  } catch (error) {
+    throw new PreconditionError(`navigation to ${url} failed: ${error.message}`);
+  }
+}
+
 // Match on the registrable domain rather than a cookie name: sites rename their
 // cookies, and that must not read as a CAD regression.
 function belongsTo(cookieDomain, site) {
@@ -45,7 +56,7 @@ async function expectCookiesGone(context, site, timeoutMs = CLEANUP_POLL_TIMEOUT
     remaining = await cookiesFor(context, site);
   }
   if (remaining.length > 0) {
-    const names = remaining.map((cookie) => `${cookie.domain}${cookie.name}`).join(', ');
+    const names = remaining.map((cookie) => `${cookie.domain}: ${cookie.name}`).join(', ');
     throw new CleanupError(
       `${site} still has ${remaining.length} cookie(s) after ${timeoutMs}ms: ${names}`,
     );
@@ -61,11 +72,38 @@ async function expectCookiesStillPresent(context, site) {
   }
 }
 
+// Identity for comparing a cookie across two snapshots in time: domain + name.
+// Deliberately excludes value/expiry, which legitimately churn between
+// snapshots (a still-open session can rewrite its own cookies).
+function cookieIdentity(cookie) {
+  return `${cookie.domain}: ${cookie.name}`;
+}
+
+// Stronger than expectCookiesStillPresent's "at least one survived": asserts
+// that every cookie observed in an earlier snapshot (`before`, from a prior
+// cookiesFor(context, site) call) is still present now. Use this wherever the
+// site is whitelisted and the honest expectation is "nothing was deleted",
+// not merely "something wasn't".
+async function expectCookieSetStillPresent(context, site, before) {
+  const after = await cookiesFor(context, site);
+  const afterIdentities = new Set(after.map(cookieIdentity));
+  const missing = before.filter((cookie) => !afterIdentities.has(cookieIdentity(cookie)));
+  if (missing.length > 0) {
+    const names = missing.map(cookieIdentity).join(', ');
+    throw new CleanupError(
+      `${site} is whitelisted but ${missing.length} of its ${before.length} cookie(s) ` +
+        `present before cleanup did not survive: ${names}`,
+    );
+  }
+}
+
 module.exports = {
   CleanupError,
   PreconditionError,
   cookiesFor,
+  expectCookieSetStillPresent,
   expectCookiesGone,
   expectCookiesPresent,
   expectCookiesStillPresent,
+  gotoOrPrecondition,
 };
