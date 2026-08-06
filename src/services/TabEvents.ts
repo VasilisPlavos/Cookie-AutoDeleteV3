@@ -344,6 +344,34 @@ export default class TabEvents extends StoreUser {
       showNumberOfCookiesInIcon(tab, cookieLength);
     }
   };
+  // Switching to a tab is the only moment a stale per-tab icon becomes visible:
+  // list edits repaint just the active tab, so a tab that was in the background
+  // when its list membership changed still shows the old colour.
+  public static onTabActivated = async (activeInfo: {
+    tabId: number;
+    windowId: number;
+  }): Promise<void> => {
+    const debug = getSetting(
+      StoreUser.store.getState(),
+      SettingID.DEBUG_MODE,
+    ) as boolean;
+    let tab: browser.tabs.Tab;
+    try {
+      tab = await browser.tabs.get(activeInfo.tabId);
+    } catch (err) {
+      cadLog(
+        {
+          msg: 'TabEvents.onTabActivated: tab no longer exists.',
+          type: 'warn',
+          x: { activeInfo, err: `${err as Error}` },
+        },
+        debug,
+      );
+      return;
+    }
+    await checkIfProtected(StoreUser.store.getState(), tab);
+  };
+
   // Add a delay to prevent multiple spawns of the browsingDataCleanup cookie
   protected static onTabUpdateDelay = false;
 

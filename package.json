@@ -18,6 +18,7 @@
     "lint": "eslint -c .eslintrc.json --max-warnings 0 --ext .ts src/",
     "test": "jest",
     "test:coverage": "jest --coverage",
+    "test:perf": "jest --testPathIgnorePatterns=/node_modules/ --runInBand -- __tests__/perf",
     "test-all": "npm run test && npm run lint"
   },
   "engines": {

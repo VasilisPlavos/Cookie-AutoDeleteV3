@@ -600,22 +600,45 @@ export const isFirefoxNotAndroid = (cache: CacheMap): boolean => {
 };
 
 /**
- * Test for FirstPartyIsolation (Firefox).
- * Workaround for not needing Firefox 'Privacy' permission.
+ * Test for FirstPartyIsolation (Firefox). Workaround for not needing Firefox
+ * 'Privacy' permission.
+ *
+ * `privacy.firstparty.isolate` is a live about:config pref a user can flip
+ * without restarting, so this isn't truly immutable — but nobody flips it
+ * mid-session, and a cold SW wake re-probes and self-corrects either way.
+ * The caller runs on every completed page load, so cache the promise rather
+ * than the value, both to avoid re-probing every call and so concurrent
+ * callers share one in-flight probe.
  */
-export const isFirstPartyIsolate = async (): Promise<boolean> => {
-  return browser.cookies
-    .getAll({
-      domain: '',
-    })
-    .then(() => {
-      // No error = most likely not enabled.
-      return Promise.resolve(false);
-    })
-    .catch((e) => {
-      // Error usually if firstPartyIsolate is enabled as it requires firstPartyDomain Property.
-      return Promise.resolve(e.message.indexOf('firstPartyDomain') !== -1);
-    });
+let firstPartyIsolateProbe: Promise<boolean> | null = null;
+
+export const isFirstPartyIsolate = (): Promise<boolean> => {
+  if (!firstPartyIsolateProbe) {
+    firstPartyIsolateProbe = browser.cookies
+      .getAll({
+        domain: '',
+      })
+      .then(() => {
+        // No error = most likely not enabled.
+        return false;
+      })
+      .catch((e) => {
+        // Error usually if firstPartyIsolate is enabled as it requires firstPartyDomain Property.
+        const isFPI = (e as Error).message.indexOf('firstPartyDomain') !== -1;
+        if (!isFPI) {
+          // Inconclusive (e.g. a transient error unrelated to FPI) — don't
+          // pin a possibly-wrong `false` for the rest of the service worker's
+          // life. Clear the cache so the next call re-probes.
+          firstPartyIsolateProbe = null;
+        }
+        return isFPI;
+      });
+  }
+  return firstPartyIsolateProbe;
+};
+
+export const _resetFirstPartyIsolateCache = (): void => {
+  firstPartyIsolateProbe = null;
 };
 
 /*

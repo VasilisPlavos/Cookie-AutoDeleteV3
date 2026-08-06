@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "CAD Hot-Path Meter",
+  "version": "1.0.0",
+  "description": "Measures real extension-API IPC latency and background event rates.",
+  "minimum_chrome_version": "109",
+  "action": { "default_title": "CAD Meter" },
+  "background": { "service_worker": "sw.js" },
+  "permissions": ["alarms", "cookies", "storage", "tabs"],
+  "host_permissions": ["<all_urls>", "http://localhost/*"]
+}

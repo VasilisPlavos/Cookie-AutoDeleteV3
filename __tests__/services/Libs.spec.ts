@@ -38,6 +38,7 @@ import {
   isFirefoxAndroid,
   isFirefoxNotAndroid,
   isFirstPartyIsolate,
+  _resetFirstPartyIsolateCache,
   localFileToRegex,
   matchIPInExpression,
   PARTITION_PROBE_COOKIE_NAME,
@@ -70,6 +71,14 @@ const mockCookie: browser.cookies.CookieProperties = {
 };
 
 describe('Library Functions', () => {
+  // isFirstPartyIsolate() memoises its result at module scope, and
+  // clearMocks does not touch that cache. Without this, whichever test runs
+  // first primes it for every test after — reset it file-wide so test order
+  // can't leak into unrelated specs.
+  beforeEach(() => {
+    _resetFirstPartyIsolateCache();
+  });
+
   describe('cadLog()', () => {
     beforeAll(() => {
       when(global.browser.runtime.getManifest)
@@ -1214,20 +1223,72 @@ describe('Library Functions', () => {
 
   describe('isFirstPartyIsolate()', () => {
     beforeEach(() => {
-      when(global.browser.cookies.getAll)
-        .calledWith({ domain: '' })
-        .mockResolvedValueOnce([] as never)
-        .mockRejectedValueOnce(new Error('firstPartyDomain') as never)
-        .mockRejectedValueOnce(new Error('Error') as never);
+      // Fully reset the memoisation cache AND the mock's registered
+      // jest-when handlers before every test, rather than relying on a
+      // shared mockResolvedValueOnce/mockRejectedValueOnce queue. That
+      // queue is keyed only by call args ({ domain: '' }), so it also
+      // accumulates whatever other describes in this file push onto the
+      // same matcher (e.g. getAllCookiesForDomain's FPI tests) -- an
+      // unconsumed leftover there previously shifted these three tests by
+      // one position. Each test below now owns its mock value outright.
+      (global.browser.cookies.getAll as jest.Mock).mockReset();
     });
     it('should return false if no error was caught', () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: '' })
+        .mockResolvedValueOnce([] as never);
       return expect(isFirstPartyIsolate()).resolves.toEqual(false);
     });
     it('should return true if error was caught and message contained "firstPartyDomain"', () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: '' })
+        .mockRejectedValueOnce(new Error('firstPartyDomain') as never);
       return expect(isFirstPartyIsolate()).resolves.toEqual(true);
     });
     it('should return false if error was caught and message did not contain "firstPartyIsolate"', () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: '' })
+        .mockRejectedValueOnce(new Error('Error') as never);
       return expect(isFirstPartyIsolate()).resolves.toEqual(false);
+    });
+  });
+
+  describe('isFirstPartyIsolate() caching', () => {
+    it('probes once no matter how many times it is called', async () => {
+      (global.browser.cookies.getAll as jest.Mock).mockReset();
+      (global.browser.cookies.getAll as jest.Mock).mockResolvedValue([]);
+
+      const results = await Promise.all([
+        isFirstPartyIsolate(),
+        isFirstPartyIsolate(),
+        isFirstPartyIsolate(),
+      ]);
+
+      expect(results).toEqual([false, false, false]);
+      expect(global.browser.cookies.getAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not cache an inconclusive error, and re-probes on the next call', async () => {
+      (global.browser.cookies.getAll as jest.Mock).mockReset();
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: '' })
+        .mockRejectedValueOnce(new Error('transient network error') as never)
+        .mockRejectedValueOnce(new Error('firstPartyDomain') as never);
+
+      // First probe errors for a reason unrelated to FPI. It must still
+      // return the computed (false) value, but must NOT pin it -- otherwise
+      // this false gets cached for the rest of the service worker's life.
+      await expect(isFirstPartyIsolate()).resolves.toEqual(false);
+      expect(global.browser.cookies.getAll).toHaveBeenCalledTimes(1);
+
+      // Because the first outcome wasn't cached, the next call re-probes and
+      // gets the conclusive answer.
+      await expect(isFirstPartyIsolate()).resolves.toEqual(true);
+      expect(global.browser.cookies.getAll).toHaveBeenCalledTimes(2);
+
+      // The conclusive `true` IS cached: a third call must not probe again.
+      await expect(isFirstPartyIsolate()).resolves.toEqual(true);
+      expect(global.browser.cookies.getAll).toHaveBeenCalledTimes(2);
     });
   });
 

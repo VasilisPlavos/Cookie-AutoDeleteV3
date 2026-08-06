@@ -1,0 +1,148 @@
+{
+  "swUrl": "chrome-extension://cmfgjefoegphaipemehofephdofmbdbd/bundles/background.js",
+  "totalMs": 278332,
+  "aliveMs": 224966,
+  "pctAlive": 80.8,
+  "coldStarts": 2,
+  "spans": [
+    {
+      "start": 1785980498419,
+      "end": 1785980520277,
+      "ms": 21858
+    },
+    {
+      "start": 1785980573644,
+      "end": 1785980776752,
+      "ms": 203108,
+      "stillAlive": true
+    }
+  ],
+  "phaseWindows": {
+    "A-quiet": {
+      "windowMs": 75015,
+      "swAliveMs": 21857,
+      "pctAlive": 29.1,
+      "coldStarts": 0
+    },
+    "B-browse": {
+      "windowMs": 80282,
+      "swAliveMs": 80073,
+      "pctAlive": 99.7,
+      "coldStarts": 1
+    },
+    "C-idle": {
+      "windowMs": 120011,
+      "swAliveMs": 120011,
+      "pctAlive": 100,
+      "coldStarts": 0
+    },
+    "D-heap": {
+      "windowMs": 3023,
+      "swAliveMs": 3023,
+      "pctAlive": 100,
+      "coldStarts": 0
+    }
+  },
+  "heap": {
+    "usedSize": 3727984,
+    "totalSize": 4980736,
+    "embedderHeapUsedSize": 1020128,
+    "backingStorageSize": 188652
+  },
+  "log": [
+    {
+      "t": 1785980498419,
+      "ev": "SW_START",
+      "url": "chrome-extension://cmfgjefoegphaipemehofephdofmbdbd/bundles/"
+    },
+    {
+      "t": 1785980498420,
+      "ev": "PHASE",
+      "phase": "A-quiet",
+      "seconds": 75
+    },
+    {
+      "t": 1785980520277,
+      "ev": "SW_STOP",
+      "aliveMs": 21858
+    },
+    {
+      "t": 1785980573435,
+      "ev": "PHASE",
+      "phase": "B-browse",
+      "sites": 10
+    },
+    {
+      "t": 1785980573456,
+      "ev": "PAGE",
+      "url": "https://en.wikipedia.org/wiki/HTTP_cookie"
+    },
+    {
+      "t": 1785980573644,
+      "ev": "SW_START",
+      "url": "chrome-extension://cmfgjefoegphaipemehofephdofmbdbd/bundles/"
+    },
+    {
+      "t": 1785980581479,
+      "ev": "PAGE",
+      "url": "https://www.bbc.com/news"
+    },
+    {
+      "t": 1785980589499,
+      "ev": "PAGE",
+      "url": "https://stackoverflow.com/questions"
+    },
+    {
+      "t": 1785980597528,
+      "ev": "PAGE",
+      "url": "https://github.com/explore"
+    },
+    {
+      "t": 1785980605563,
+      "ev": "PAGE",
+      "url": "https://www.reddit.com/r/programming/"
+    },
+    {
+      "t": 1785980613599,
+      "ev": "PAGE",
+      "url": "https://www.imdb.com/chart/top/"
+    },
+    {
+      "t": 1785980621623,
+      "ev": "PAGE",
+      "url": "https://www.ebay.com/"
+    },
+    {
+      "t": 1785980629656,
+      "ev": "PAGE",
+      "url": "https://weather.com/"
+    },
+    {
+      "t": 1785980637685,
+      "ev": "PAGE",
+      "url": "https://www.cnn.com/"
+    },
+    {
+      "t": 1785980645712,
+      "ev": "PAGE",
+      "url": "https://www.amazon.com/"
+    },
+    {
+      "t": 1785980653717,
+      "ev": "PHASE",
+      "phase": "C-idle",
+      "seconds": 120
+    },
+    {
+      "t": 1785980773728,
+      "ev": "PHASE",
+      "phase": "D-heap"
+    },
+    {
+      "t": 1785980776751,
+      "ev": "HEAP",
+      "usedMB": 3.56,
+      "totalMB": 4.75
+    }
+  ]
+}

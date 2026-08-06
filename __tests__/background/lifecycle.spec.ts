@@ -9,6 +9,7 @@ import { when } from 'jest-when';
 // Mock heavy services so the test only focuses on lifecycle logic
 jest.mock('../../src/services/BrowserActionService', () => ({
   setGlobalIcon: jest.fn().mockResolvedValue(undefined),
+  resetAllTabIcons: jest.fn().mockResolvedValue(undefined),
   checkIfProtected: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('../../src/services/SettingService', () => {
@@ -31,8 +32,9 @@ jest.mock('../../src/services/ContextualIdentitiesEvents', () => {
   };
 });
 
-import { ready, _resetForTests } from '../../src/background/lifecycle';
+import { getStore, ready, _resetForTests } from '../../src/background/lifecycle';
 import { PARTITION_PROBE_COOKIE_NAME } from '../../src/services/Libs';
+import { ReduxConstants } from '../../src/typings/ReduxConstants';
 
 describe('background/lifecycle', () => {
   beforeEach(() => {
@@ -137,6 +139,91 @@ describe('background/lifecycle', () => {
       global.browser.cookies.getAll = jest.fn();
       await ready();
       expect(global.browser.cookies.getAll).not.toHaveBeenCalled();
+    });
+
+    it('does not touch per-tab icons during init', async () => {
+      const bas = require('../../src/services/BrowserActionService');
+      await ready();
+      expect(bas.setGlobalIcon).toHaveBeenCalled();
+      expect(bas.resetAllTabIcons).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('store subscriptions', () => {
+    it('does not run SettingService.onSettingsChange for an unrelated slice', async () => {
+      await ready();
+      const SettingService = require('../../src/services/SettingService').default;
+      const before = SettingService.onSettingsChange.mock.calls.length;
+
+      getStore().dispatch({
+        type: ReduxConstants.ADD_CACHE,
+        payload: { key: 'probe', value: 1 },
+      });
+
+      expect(SettingService.onSettingsChange.mock.calls.length).toBe(before);
+    });
+
+    it('runs SettingService.onSettingsChange when settings change', async () => {
+      await ready();
+      const SettingService = require('../../src/services/SettingService').default;
+      const before = SettingService.onSettingsChange.mock.calls.length;
+
+      getStore().dispatch({
+        type: ReduxConstants.UPDATE_SETTING,
+        payload: { name: SettingID.DEBUG_MODE, value: true },
+      });
+
+      expect(SettingService.onSettingsChange.mock.calls.length).toBe(before + 1);
+    });
+
+    it('does not run checkIfProtected for an unrelated slice', async () => {
+      await ready();
+      const bas = require('../../src/services/BrowserActionService');
+      const before = bas.checkIfProtected.mock.calls.length;
+
+      getStore().dispatch({
+        type: ReduxConstants.ADD_CACHE,
+        payload: { key: 'probe', value: 1 },
+      });
+
+      expect(bas.checkIfProtected.mock.calls.length).toBe(before);
+    });
+
+    it('refreshes the action icon when the expression lists change', async () => {
+      await ready();
+      const bas = require('../../src/services/BrowserActionService');
+      const before = bas.checkIfProtected.mock.calls.length;
+
+      getStore().dispatch({
+        type: ReduxConstants.ADD_EXPRESSION,
+        payload: {
+          expression: '*.example.com',
+          listType: ListType.WHITE,
+          storeId: 'default',
+        },
+      });
+
+      expect(bas.checkIfProtected.mock.calls.length).toBe(before + 1);
+    });
+
+    // The raw-dispatch test above cannot see a double call: the UI reaches these
+    // actions through the Actions.ts thunks, which used to run their own
+    // checkIfProtected on top of this subscription.
+    it('runs checkIfProtected exactly once for a list edit made through the thunk', async () => {
+      await ready();
+      const bas = require('../../src/services/BrowserActionService');
+      const { addExpression } = require('../../src/redux/Actions');
+      const before = bas.checkIfProtected.mock.calls.length;
+
+      getStore().dispatch(
+        addExpression({
+          expression: '*.thunk-path.com',
+          listType: ListType.WHITE,
+          storeId: 'default',
+        }),
+      );
+
+      expect(bas.checkIfProtected.mock.calls.length).toBe(before + 1);
     });
   });
 });
