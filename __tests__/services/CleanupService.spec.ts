@@ -1556,6 +1556,30 @@ describe('CleanupService', () => {
         },
       },
     };
+    const greylistOffState: State = {
+      ...sampleState,
+      settings: {
+        ...sampleState.settings,
+        [SettingID.ENABLE_GREYLIST]: {
+          name: SettingID.ENABLE_GREYLIST,
+          value: false,
+        },
+      },
+    };
+    // Same as greylistOffState, plus CLEAN_EXPIRED on: used to prove a startup
+    // run with greylist cleanup off still reports the non-Restart expiry
+    // reason for a greylisted expression (Restart is policy, not cosmetic —
+    // see the comment on the reason assignments in CleanupService.ts).
+    const greylistOffExpiredState: State = {
+      ...greylistOffState,
+      settings: {
+        ...greylistOffState.settings,
+        [SettingID.CLEAN_EXPIRED]: {
+          name: SettingID.CLEAN_EXPIRED,
+          value: true,
+        },
+      },
+    };
 
     it('should return true for yahoo.com', () => {
       const cookieProperty: CookiePropertiesCleanup = {
@@ -1888,16 +1912,6 @@ describe('CleanupService', () => {
     });
 
     it('keeps a greylisted cookie on a startup run when greylist cleanup is off', () => {
-      const greylistOffState: State = {
-        ...sampleState,
-        settings: {
-          ...sampleState.settings,
-          [SettingID.ENABLE_GREYLIST]: {
-            name: SettingID.ENABLE_GREYLIST,
-            value: false,
-          },
-        },
-      };
       const cookieProperty = {
         ...mockCookie,
         hostname: 'github.com',
@@ -1910,6 +1924,21 @@ describe('CleanupService', () => {
       });
       expect(result.reason).toBe(ReasonKeep.MatchedExpression);
       expect(result.cleanCookie).toBe(false);
+    });
+
+    it('cleans an unlisted domain on a startup run when greylist cleanup is off, reporting StartupNoMatchedExpression', () => {
+      const cookieProperty = {
+        ...mockCookie,
+        hostname: 'nomatch.com',
+        mainDomain: 'nomatch.com',
+      };
+
+      const result = isSafeToClean(greylistOffState, cookieProperty, {
+        ...cleanupProperties,
+        startup: true,
+      });
+      expect(result.reason).toBe(ReasonClean.StartupNoMatchedExpression);
+      expect(result.cleanCookie).toBe(true);
     });
 
     it('cleans a greylisted cookie on a startup run when greylist cleanup is on', () => {
@@ -2209,6 +2238,22 @@ describe('CleanupService', () => {
       });
       expect(result.reason).toBe(ReasonClean.ExpiredCookieRestart);
       expect(result.expression?.cleanSiteData).not.toBeUndefined();
+    });
+
+    it('reports ExpiredCookie (not the Restart variant) for an expired cookie on a greylisted expression during a startup run when greylist cleanup is off, so filterSiteData still honours that expression\'s cleanSiteData list', () => {
+      const cookieProperty = {
+        ...mockCookie,
+        hostname: 'github.com',
+        mainDomain: 'github.com',
+        expirationDate: 12345,
+        session: false,
+      };
+      const result = isSafeToClean(greylistOffExpiredState, cookieProperty, {
+        ...cleanupProperties,
+        startup: true,
+      });
+      expect(result.reason).toBe(ReasonClean.ExpiredCookie);
+      expect(result.cleanCookie).toBe(true);
     });
 
     it('should return true if cookie was created through CAD with matching WHITE expression and at least one browsingData type for cleanup', () => {

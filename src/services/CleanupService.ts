@@ -212,7 +212,11 @@ export const isSafeToClean = (
       cookie: cookieProperties,
       expression: matchedExpression,
       openTabStatus,
-      reason: startup
+      // filterSiteData reads the *Restart reason as policy (it overrides a
+      // greylisted expression's cleanSiteData opt-in), so this must track
+      // cleanGreylist, not startup — a startup run with greylist cleanup off
+      // must not be treated as a restart cleanup for that expression.
+      reason: cleanGreylist
         ? ReasonClean.CADSiteDataCookieRestart
         : ReasonClean.CADSiteDataCookie,
     };
@@ -238,7 +242,9 @@ export const isSafeToClean = (
         cookie: cookieProperties,
         expression: matchedExpression,
         openTabStatus,
-        reason: startup
+        // Same rule as the CAD-cookie branch above: filterSiteData treats
+        // *Restart as policy, so key it on cleanGreylist, not startup.
+        reason: cleanGreylist
           ? ReasonClean.ExpiredCookieRestart
           : ReasonClean.ExpiredCookie,
       };

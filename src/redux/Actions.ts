@@ -371,12 +371,13 @@ export const cookieCleanup: ActionCreator<ThunkAction<
     siteDataCleaned,
   } = cachedResults as ActivityLog;
 
-  // Consume the site-data registry (state.domainsToClean) now that this run has
-  // evaluated it. Reached only after cleanCookiesOperation returned successfully.
-  // A startup run processes the whole registry, so drop all of it;
-  // it repopulates as the user browses. An active/manual run only cleaned the
-  // domains that were not open-tab or whitelist protected, so drop exactly those
-  // and keep the rest for a later run (they reset on the next startup anyway).
+  // Consume the site-data registry (state.domainsToClean) now that this run
+  // has evaluated it, reached only after cleanCookiesOperation returned
+  // successfully. A startup run processes the whole registry, so drop all of
+  // it; it repopulates as the user browses. An active/manual run only
+  // cleaned the domains that were not open-tab or whitelist protected, so
+  // drop exactly those and keep the rest for a later run (they reset on the
+  // next startup anyway).
   if (options.startup) {
     dispatch(clearDomainsToCleanUI());
   } else if ((getState().domainsToClean || []).length > 0) {
