@@ -1505,7 +1505,7 @@ describe('CleanupService', () => {
       const result = filterSiteData(cleanReasonObj, SiteDataType.LOCALSTORAGE);
       expect(result).toBe(false);
     });
-    it('should return true because of restart cleanup and is expired cookie on restart.  Edge case => usually notInAnyList takes precidence already.', () => {
+    it('should return false because an expired cookie on restart with no matched expression has no site data opt-in.  Unlisted hosts are already covered by notInAnyList.', () => {
       const cleanReasonObj: CleanReasonObject = {
         cached: false,
         cleanCookie: true,
@@ -1516,7 +1516,33 @@ describe('CleanupService', () => {
         reason: ReasonClean.ExpiredCookieRestart,
       };
       const result = filterSiteData(cleanReasonObj, SiteDataType.LOCALSTORAGE);
-      expect(result).toBe(true);
+      expect(result).toBe(false);
+    });
+    it('should return false because an expired cookie with no matched expression has no site data opt-in.', () => {
+      const cleanReasonObj: CleanReasonObject = {
+        cached: false,
+        cleanCookie: true,
+        cookie: {
+          ...restartCleanCookie,
+        },
+        openTabStatus: OpenTabStatus.TabsWasNotIgnored,
+        reason: ReasonClean.ExpiredCookie,
+      };
+      const result = filterSiteData(cleanReasonObj, SiteDataType.LOCALSTORAGE);
+      expect(result).toBe(false);
+    });
+    it('should return false because a cookie kept by a matched expression never opts its site data in.', () => {
+      const cleanReasonObj: CleanReasonObject = {
+        cached: false,
+        cleanCookie: false,
+        cookie: {
+          ...restartCleanCookie,
+        },
+        openTabStatus: OpenTabStatus.TabsWasNotIgnored,
+        reason: ReasonKeep.MatchedExpression,
+      };
+      const result = filterSiteData(cleanReasonObj, SiteDataType.LOCALSTORAGE);
+      expect(result).toBe(false);
     });
     it('should return false because of whitelist expression and is expired cookie.', () => {
       const cleanReasonObj: CleanReasonObject = {

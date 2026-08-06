@@ -16,7 +16,7 @@ import StoreUser from './StoreUser';
 import ContextualIdentitiesEvents from './ContextualIdentitiesEvents';
 import { validateSettings } from '../redux/Actions';
 import { cadLog, siteDataToBrowser, SITEDATATYPES } from './Libs';
-import { checkIfProtected, setGlobalIcon } from './BrowserActionService';
+import { checkIfProtected, resetAllTabIcons } from './BrowserActionService';
 import ContextMenuEvents from './ContextMenuEvents';
 import { ReduxConstants } from '../typings/ReduxConstants';
 
@@ -90,7 +90,7 @@ export default class SettingService extends StoreUser {
       if (!active) {
         await browser.alarms.clear('activeModeAlarm');
       }
-      await setGlobalIcon(active);
+      await resetAllTabIcons(active);
       ContextMenuEvents.updateMenuItemCheckbox(
         ContextMenuEvents.MenuID.ACTIVE_MODE,
         active,

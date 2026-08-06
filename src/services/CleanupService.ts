@@ -803,6 +803,28 @@ export const parseCleanSiteData = (bool?: boolean): boolean => {
   return bool === undefined ? false : bool;
 };
 
+// Reason membership as sets rather than `obj.reason === X || obj.reason === Y`
+// chains. That chain shape is what hid a bug here for two years: drop one
+// `obj.reason ===` and the operand becomes a bare enum member, which is truthy,
+// so the condition silently reads as always-true with no type or runtime error.
+type CleanupReason = ReasonKeep | ReasonClean;
+
+const NO_MATCHED_EXPRESSION_REASONS: ReadonlyArray<CleanupReason> = [
+  ReasonClean.NoMatchedExpression,
+  ReasonClean.StartupNoMatchedExpression,
+];
+
+const CAD_SITE_DATA_REASONS: ReadonlyArray<CleanupReason> = [
+  ReasonClean.CADSiteDataCookie,
+  ReasonClean.CADSiteDataCookieRestart,
+];
+
+// Restart reasons that only clean when the matched expression is greylisted.
+const GREY_ONLY_RESTART_REASONS: ReadonlyArray<CleanupReason> = [
+  ReasonClean.ExpiredCookieRestart,
+  ReasonClean.CADSiteDataCookieRestart,
+];
+
 /** Filter the deleted cookies from site data type */
 export const filterSiteData = (
   obj: CleanReasonObject,
@@ -810,24 +832,18 @@ export const filterSiteData = (
   debug = false,
 ): boolean => {
   const notProtectedByOpenTab = obj.reason !== ReasonKeep.OpenTabs;
-  const notInAnyLists =
-    obj.reason === ReasonClean.NoMatchedExpression ||
-    obj.reason === ReasonClean.StartupNoMatchedExpression;
-  const isExpiredNotRestart = obj.reason === ReasonClean.ExpiredCookie;
+  const notInAnyLists = NO_MATCHED_EXPRESSION_REASONS.includes(obj.reason);
   const isExpiredRestart = obj.reason === ReasonClean.ExpiredCookieRestart;
   const isCADCookieNoExpression =
-    (obj.reason === ReasonClean.CADSiteDataCookie ||
-      ReasonClean.CADSiteDataCookieRestart) &&
-    obj.expression === undefined;
+    CAD_SITE_DATA_REASONS.includes(obj.reason) && obj.expression === undefined;
   const nonBlankCookieHostName = obj.cookie.hostname.trim() !== '';
   const cleanSiteDataInExpression = parseCleanSiteData(
     obj.expression?.cleanSiteData?.includes(siteData),
   );
   const isRestartCleanup =
-    (isExpiredRestart && obj.expression?.listType === ListType.GREY) ||
-    (obj.reason === ReasonClean.CADSiteDataCookieRestart &&
-      obj.expression?.listType === ListType.GREY) ||
-    obj.reason === ReasonClean.StartupCleanupAndGreyList;
+    obj.reason === ReasonClean.StartupCleanupAndGreyList ||
+    (GREY_ONLY_RESTART_REASONS.includes(obj.reason) &&
+      obj.expression?.listType === ListType.GREY);
   const canCleanSiteData =
     isCADCookieNoExpression || cleanSiteDataInExpression || isRestartCleanup;
   const cro: CleanReasonObject = {
@@ -844,7 +860,7 @@ export const filterSiteData = (
         notProtectedByOpenTab,
         notInAnyLists,
         siteData,
-        isExpiredNotRestart,
+        isExpiredNotRestart: obj.reason === ReasonClean.ExpiredCookie,
         isExpiredRestart,
         isCADCookieNoExpression,
         cleanSiteDataInExpression,

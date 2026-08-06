@@ -393,6 +393,33 @@ describe('TabEvents', () => {
     });
   });
 
+  describe('onTabActivated', () => {
+    it('repaints the action icon for the newly activated tab', async () => {
+      const tab = { ...sampleTab, id: 7, url: 'https://example.com' };
+      when(global.browser.tabs.get)
+        .calledWith(7)
+        .mockResolvedValue(tab as never);
+
+      await TabEvents.onTabActivated({ tabId: 7, windowId: 1 });
+
+      expect(spyBrowserActions.checkIfProtected).toHaveBeenCalledWith(
+        expect.anything(),
+        tab,
+      );
+    });
+
+    it('does not throw when the tab is already gone', async () => {
+      when(global.browser.tabs.get)
+        .calledWith(999)
+        .mockRejectedValue(new Error('No tab with id: 999') as never);
+
+      await expect(
+        TabEvents.onTabActivated({ tabId: 999, windowId: 1 }),
+      ).resolves.toBeUndefined();
+      expect(spyBrowserActions.checkIfProtected).not.toHaveBeenCalled();
+    });
+  });
+
   describe('onTabUpdate', () => {
     beforeAll(() => {
       when(spyTabEvents.getAllCookieActions)

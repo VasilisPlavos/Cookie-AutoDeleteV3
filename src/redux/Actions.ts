@@ -14,7 +14,6 @@
 
 import { ActionCreator, Dispatch } from 'redux';
 import { ThunkAction } from 'redux-thunk';
-import { checkIfProtected } from '../services/BrowserActionService';
 import { cleanCookiesOperation } from '../services/CleanupService';
 import {
   getContainerExpressionDefault,
@@ -100,18 +99,15 @@ export const addExpression = (payload: Expression) => (
     },
     type: ReduxConstants.ADD_EXPRESSION,
   });
-  checkIfProtected(getState());
 };
 
 export const clearExpressions = (payload: StoreIdToExpressionList) => (
   dispatch: Dispatch<ReduxAction>,
-  getState: GetState,
 ): void => {
   dispatch({
     payload,
     type: ReduxConstants.CLEAR_EXPRESSIONS,
   });
-  checkIfProtected(getState());
 };
 
 export const removeExpression = (payload: Expression) => (
@@ -126,7 +122,6 @@ export const removeExpression = (payload: Expression) => (
     },
     type: ReduxConstants.REMOVE_EXPRESSION,
   });
-  checkIfProtected(getState());
 };
 
 export const updateExpression = (payload: Expression) => (
@@ -183,18 +178,15 @@ export const updateExpression = (payload: Expression) => (
       }
     }
   }
-  checkIfProtected(getState());
 };
 
 export const removeList = (payload: keyof StoreIdToExpressionList) => (
   dispatch: Dispatch<ReduxAction>,
-  getState: GetState,
 ): void => {
   dispatch({
     payload,
     type: ReduxConstants.REMOVE_LIST,
   });
-  checkIfProtected(getState());
 };
 
 export const addActivity = (payload: ActivityLog): ADD_ACTIVITY_LOG => ({

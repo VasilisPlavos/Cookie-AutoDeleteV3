@@ -1,10 +1,21 @@
 {
   "releases": [
     {
-      "version": "1.3.1",
+      "version": "1.3.2",
       "notes": [
         "Removed the 'Clean Cookies and other Site Data from Open Tabs on Startup' setting. Open tabs stay protected from automatic cleaning — unloaded tabs still follow 'Enable Cleanup for Discarded/Unloaded Tabs' — use 'Clean, include open tabs' from the popup or the right-click menu when you want to clean them anyway.",
-        "Startup cleanup now runs whenever automatic cleaning is on, instead of only when greylist cleanup on browser restart is enabled. Greylisted sites are still only cleared at startup if that setting is on."
+        "Startup cleanup now runs whenever automatic cleaning is on, instead of only when greylist cleanup on browser restart is enabled. Greylisted sites are still only cleared at startup if that setting is on.",
+        "Importing a settings backup made by an older version no longer fails outright when it mentions a setting that has since been removed; an import that matches nothing at all is still reported as an error."
+      ]
+    },
+    {
+      "version": "1.3.1",
+      "notes": [
+        "Fixed the toolbar icon losing its per-site colour on background tabs after the extension's background worker restarted.",
+        "The extension now does less work when your browser starts with many tabs open.",
+        "Removed repeated internal checks that ran on every page load and on unrelated internal updates.",
+        "The toolbar icon now updates as soon as you switch to a tab, so a site you added to a list while its tab sat in the background no longer shows the old colour.",
+        "Fixed a faulty check that could clear a site's cache, storage and service workers merely because one of its cookies had expired, without that site's data cleanup ever having been asked for."
       ]
     },
     {

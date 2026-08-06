@@ -1,0 +1,275 @@
+{
+  "startedAt": 1785970707565,
+  "phases": [
+    {
+      "kind": "phase",
+      "phase": "start",
+      "ts": 1785970821900
+    },
+    {
+      "kind": "phase",
+      "phase": "browse-start",
+      "ts": 1785970823636
+    },
+    {
+      "kind": "phase",
+      "phase": "browse-end",
+      "ts": 1785970905532
+    },
+    {
+      "kind": "phase",
+      "phase": "idle-start",
+      "ts": 1785970905533,
+      "openTabs": 11
+    },
+    {
+      "kind": "phase",
+      "phase": "idle-end",
+      "ts": 1785970965991
+    }
+  ],
+  "ipc": [
+    {
+      "name": "tabs.query({active:true})",
+      "n": 300,
+      "mean": 0.15166666666666667,
+      "p50": 0.10000002384185791,
+      "p90": 0.20000004768371582,
+      "p99": 0.9000000357627869
+    },
+    {
+      "name": "tabs.query({windowType:normal})",
+      "n": 300,
+      "mean": 0.11766666670640309,
+      "p50": 0.10000002384185791,
+      "p90": 0.19999998807907104,
+      "p99": 0.30000001192092896
+    },
+    {
+      "name": "cookies.getAll({domain})",
+      "n": 300,
+      "mean": 0.14600000003973643,
+      "p50": 0.10000002384185791,
+      "p90": 0.20000004768371582,
+      "p99": 0.30000001192092896
+    },
+    {
+      "name": "cookies.getAll({domain:\"\"}) [FPI probe]",
+      "n": 300,
+      "mean": 0.14999999980131784,
+      "p50": 0.10000002384185791,
+      "p90": 0.20000004768371582,
+      "p99": 0.30000001192092896
+    },
+    {
+      "name": "action.setIcon(imageData)",
+      "n": 300,
+      "mean": 0.5376666667064031,
+      "p50": 0.5,
+      "p90": 0.699999988079071,
+      "p99": 0.9000000357627869
+    },
+    {
+      "name": "action.getTitle()",
+      "n": 300,
+      "mean": 0.08766666670640309,
+      "p50": 0.09999996423721313,
+      "p90": 0.19999998807907104,
+      "p99": 0.20000004768371582
+    },
+    {
+      "name": "action.setTitle()",
+      "n": 300,
+      "mean": 0.13433333337306977,
+      "p50": 0.10000002384185791,
+      "p90": 0.20000004768371582,
+      "p99": 0.3999999761581421
+    },
+    {
+      "name": "action.setBadgeText()",
+      "n": 300,
+      "mean": 0.1369999998807907,
+      "p50": 0.10000002384185791,
+      "p90": 0.20000004768371582,
+      "p99": 0.3999999761581421
+    },
+    {
+      "name": "action.setBadgeBackgroundColor()",
+      "n": 300,
+      "mean": 0.1246666665871938,
+      "p50": 0.10000002384185791,
+      "p90": 0.20000004768371582,
+      "p99": 0.3999999761581421
+    },
+    {
+      "name": "storage.local.get()",
+      "n": 300,
+      "mean": 0.09700000007947286,
+      "p50": 0.10000002384185791,
+      "p90": 0.19999998807907104,
+      "p99": 0.30000001192092896
+    },
+    {
+      "name": "storage.local.set(5KB)",
+      "n": 150,
+      "mean": 0.18666666626930237,
+      "p50": 0.19999998807907104,
+      "p90": 0.30000001192092896,
+      "p99": 0.5
+    },
+    {
+      "name": "storage.session.get()",
+      "n": 300,
+      "mean": 0.07766666690508525,
+      "p50": 0.09999996423721313,
+      "p90": 0.19999998807907104,
+      "p99": 0.20000004768371582
+    },
+    {
+      "name": "alarms.get()",
+      "n": 300,
+      "mean": 0.07133333325386047,
+      "p50": 0.09999996423721313,
+      "p90": 0.10000002384185791,
+      "p99": 0.20000004768371582
+    }
+  ],
+  "ipcLoaded": {
+    "tabCount": 11,
+    "results": [
+      {
+        "name": "tabs.query({windowType:normal}) @manyTabs",
+        "n": 200,
+        "mean": 0.2975,
+        "p50": 0.30000001192092896,
+        "p90": 0.40000003576278687,
+        "p99": 0.5
+      },
+      {
+        "name": "action.setIcon(imageData) @manyTabs",
+        "n": 200,
+        "mean": 0.5119999998807907,
+        "p50": 0.5,
+        "p90": 0.6000000238418579,
+        "p99": 0.8999999761581421
+      }
+    ]
+  },
+  "pages": [
+    {
+      "kind": "page",
+      "url": "https://en.wikipedia.org/wiki/HTTP_cookie",
+      "ms": 8029,
+      "openTabs": 2
+    },
+    {
+      "kind": "page",
+      "url": "https://www.bbc.com/news",
+      "ms": 8030,
+      "openTabs": 3
+    },
+    {
+      "kind": "page",
+      "url": "https://stackoverflow.com/questions",
+      "ms": 8037,
+      "openTabs": 4
+    },
+    {
+      "kind": "page",
+      "url": "https://github.com/explore",
+      "ms": 8029,
+      "openTabs": 5
+    },
+    {
+      "kind": "page",
+      "url": "https://www.reddit.com/r/programming/",
+      "ms": 8028,
+      "openTabs": 6
+    },
+    {
+      "kind": "page",
+      "url": "https://www.imdb.com/chart/top/",
+      "ms": 8033,
+      "openTabs": 7
+    },
+    {
+      "kind": "page",
+      "url": "https://www.ebay.com/",
+      "ms": 8037,
+      "openTabs": 8
+    },
+    {
+      "kind": "page",
+      "url": "https://weather.com/",
+      "ms": 8033,
+      "openTabs": 9
+    },
+    {
+      "kind": "page",
+      "url": "https://www.cnn.com/",
+      "ms": 8034,
+      "openTabs": 10
+    },
+    {
+      "kind": "page",
+      "url": "https://www.amazon.com/",
+      "ms": 8030,
+      "openTabs": 11
+    }
+  ],
+  "totals": {
+    "cookieEvents": 2174,
+    "cookieRemoved": 1001,
+    "tabUpdatedEvents": 69,
+    "tabUpdatedComplete": 28,
+    "tabsRemoved": 0
+  },
+  "byPhase": {
+    "ipc-bench": {
+      "cookieEvents": 0,
+      "cookieRemoved": 0,
+      "cookieByCause": {},
+      "tabUpdatedEvents": 0,
+      "tabUpdatedComplete": 0,
+      "tabUpdatedByKey": {},
+      "tabsRemoved": 0,
+      "flushes": 1
+    },
+    "browse": {
+      "cookieEvents": 2124,
+      "cookieRemoved": 977,
+      "cookieByCause": {
+        "explicit": 1147,
+        "overwrite": 686,
+        "expired_overwrite": 291
+      },
+      "tabUpdatedEvents": 69,
+      "tabUpdatedComplete": 28,
+      "tabUpdatedByKey": {
+        "status": 38,
+        "url": 15,
+        "title": 15,
+        "favIconUrl": 16
+      },
+      "tabsRemoved": 0,
+      "flushes": 10
+    },
+    "idle": {
+      "cookieEvents": 50,
+      "cookieRemoved": 24,
+      "cookieByCause": {
+        "explicit": 26,
+        "overwrite": 22,
+        "expired": 1,
+        "expired_overwrite": 1
+      },
+      "tabUpdatedEvents": 0,
+      "tabUpdatedComplete": 0,
+      "tabUpdatedByKey": {},
+      "tabsRemoved": 0,
+      "flushes": 12
+    }
+  },
+  "errors": [],
+  "finishedAt": 1785970966176
+}
