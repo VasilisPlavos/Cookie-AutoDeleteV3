@@ -26,37 +26,54 @@ async function launchWithExtension() {
   // state from the previous run into the assertions.
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cad-e2e-'));
 
-  const context = await chromium.launchPersistentContext(userDataDir, {
-    headless: false,
-    args: [
-      `--disable-extensions-except=${EXTENSION_DIR}`,
-      `--load-extension=${EXTENSION_DIR}`,
-      '--no-first-run',
-      '--no-default-browser-check',
-    ],
-  });
+  let context;
+  try {
+    context = await chromium.launchPersistentContext(userDataDir, {
+      headless: false,
+      args: [
+        `--disable-extensions-except=${EXTENSION_DIR}`,
+        `--load-extension=${EXTENSION_DIR}`,
+        '--no-first-run',
+        '--no-default-browser-check',
+      ],
+    });
 
-  let worker = context.serviceWorkers()[0];
-  if (!worker) {
-    try {
-      worker = await context.waitForEvent('serviceworker', {
-        timeout: SERVICE_WORKER_TIMEOUT_MS,
-      });
-    } catch {
-      await context.close();
-      throw new SetupError(
-        'the extension service worker never started; the extension failed to load',
-      );
+    let worker = context.serviceWorkers()[0];
+    if (!worker) {
+      try {
+        worker = await context.waitForEvent('serviceworker', {
+          timeout: SERVICE_WORKER_TIMEOUT_MS,
+        });
+      } catch {
+        throw new SetupError(
+          'the extension service worker never started; the extension failed to load',
+        );
+      }
     }
-  }
 
-  const extensionId = new URL(worker.url()).host;
-  if (!extensionId) {
-    await context.close();
-    throw new SetupError('could not resolve the extension id from the service worker url');
-  }
+    const extensionId = new URL(worker.url()).host;
+    if (!extensionId) {
+      throw new SetupError('could not resolve the extension id from the service worker url');
+    }
 
-  return { context, worker, extensionId, userDataDir };
+    return { context, worker, extensionId, userDataDir };
+  } catch (error) {
+    // Best-effort cleanup on any failure path after the temp profile was
+    // created. Swallow cleanup errors so the original error — what the
+    // caller actually needs to see — is never masked by a secondary
+    // failure while closing an already-broken context or removing an
+    // already-gone directory.
+    try {
+      if (context) {
+        await closeContext(context, userDataDir);
+      } else {
+        fs.rmSync(userDataDir, { recursive: true, force: true });
+      }
+    } catch {
+      // ignore; rethrow the original error below
+    }
+    throw error;
+  }
 }
 
 async function closeContext(context, userDataDir) {
