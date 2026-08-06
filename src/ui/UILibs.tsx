@@ -78,3 +78,27 @@ export const expressionFieldsForCookiePolicy = (
       return { cleanAllCookies: true, firstPartyOnly: false };
   }
 };
+
+// Settings Import/Export share this problem: a setting can be removed from
+// initialState (e.g. dropping cleanCookiesFromOpenTabsOnStartup) while still
+// showing up on either side — in an import file exported by an older version,
+// or in this install's own redux state if it was rehydrated from
+// storage.local before the removal. Both call sites only want the settings
+// still known to this version, so this splits the input once: the settings
+// whose name is a known key, and just the names that were not (for logging —
+// never surfaced to the user).
+export const partitionSettingsByKnownKeys = (
+  settings: readonly Setting[],
+  knownKeys: readonly string[],
+): { known: Setting[]; dropped: string[] } => {
+  const known: Setting[] = [];
+  const dropped: string[] = [];
+  settings.forEach((setting) => {
+    if (knownKeys.includes(setting.name)) {
+      known.push(setting);
+    } else {
+      dropped.push(setting.name);
+    }
+  });
+  return { known, dropped };
+};

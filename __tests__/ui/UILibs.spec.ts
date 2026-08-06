@@ -18,6 +18,7 @@ import { advanceTo, clear } from 'jest-date-mock';
 import {
   appendDynamicTimestamp,
   downloadObjectAsJSON,
+  partitionSettingsByKnownKeys,
 } from '../../src/ui/UILibs';
 
 describe('appendDynamicTimestamp', () => {
@@ -125,6 +126,39 @@ describe('expressionFieldsForCookiePolicy', () => {
     expect(expressionFieldsForCookiePolicy('selected')).toEqual({
       cleanAllCookies: false,
       firstPartyOnly: false,
+    });
+  });
+});
+
+describe('partitionSettingsByKnownKeys', () => {
+  const knownKeys = ['activeMode', 'delayBeforeClean'];
+
+  it('passes through settings whose name is a known key', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'delayBeforeClean', value: 15 },
+    ];
+    expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
+      known: settings,
+      dropped: [],
+    });
+  });
+
+  it('reports settings whose name is not a known key as dropped', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'cleanCookiesFromOpenTabsOnStartup', value: false },
+    ];
+    expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
+      known: [{ name: 'activeMode', value: true }],
+      dropped: ['cleanCookiesFromOpenTabsOnStartup'],
+    });
+  });
+
+  it('returns empty known/dropped arrays for an empty input', () => {
+    expect(partitionSettingsByKnownKeys([], knownKeys)).toEqual({
+      known: [],
+      dropped: [],
     });
   });
 });

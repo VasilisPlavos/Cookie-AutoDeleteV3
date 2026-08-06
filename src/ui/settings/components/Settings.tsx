@@ -26,7 +26,10 @@ import { ReduxAction } from '../../../typings/ReduxConstants';
 import CheckboxSetting from '../../common_components/CheckboxSetting';
 import IconButton from '../../common_components/IconButton';
 import SelectInput from '../../common_components/SelectInput';
-import { downloadObjectAsJSON } from '../../UILibs';
+import {
+  downloadObjectAsJSON,
+  partitionSettingsByKnownKeys,
+} from '../../UILibs';
 import SettingsTooltip from './SettingsTooltip';
 
 const styles = {
@@ -135,33 +138,35 @@ class Settings extends React.Component<SettingProps> {
           a[c.name] = c;
           return a;
         }, {});
-        const settingKeys = Object.keys(newSettings);
-        const unknownKeys = settingKeys.filter(
-          (key) => !initialSettingKeys.includes(key),
+        // A setting removed after this file was exported (e.g. an older
+        // version's backup) is dropped rather than failing the whole import.
+        const { known, dropped } = partitionSettingsByKnownKeys(
+          Object.values(newSettings),
+          initialSettingKeys,
         );
-        if (unknownKeys.length > 0) {
-          this.setError(
-            new Error(
-              `${browser.i18n.getMessage(
-                'importCoreSettingsFailed',
-              )}:  ${unknownKeys.join(', ')}`,
-            ),
+        if (dropped.length > 0) {
+          cadLog(
+            {
+              msg: 'importCoreSettings: Dropped settings no longer supported by this version.',
+              x: dropped,
+            },
+            debug,
           );
-          return;
         }
-        settingKeys.forEach((setting) => {
-          if (settings[setting].value !== newSettings[setting].value) {
+        known.forEach((newSetting) => {
+          const settingName = newSetting.name;
+          if (settings[settingName].value !== newSetting.value) {
             cadLog(
               {
-                msg: `Setting updated:  ${setting} (${settings[setting].value} => ${newSettings[setting].value})`,
+                msg: `Setting updated:  ${settingName} (${settings[settingName].value} => ${newSetting.value})`,
               },
               debug,
             );
-            onUpdateSetting(newSettings[setting]);
+            onUpdateSetting(newSetting);
           } else {
             cadLog(
               {
-                msg: `Setting remains unchanged:  ${setting} (${settings[setting].value})`,
+                msg: `Setting remains unchanged:  ${settingName} (${settings[settingName].value})`,
               },
               debug,
             );
@@ -186,8 +191,14 @@ class Settings extends React.Component<SettingProps> {
 
   public exportCoreSettings() {
     const { settings } = this.props;
-    // Convert from name:{name, value} to {name, value}
-    const exportSettings: Setting[] = Object.values(settings);
+    // Convert from name:{name, value} to {name, value}, dropping any setting
+    // that used to exist but has since been removed — this install's stored
+    // state can still carry the stale key even though initialState no longer
+    // does, and re-exporting it would make the file fail re-import.
+    const { known: exportSettings } = partitionSettingsByKnownKeys(
+      Object.values(settings),
+      Object.keys(initialState.settings),
+    );
     const r = downloadObjectAsJSON(
       { settings: exportSettings },
       'CoreSettings',
