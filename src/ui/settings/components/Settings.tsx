@@ -131,17 +131,10 @@ class Settings extends React.Component<SettingProps> {
           );
           return;
         }
-        // from { name, value } to name:{ name, value }
-        const newSettings: MapToSettingObject = (
-          jsonImport.settings as unknown as Setting[]
-        ).reduce((a: { [k: string]: Setting }, c: Setting) => {
-          a[c.name] = c;
-          return a;
-        }, {});
         // A setting removed after this file was exported (e.g. an older
         // version's backup) is dropped rather than failing the whole import.
         const { known, dropped } = partitionSettingsByKnownKeys(
-          Object.values(newSettings),
+          jsonImport.settings as unknown as Setting[],
           initialSettingKeys,
         );
         if (dropped.length > 0) {
@@ -152,6 +145,16 @@ class Settings extends React.Component<SettingProps> {
             },
             debug,
           );
+        }
+        if (known.length === 0) {
+          this.setError(
+            new Error(
+              `${browser.i18n.getMessage(
+                'importCoreSettingsFailed',
+              )}:  ${dropped.join(', ')}`,
+            ),
+          );
+          return;
         }
         known.forEach((newSetting) => {
           const settingName = newSetting.name;

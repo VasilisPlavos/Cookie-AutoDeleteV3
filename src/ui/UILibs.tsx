@@ -79,14 +79,8 @@ export const expressionFieldsForCookiePolicy = (
   }
 };
 
-// Settings Import/Export share this problem: a setting can be removed from
-// initialState (e.g. dropping cleanCookiesFromOpenTabsOnStartup) while still
-// showing up on either side — in an import file exported by an older version,
-// or in this install's own redux state if it was rehydrated from
-// storage.local before the removal. Both call sites only want the settings
-// still known to this version, so this splits the input once: the settings
-// whose name is a known key, and just the names that were not (for logging —
-// never surfaced to the user).
+// A removed setting (e.g. cleanCookiesFromOpenTabsOnStartup) can still show
+// up here — from an older export file, or rehydrated from storage.local.
 export const partitionSettingsByKnownKeys = (
   settings: readonly Setting[],
   knownKeys: readonly string[],

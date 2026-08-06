@@ -161,4 +161,15 @@ describe('partitionSettingsByKnownKeys', () => {
       dropped: [],
     });
   });
+
+  it('returns an empty known array when no setting matches (e.g. an unrelated import file)', () => {
+    const settings: Setting[] = [
+      { name: 'someOtherAppSetting', value: true },
+      { name: 'cleanCookiesFromOpenTabsOnStartup', value: false },
+    ];
+    expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
+      known: [],
+      dropped: ['someOtherAppSetting', 'cleanCookiesFromOpenTabsOnStartup'],
+    });
+  });
 });
