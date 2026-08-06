@@ -7,6 +7,8 @@ const {
   seedState,
 } = require('../../tools/e2e/seed');
 const {
+  CleanupError,
+  PreconditionError,
   expectCookiesGone,
   expectCookiesPresent,
   expectCookiesStillPresent,
@@ -82,20 +84,27 @@ const SITE_DATA_KEY = 'cad-e2e-marker';
 const SITE_DATA_DB = 'cad-e2e-db';
 
 async function writeSiteData(page) {
-  await page.evaluate(
-    ({ key, db }) =>
-      new Promise((resolve, reject) => {
-        localStorage.setItem(key, 'present');
-        const request = indexedDB.open(db, 1);
-        request.onupgradeneeded = () => request.result.createObjectStore('items');
-        request.onsuccess = () => {
-          request.result.close();
-          resolve();
-        };
-        request.onerror = () => reject(request.error);
-      }),
-    { key: SITE_DATA_KEY, db: SITE_DATA_DB },
-  );
+  try {
+    await page.evaluate(
+      ({ key, db }) =>
+        new Promise((resolve, reject) => {
+          localStorage.setItem(key, 'present');
+          const request = indexedDB.open(db, 1);
+          request.onupgradeneeded = () => request.result.createObjectStore('items');
+          request.onsuccess = () => {
+            request.result.close();
+            resolve();
+          };
+          request.onerror = () => reject(request.error);
+        }),
+      { key: SITE_DATA_KEY, db: SITE_DATA_DB },
+    );
+  } catch (error) {
+    // A raw IndexedDB failure (quota exhausted, storage disabled) is a site or
+    // browser problem, not a CAD regression — carry its detail into the
+    // taxonomy instead of letting an unprefixed DOMException escape.
+    throw new PreconditionError(`could not write site data: ${error.message}`);
+  }
 }
 
 async function readSiteData(page) {
@@ -115,8 +124,8 @@ test('site data is cleaned for an unlisted domain', async () => {
 
   const before = await readSiteData(page);
   if (before.localStorageValue !== 'present' || !before.databases.includes(SITE_DATA_DB)) {
-    throw new Error(
-      `PRECONDITION FAILED: could not write site data on ${CLEANED_SITE}. ` +
+    throw new PreconditionError(
+      `could not write site data on ${CLEANED_SITE}. ` +
         'This is a site or browser problem, not a CAD regression.',
     );
   }
@@ -133,13 +142,13 @@ test('site data is cleaned for an unlisted domain', async () => {
   await verify.close();
 
   if (after.localStorageValue !== null) {
-    throw new Error(
-      `CLEANUP FAILED: localStorage key "${SITE_DATA_KEY}" survived on ${CLEANED_SITE}`,
+    throw new CleanupError(
+      `localStorage key "${SITE_DATA_KEY}" survived on ${CLEANED_SITE}`,
     );
   }
   if (after.databases.includes(SITE_DATA_DB)) {
-    throw new Error(
-      `CLEANUP FAILED: IndexedDB database "${SITE_DATA_DB}" survived on ${CLEANED_SITE}`,
+    throw new CleanupError(
+      `IndexedDB database "${SITE_DATA_DB}" survived on ${CLEANED_SITE}`,
     );
   }
 });
