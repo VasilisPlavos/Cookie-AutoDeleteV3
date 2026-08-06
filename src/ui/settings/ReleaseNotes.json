@@ -6,7 +6,8 @@
         "Fixed the toolbar icon losing its per-site colour on background tabs after the extension's background worker restarted.",
         "The extension now does less work when your browser starts with many tabs open.",
         "Removed repeated internal checks that ran on every page load and on unrelated internal updates.",
-        "The toolbar icon now updates as soon as you switch to a tab, so a site you added to a list while its tab sat in the background no longer shows the old colour."
+        "The toolbar icon now updates as soon as you switch to a tab, so a site you added to a list while its tab sat in the background no longer shows the old colour.",
+        "Added an automated pre-release check that loads the extension into a real browser and confirms cookies and site data are genuinely deleted."
       ]
     },
     {

@@ -35,6 +35,7 @@ npm run lint           # eslint, --max-warnings 0
 npm test               # jest
 npm run test-all       # test + lint (run before every PR)
 npm run test:coverage  # jest with coverage
+npm run test:e2e       # Playwright harness in a real Chromium (local only, needs network)
 ```
 
 Run a single test file / name:
@@ -130,6 +131,16 @@ merging a version bump to `main` — never by pushing directly.
 
 Jest + ts-jest. Tests live under `__tests__/` (currently the build tooling and
 release workflows); setup in `__tests__/setup.js`, `testEnvironment: node`.
+
+`__tests__/e2e/` is a **local pre-release harness**, not part of `npm test`. It
+loads the built extension into Playwright's Chromium, browses real sites, and
+asserts against the real cookie jar — the one thing the mocked unit tests cannot
+do. It needs network access and is excluded from Jest via
+`testPathIgnorePatterns`. Run `npm run test:e2e` before cutting a release.
+
+Failures are prefixed to say who is at fault: `SETUP FAILED` (harness),
+`PRECONDITION FAILED` (site or network), `CLEANUP FAILED` (a real CAD
+regression). Only the last one should block a release.
 
 ## Agent skills
 
