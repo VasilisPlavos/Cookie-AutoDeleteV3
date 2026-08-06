@@ -179,10 +179,6 @@
     "message": "Cookie",
     "description": "Cookies. Primarily used in popup via alternate clean action dropdown."
   },
-  "cookieCleanUpOnStartText": {
-    "message": "Pulire i cookie e altri dati del sito da schede aperte all'avvio",
-    "description": "Clean Cookies and other Site Data from Open Tabs on Startup"
-  },
   "cookieCleanupIgnoreOpenTabsText": {
     "message": "Esegui la pulizia ora, include i domini dalle schede aperte",
     "description": "Run cleanup now, include cookies from open tabs. This is shown on mouseover from the available dropdown buttons."

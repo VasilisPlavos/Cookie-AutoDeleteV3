@@ -183,10 +183,6 @@
     "message": "Cookies",
     "description": "Cookies. Primarily used in popup via alternate clean action dropdown."
   },
-  "cookieCleanUpOnStartText": {
-    "message": "Rens cookies og andre webstedsdata fra åbne faner ved opstart",
-    "description": "Clean Cookies and other Site Data from Open Tabs on Startup"
-  },
   "cookieCleanupIgnoreOpenTabsText": {
     "message": "Slet nu, inkluder domæner fra åbne faner",
     "description": "Run cleanup now, include cookies from open tabs. This is shown on mouseover from the available dropdown buttons."

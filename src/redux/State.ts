@@ -31,10 +31,6 @@ export const initialState: State = {
       name: SettingID.CLEANUP_FILESYSTEMS,
       value: false,
     },
-    [SettingID.CLEAN_OPEN_TABS_STARTUP]: {
-      name: SettingID.CLEAN_OPEN_TABS_STARTUP,
-      value: false,
-    },
     [SettingID.CLEAN_EXPIRED]: {
       name: SettingID.CLEAN_EXPIRED,
       value: false,
@@ -147,3 +143,12 @@ export const initialState: State = {
   cache: {},
   domainsToClean: [],
 };
+
+// The authoritative "setting keys this version knows about" — the single
+// source consulted whenever a stored/imported/exported setting needs to be
+// checked against what the current version actually supports (e.g. Settings
+// import/export, which must tolerate keys from a setting removed since the
+// file was produced).
+export const knownSettingKeys: ReadonlySet<string> = new Set(
+  Object.keys(initialState.settings),
+);

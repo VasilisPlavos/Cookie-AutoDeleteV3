@@ -92,7 +92,6 @@ declare const enum SettingID {
   CLEAN_DISCARDED = 'discardedCleanup',
   CLEAN_DOMAIN_CHANGE = 'domainChangeCleanup',
   CLEAN_EXPIRED = 'cleanExpiredCookies',
-  CLEAN_OPEN_TABS_STARTUP = 'cleanCookiesFromOpenTabsOnStartup',
   CLEANUP_CACHE = 'cacheCleanup',
   CLEANUP_FILESYSTEMS = 'fileSystemsCleanup',
   CLEANUP_INDEXEDDB = 'indexedDBCleanup',

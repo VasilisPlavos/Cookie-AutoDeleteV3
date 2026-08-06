@@ -175,10 +175,6 @@
     "message": "Informasjonskapsler",
     "description": "Cookies. Primarily used in popup via alternate clean action dropdown."
   },
-  "cookieCleanUpOnStartText": {
-    "message": "Rengjør informasjonskapsler og andre nettstedsdata fra åpne faner ved oppstart",
-    "description": "Clean Cookies and other Site Data from Open Tabs on Startup"
-  },
   "cookieCleanupIgnoreOpenTabsText": {
     "message": "Kjør opprydding nå, inkludert domener fra åpne faner",
     "description": "Run cleanup now, include cookies from open tabs. This is shown on mouseover from the available dropdown buttons."

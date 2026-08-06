@@ -17,7 +17,9 @@
 import { advanceTo, clear } from 'jest-date-mock';
 import {
   appendDynamicTimestamp,
+  decideCoreSettingsImport,
   downloadObjectAsJSON,
+  partitionSettingsByKnownKeys,
 } from '../../src/ui/UILibs';
 
 describe('appendDynamicTimestamp', () => {
@@ -125,6 +127,125 @@ describe('expressionFieldsForCookiePolicy', () => {
     expect(expressionFieldsForCookiePolicy('selected')).toEqual({
       cleanAllCookies: false,
       firstPartyOnly: false,
+    });
+  });
+});
+
+describe('partitionSettingsByKnownKeys', () => {
+  const knownKeys = new Set(['activeMode', 'delayBeforeClean']);
+
+  it('passes through settings whose name is a known key', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'delayBeforeClean', value: 15 },
+    ];
+    expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
+      known: settings,
+      dropped: [],
+    });
+  });
+
+  it('reports settings whose name is not a known key as dropped', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'cleanCookiesFromOpenTabsOnStartup', value: false },
+    ];
+    expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
+      known: [{ name: 'activeMode', value: true }],
+      dropped: ['cleanCookiesFromOpenTabsOnStartup'],
+    });
+  });
+
+  it('returns empty known/dropped arrays for an empty input', () => {
+    expect(partitionSettingsByKnownKeys([], knownKeys)).toEqual({
+      known: [],
+      dropped: [],
+    });
+  });
+
+  it('returns an empty known array when no setting matches (e.g. an unrelated import file)', () => {
+    const settings: Setting[] = [
+      { name: 'someOtherAppSetting', value: true },
+      { name: 'cleanCookiesFromOpenTabsOnStartup', value: false },
+    ];
+    expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
+      known: [],
+      dropped: ['someOtherAppSetting', 'cleanCookiesFromOpenTabsOnStartup'],
+    });
+  });
+
+  it('de-duplicates a repeated name, last-wins, keeping only one dropped entry too', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'unknownSetting', value: 'first' },
+      { name: 'activeMode', value: false },
+      { name: 'unknownSetting', value: 'second' },
+    ];
+    expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
+      known: [{ name: 'activeMode', value: false }],
+      dropped: ['unknownSetting'],
+    });
+  });
+});
+
+describe('decideCoreSettingsImport', () => {
+  const knownKeys = new Set(['activeMode', 'delayBeforeClean']);
+
+  it('all-known: applies everything, nothing dropped, not an error', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'delayBeforeClean', value: 15 },
+    ];
+    expect(decideCoreSettingsImport(settings, knownKeys)).toEqual({
+      toApply: settings,
+      dropped: [],
+      isError: false,
+    });
+  });
+
+  it('partial: applies the known subset, reports the rest dropped, not an error', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'cleanCookiesFromOpenTabsOnStartup', value: false },
+    ];
+    expect(decideCoreSettingsImport(settings, knownKeys)).toEqual({
+      toApply: [{ name: 'activeMode', value: true }],
+      dropped: ['cleanCookiesFromOpenTabsOnStartup'],
+      isError: false,
+    });
+  });
+
+  it('all-unknown: applies nothing and is an error, with the unknown names in dropped', () => {
+    const settings: Setting[] = [
+      { name: 'someOtherAppSetting', value: true },
+      { name: 'cleanCookiesFromOpenTabsOnStartup', value: false },
+    ];
+    expect(decideCoreSettingsImport(settings, knownKeys)).toEqual({
+      toApply: [],
+      dropped: ['someOtherAppSetting', 'cleanCookiesFromOpenTabsOnStartup'],
+      isError: true,
+    });
+  });
+
+  it('empty array: applies nothing and is an error, with nothing dropped either', () => {
+    expect(decideCoreSettingsImport([], knownKeys)).toEqual({
+      toApply: [],
+      dropped: [],
+      isError: true,
+    });
+  });
+
+  it('duplicate names: last-wins for the applied value, and the name appears once in dropped', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'activeMode', value: false },
+      { name: 'unknownSetting', value: 'first' },
+      { name: 'unknownSetting', value: 'second' },
+    ];
+    expect(decideCoreSettingsImport(settings, knownKeys)).toEqual({
+      toApply: [{ name: 'activeMode', value: false }],
+      dropped: ['unknownSetting'],
+      isError: false,
     });
   });
 });

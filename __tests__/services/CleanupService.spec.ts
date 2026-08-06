@@ -357,7 +357,7 @@ describe('CleanupService', () => {
 
   describe('cleanCookiesOperation()', () => {
     const cleanupProperties: CleanupProperties = {
-      greyCleanup: false,
+      startup: false,
       ignoreOpenTabs: false,
     };
     beforeEach(() => {
@@ -497,7 +497,7 @@ describe('CleanupService', () => {
       it('Browser Restart clean, exclude open tabs.', async () => {
         const ffResult = await cleanCookiesOperation(firefoxState, {
           ...cleanupProperties,
-          greyCleanup: true,
+          startup: true,
         });
         expect(global.browser.cookies.remove).toHaveBeenCalledTimes(3);
         expect(ffResult.cachedResults.recentlyCleaned).toBe(3);
@@ -510,7 +510,7 @@ describe('CleanupService', () => {
 
       it('Browser Restart clean, include open tabs.', async () => {
         const ffResult = await cleanCookiesOperation(firefoxState, {
-          greyCleanup: true,
+          startup: true,
           ignoreOpenTabs: true,
         });
         expect(global.browser.cookies.remove).toHaveBeenCalledTimes(5);
@@ -873,7 +873,7 @@ describe('CleanupService', () => {
 
     it('cleans site data for a registry hostname that left no cookie (startup)', async () => {
       await cleanCookiesOperation(firefoxRegistryState, {
-        greyCleanup: true,
+        startup: true,
         ignoreOpenTabs: false,
       });
       const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
@@ -886,9 +886,9 @@ describe('CleanupService', () => {
       expect(cleanedHostnames).toContain('registry-only.com');
     });
 
-    it('also cleans site data for a registry hostname during a non-startup (greyCleanup=false) run', async () => {
+    it('also cleans site data for a registry hostname during a non-startup run', async () => {
       await cleanCookiesOperation(firefoxRegistryState, {
-        greyCleanup: false,
+        startup: false,
         ignoreOpenTabs: false,
       });
       const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
@@ -915,7 +915,7 @@ describe('CleanupService', () => {
         },
       };
       await cleanCookiesOperation(whitelistedState, {
-        greyCleanup: true,
+        startup: true,
         ignoreOpenTabs: false,
       });
       const removeCalls = (global.browser.browsingData.remove as jest.Mock).mock
@@ -1566,7 +1566,7 @@ describe('CleanupService', () => {
         dateTime: '',
         recentlyCleaned: 0,
       },
-      greyCleanup: false,
+      startup: false,
       hostnamesDeleted: new Set(),
       ignoreOpenTabs: false,
       openTabDomains: { 'firefox-default': ['example.com', 'mozilla.org'] },
@@ -1576,6 +1576,30 @@ describe('CleanupService', () => {
       ...sampleState,
       settings: {
         ...sampleState.settings,
+        [SettingID.CLEAN_EXPIRED]: {
+          name: SettingID.CLEAN_EXPIRED,
+          value: true,
+        },
+      },
+    };
+    const greylistOffState: State = {
+      ...sampleState,
+      settings: {
+        ...sampleState.settings,
+        [SettingID.ENABLE_GREYLIST]: {
+          name: SettingID.ENABLE_GREYLIST,
+          value: false,
+        },
+      },
+    };
+    // Same as greylistOffState, plus CLEAN_EXPIRED on: used to prove a startup
+    // run with greylist cleanup off still reports the non-Restart expiry
+    // reason for a greylisted expression (Restart is policy, not cosmetic —
+    // see the comment on the reason assignments in CleanupService.ts).
+    const greylistOffExpiredState: State = {
+      ...greylistOffState,
+      settings: {
+        ...greylistOffState.settings,
         [SettingID.CLEAN_EXPIRED]: {
           name: SettingID.CLEAN_EXPIRED,
           value: true,
@@ -1782,7 +1806,7 @@ describe('CleanupService', () => {
 
       const result = isSafeToClean(sampleState, cookieProperty, {
         ...cleanupProperties,
-        greyCleanup: false,
+        startup: false,
       });
       expect(result.reason).toBe(ReasonKeep.MatchedExpression);
       expect(result.cleanCookie).toBe(false);
@@ -1797,7 +1821,7 @@ describe('CleanupService', () => {
 
       const result = isSafeToClean(sampleState, cookieProperty, {
         ...cleanupProperties,
-        greyCleanup: true,
+        startup: true,
       });
       expect(result.reason).toBe(ReasonClean.PartitionedThirdParty);
       expect(result.cleanCookie).toBe(true);
@@ -1913,6 +1937,66 @@ describe('CleanupService', () => {
       expect(result.cleanCookie).toBe(false);
     });
 
+    it('keeps a greylisted cookie on a startup run when greylist cleanup is off', () => {
+      const cookieProperty = {
+        ...mockCookie,
+        hostname: 'github.com',
+        mainDomain: 'github.com',
+      };
+
+      const result = isSafeToClean(greylistOffState, cookieProperty, {
+        ...cleanupProperties,
+        startup: true,
+      });
+      expect(result.reason).toBe(ReasonKeep.MatchedExpression);
+      expect(result.cleanCookie).toBe(false);
+    });
+
+    it('cleans an unlisted domain on a startup run when greylist cleanup is off, reporting StartupNoMatchedExpression', () => {
+      const cookieProperty = {
+        ...mockCookie,
+        hostname: 'nomatch.com',
+        mainDomain: 'nomatch.com',
+      };
+
+      const result = isSafeToClean(greylistOffState, cookieProperty, {
+        ...cleanupProperties,
+        startup: true,
+      });
+      expect(result.reason).toBe(ReasonClean.StartupNoMatchedExpression);
+      expect(result.cleanCookie).toBe(true);
+    });
+
+    it('cleans a greylisted cookie on a startup run when greylist cleanup is on', () => {
+      const cookieProperty = {
+        ...mockCookie,
+        hostname: 'github.com',
+        mainDomain: 'github.com',
+      };
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+        startup: true,
+      });
+      expect(result.reason).toBe(ReasonClean.StartupCleanupAndGreyList);
+      expect(result.cleanCookie).toBe(true);
+    });
+
+    it('keeps a cookie whose domain has an open tab on a startup run', () => {
+      const cookieProperty = {
+        ...mockCookie,
+        hostname: 'example.com',
+        mainDomain: 'example.com',
+      };
+
+      const result = isSafeToClean(sampleState, cookieProperty, {
+        ...cleanupProperties,
+        startup: true,
+      });
+      expect(result.reason).toBe(ReasonKeep.OpenTabs);
+      expect(result.cleanCookie).toBe(false);
+    });
+
     it('should return true for twitter.com when using regular expressions whiteListAllExceptTwitter', () => {
       const cookieProperty = {
         ...mockCookie,
@@ -2019,7 +2103,7 @@ describe('CleanupService', () => {
 
       const result = isSafeToClean(sampleState, cookieProperty, {
         ...cleanupProperties,
-        greyCleanup: true,
+        startup: true,
       });
       expect(result.reason).toBe(ReasonClean.StartupCleanupAndGreyList);
       expect(result.cleanCookie).toBe(true);
@@ -2034,7 +2118,7 @@ describe('CleanupService', () => {
 
       const result = isSafeToClean(sampleState, cookieProperty, {
         ...cleanupProperties,
-        greyCleanup: true,
+        startup: true,
       });
       expect(result.reason).toBe(ReasonClean.StartupNoMatchedExpression);
       expect(result.cleanCookie).toBe(true);
@@ -2096,7 +2180,7 @@ describe('CleanupService', () => {
 
       const result = isSafeToClean(sampleState, cookieProperty, {
         ...cleanupProperties,
-        greyCleanup: true,
+        startup: true,
       });
       expect(result.reason).toBe(ReasonKeep.MatchedExpression);
       expect(result.cleanCookie).toBe(false);
@@ -2113,7 +2197,7 @@ describe('CleanupService', () => {
 
       const result = isSafeToClean(sampleState, cookieProperty, {
         ...cleanupProperties,
-        greyCleanup: true,
+        startup: true,
       });
       expect(result.reason).toBe(ReasonClean.StartupCleanupAndGreyList);
       expect(result.cleanCookie).toBe(true);
@@ -2176,10 +2260,26 @@ describe('CleanupService', () => {
       };
       const result = isSafeToClean(expiredState, cookieProperty, {
         ...cleanupProperties,
-        greyCleanup: true,
+        startup: true,
       });
       expect(result.reason).toBe(ReasonClean.ExpiredCookieRestart);
       expect(result.expression?.cleanSiteData).not.toBeUndefined();
+    });
+
+    it('reports ExpiredCookie (not the Restart variant) for an expired cookie on a greylisted expression during a startup run when greylist cleanup is off, so filterSiteData still honours that expression\'s cleanSiteData list', () => {
+      const cookieProperty = {
+        ...mockCookie,
+        hostname: 'github.com',
+        mainDomain: 'github.com',
+        expirationDate: 12345,
+        session: false,
+      };
+      const result = isSafeToClean(greylistOffExpiredState, cookieProperty, {
+        ...cleanupProperties,
+        startup: true,
+      });
+      expect(result.reason).toBe(ReasonClean.ExpiredCookie);
+      expect(result.cleanCookie).toBe(true);
     });
 
     it('should return true if cookie was created through CAD with matching WHITE expression and at least one browsingData type for cleanup', () => {
@@ -2207,7 +2307,7 @@ describe('CleanupService', () => {
 
       const result = isSafeToClean(sampleState, cookieProperty, {
         ...cleanupProperties,
-        greyCleanup: true,
+        startup: true,
       });
       expect(result.reason).toBe(ReasonClean.CADSiteDataCookieRestart);
       expect(result.cleanCookie).toBe(true);

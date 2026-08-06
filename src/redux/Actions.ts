@@ -351,7 +351,7 @@ export const cookieCleanup: ActionCreator<ThunkAction<
   null,
   ReduxAction
 >> = (
-  options: CleanupProperties = { greyCleanup: false, ignoreOpenTabs: false },
+  options: CleanupProperties = { startup: false, ignoreOpenTabs: false },
 ) => async (dispatch, getState) => {
   const cleanupDoneObject = await cleanCookiesOperation(getState(), options);
   if (!cleanupDoneObject) return;
@@ -363,13 +363,14 @@ export const cookieCleanup: ActionCreator<ThunkAction<
     siteDataCleaned,
   } = cachedResults as ActivityLog;
 
-  // Consume the site-data registry (state.domainsToClean) now that this run has
-  // evaluated it. Reached only after cleanCookiesOperation returned successfully.
-  // A startup (greyCleanup) run processes the whole registry, so drop all of it;
-  // it repopulates as the user browses. An active/manual run only cleaned the
-  // domains that were not open-tab or whitelist protected, so drop exactly those
-  // and keep the rest for a later run (they reset on the next startup anyway).
-  if (options.greyCleanup) {
+  // Consume the site-data registry (state.domainsToClean) now that this run
+  // has evaluated it, reached only after cleanCookiesOperation returned
+  // successfully. A startup run processes the whole registry, so drop all of
+  // it; it repopulates as the user browses. An active/manual run only
+  // cleaned the domains that were not open-tab or whitelist protected, so
+  // drop exactly those and keep the rest for a later run (they reset on the
+  // next startup anyway).
+  if (options.startup) {
     dispatch(clearDomainsToCleanUI());
   } else if ((getState().domainsToClean || []).length > 0) {
     const cleanedSiteDataDomains = new Set<string>();
