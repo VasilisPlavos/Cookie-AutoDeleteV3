@@ -15,7 +15,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 import { resetSettings, updateSetting } from '../../../redux/Actions';
-import { initialState } from '../../../redux/State';
+import { knownSettingKeys } from '../../../redux/State';
 import {
   cadLog,
   isChrome,
@@ -27,6 +27,7 @@ import CheckboxSetting from '../../common_components/CheckboxSetting';
 import IconButton from '../../common_components/IconButton';
 import SelectInput from '../../common_components/SelectInput';
 import {
+  decideCoreSettingsImport,
   downloadObjectAsJSON,
   partitionSettingsByKnownKeys,
 } from '../../UILibs';
@@ -95,7 +96,6 @@ class Settings extends React.Component<SettingProps> {
       return;
     }
     const { onUpdateSetting } = this.props;
-    const initialSettingKeys = Object.keys(initialState.settings);
     const reader = new FileReader();
     reader.onload = (file) => {
       try {
@@ -133,9 +133,9 @@ class Settings extends React.Component<SettingProps> {
         }
         // A setting removed after this file was exported (e.g. an older
         // version's backup) is dropped rather than failing the whole import.
-        const { known, dropped } = partitionSettingsByKnownKeys(
+        const { toApply, dropped, isError } = decideCoreSettingsImport(
           jsonImport.settings as unknown as Setting[],
-          initialSettingKeys,
+          knownSettingKeys,
         );
         if (dropped.length > 0) {
           cadLog(
@@ -146,17 +146,22 @@ class Settings extends React.Component<SettingProps> {
             debug,
           );
         }
-        if (known.length === 0) {
+        if (isError) {
+          // Two distinct causes share one message: a file with no settings
+          // at all (dropped is also empty — name the file instead of
+          // appending nothing) vs. a file whose settings were all
+          // unrecognized (dropped lists which ones).
+          const detail = dropped.length > 0 ? dropped.join(', ') : importFile.name;
           this.setError(
             new Error(
               `${browser.i18n.getMessage(
                 'importCoreSettingsFailed',
-              )}:  ${dropped.join(', ')}`,
+              )}:  ${detail}`,
             ),
           );
           return;
         }
-        known.forEach((newSetting) => {
+        toApply.forEach((newSetting) => {
           const settingName = newSetting.name;
           if (settings[settingName].value !== newSetting.value) {
             cadLog(
@@ -177,7 +182,17 @@ class Settings extends React.Component<SettingProps> {
         });
         this.setState({
           error: '',
-          success: browser.i18n.getMessage('importCoreSettingsText'),
+          // A partial import (some names unrecognized) still surfaces those
+          // names here, not just to the DEBUG_MODE-gated cadLog above — a
+          // plain success would otherwise tell the user everything imported.
+          success:
+            dropped.length > 0
+              ? `${browser.i18n.getMessage(
+                  'importCoreSettingsText',
+                )} ${browser.i18n.getMessage(
+                  'importCoreSettingsFailed',
+                )}:  ${dropped.join(', ')}`
+              : browser.i18n.getMessage('importCoreSettingsText'),
         });
       } catch (error: unknown) {
         if (error instanceof Error) {
@@ -200,7 +215,7 @@ class Settings extends React.Component<SettingProps> {
     // does, and re-exporting it would make the file fail re-import.
     const { known: exportSettings } = partitionSettingsByKnownKeys(
       Object.values(settings),
-      Object.keys(initialState.settings),
+      knownSettingKeys,
     );
     const r = downloadObjectAsJSON(
       { settings: exportSettings },

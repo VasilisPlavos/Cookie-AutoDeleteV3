@@ -138,6 +138,11 @@ export const isSafeToClean = (
   // "Is this the startup run" is the caller's fact; whether greylisted entries
   // are cleaned is policy, and policy lives in the setting. Keeping them apart
   // is what lets the startup run happen with greylist cleanup switched off.
+  // filterSiteData reads the *Restart reasons below (CADSiteDataCookieRestart,
+  // ExpiredCookieRestart) as policy — it treats them as overriding a
+  // greylisted expression's cleanSiteData opt-in — so those reasons must key
+  // on cleanGreylist, not startup, or a startup run with greylist cleanup off
+  // would be wrongly treated as a restart cleanup for that expression.
   const cleanGreylist =
     startup && (getSetting(state, SettingID.ENABLE_GREYLIST) as boolean);
   const openTabStatus = ignoreOpenTabs
@@ -212,10 +217,6 @@ export const isSafeToClean = (
       cookie: cookieProperties,
       expression: matchedExpression,
       openTabStatus,
-      // filterSiteData reads the *Restart reason as policy (it overrides a
-      // greylisted expression's cleanSiteData opt-in), so this must track
-      // cleanGreylist, not startup — a startup run with greylist cleanup off
-      // must not be treated as a restart cleanup for that expression.
       reason: cleanGreylist
         ? ReasonClean.CADSiteDataCookieRestart
         : ReasonClean.CADSiteDataCookie,
@@ -242,8 +243,6 @@ export const isSafeToClean = (
         cookie: cookieProperties,
         expression: matchedExpression,
         openTabStatus,
-        // Same rule as the CAD-cookie branch above: filterSiteData treats
-        // *Restart as policy, so key it on cleanGreylist, not startup.
         reason: cleanGreylist
           ? ReasonClean.ExpiredCookieRestart
           : ReasonClean.ExpiredCookie,
@@ -268,6 +267,11 @@ export const isSafeToClean = (
     // Unmatched by any list: clean. Startup and normal cleanup differ only in
     // the reason reported. Returning here also narrows `matched` to defined for
     // the remaining checks.
+    // Deliberately keyed on raw `startup`, not `cleanGreylist`, unlike the
+    // *Restart reasons above: filterSiteData's no-match reason list treats
+    // StartupNoMatchedExpression identically to NoMatchedExpression, so this
+    // label is descriptive only and carries no policy — do not "fix" it to
+    // track cleanGreylist, and do not give it policy meaning later.
     if (!matched) {
       return {
         clean: true,

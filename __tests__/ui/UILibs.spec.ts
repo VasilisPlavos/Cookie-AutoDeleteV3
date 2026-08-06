@@ -17,6 +17,7 @@
 import { advanceTo, clear } from 'jest-date-mock';
 import {
   appendDynamicTimestamp,
+  decideCoreSettingsImport,
   downloadObjectAsJSON,
   partitionSettingsByKnownKeys,
 } from '../../src/ui/UILibs';
@@ -131,7 +132,7 @@ describe('expressionFieldsForCookiePolicy', () => {
 });
 
 describe('partitionSettingsByKnownKeys', () => {
-  const knownKeys = ['activeMode', 'delayBeforeClean'];
+  const knownKeys = new Set(['activeMode', 'delayBeforeClean']);
 
   it('passes through settings whose name is a known key', () => {
     const settings: Setting[] = [
@@ -170,6 +171,81 @@ describe('partitionSettingsByKnownKeys', () => {
     expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
       known: [],
       dropped: ['someOtherAppSetting', 'cleanCookiesFromOpenTabsOnStartup'],
+    });
+  });
+
+  it('de-duplicates a repeated name, last-wins, keeping only one dropped entry too', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'unknownSetting', value: 'first' },
+      { name: 'activeMode', value: false },
+      { name: 'unknownSetting', value: 'second' },
+    ];
+    expect(partitionSettingsByKnownKeys(settings, knownKeys)).toEqual({
+      known: [{ name: 'activeMode', value: false }],
+      dropped: ['unknownSetting'],
+    });
+  });
+});
+
+describe('decideCoreSettingsImport', () => {
+  const knownKeys = new Set(['activeMode', 'delayBeforeClean']);
+
+  it('all-known: applies everything, nothing dropped, not an error', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'delayBeforeClean', value: 15 },
+    ];
+    expect(decideCoreSettingsImport(settings, knownKeys)).toEqual({
+      toApply: settings,
+      dropped: [],
+      isError: false,
+    });
+  });
+
+  it('partial: applies the known subset, reports the rest dropped, not an error', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'cleanCookiesFromOpenTabsOnStartup', value: false },
+    ];
+    expect(decideCoreSettingsImport(settings, knownKeys)).toEqual({
+      toApply: [{ name: 'activeMode', value: true }],
+      dropped: ['cleanCookiesFromOpenTabsOnStartup'],
+      isError: false,
+    });
+  });
+
+  it('all-unknown: applies nothing and is an error, with the unknown names in dropped', () => {
+    const settings: Setting[] = [
+      { name: 'someOtherAppSetting', value: true },
+      { name: 'cleanCookiesFromOpenTabsOnStartup', value: false },
+    ];
+    expect(decideCoreSettingsImport(settings, knownKeys)).toEqual({
+      toApply: [],
+      dropped: ['someOtherAppSetting', 'cleanCookiesFromOpenTabsOnStartup'],
+      isError: true,
+    });
+  });
+
+  it('empty array: applies nothing and is an error, with nothing dropped either', () => {
+    expect(decideCoreSettingsImport([], knownKeys)).toEqual({
+      toApply: [],
+      dropped: [],
+      isError: true,
+    });
+  });
+
+  it('duplicate names: last-wins for the applied value, and the name appears once in dropped', () => {
+    const settings: Setting[] = [
+      { name: 'activeMode', value: true },
+      { name: 'activeMode', value: false },
+      { name: 'unknownSetting', value: 'first' },
+      { name: 'unknownSetting', value: 'second' },
+    ];
+    expect(decideCoreSettingsImport(settings, knownKeys)).toEqual({
+      toApply: [{ name: 'activeMode', value: false }],
+      dropped: ['unknownSetting'],
+      isError: false,
     });
   });
 });

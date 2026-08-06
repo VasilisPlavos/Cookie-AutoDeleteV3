@@ -83,16 +83,54 @@ export const expressionFieldsForCookiePolicy = (
 // up here — from an older export file, or rehydrated from storage.local.
 export const partitionSettingsByKnownKeys = (
   settings: readonly Setting[],
-  knownKeys: readonly string[],
+  knownKeys: ReadonlySet<string>,
 ): { known: Setting[]; dropped: string[] } => {
+  // A duplicated name is deduplicated last-wins, mirroring how applying each
+  // entry in order would leave the settings map: a later entry for the same
+  // name overrides an earlier one rather than both being carried forward.
+  const deduped = Array.from(
+    new Map(settings.map((setting) => [setting.name, setting])).values(),
+  );
   const known: Setting[] = [];
   const dropped: string[] = [];
-  settings.forEach((setting) => {
-    if (knownKeys.includes(setting.name)) {
+  deduped.forEach((setting) => {
+    if (knownKeys.has(setting.name)) {
       known.push(setting);
     } else {
       dropped.push(setting.name);
     }
   });
   return { known, dropped };
+};
+
+export interface CoreSettingsImportDecision {
+  // De-duplicated (last-wins), known-key settings to apply.
+  toApply: Setting[];
+  // De-duplicated names of settings this version does not recognize.
+  dropped: string[];
+  // True when nothing is applicable — either the file had no settings at
+  // all, or none of the settings it had are recognized by this version.
+  // Callers that need to tell those two cases apart for messaging can do so
+  // from `dropped.length` (0 for the former, >0 for the latter).
+  isError: boolean;
+}
+
+/**
+ * The pure decision behind Settings import: given the raw settings parsed
+ * from an import file and the set of keys this version knows about, decide
+ * what should be applied, what was dropped, and whether the import as a
+ * whole is an error. Kept free of any DOM/redux I/O so it can be unit tested
+ * directly (jest's testEnvironment is 'node' — no jsdom, so the component
+ * method itself cannot be).
+ */
+export const decideCoreSettingsImport = (
+  settings: readonly Setting[],
+  knownKeys: ReadonlySet<string>,
+): CoreSettingsImportDecision => {
+  const { known, dropped } = partitionSettingsByKnownKeys(settings, knownKeys);
+  return {
+    toApply: known,
+    dropped,
+    isError: known.length === 0,
+  };
 };

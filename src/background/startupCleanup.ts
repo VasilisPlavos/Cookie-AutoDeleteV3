@@ -32,19 +32,37 @@ export async function runStartupCleanup(
   } catch (err) {
     // Without a reliable tab list, open-tab protection can't be trusted —
     // skip this startup's cleanup rather than risk cleaning an open tab.
+    // A genuine failure like this belongs in bug reports, so it is always
+    // logged regardless of DEBUG_MODE (see CleanupService's browsingData
+    // failure logs for the same convention).
     cadLog(
       {
         msg: 'runStartupCleanup: tabs.query failed; skipping startup cleanup.',
         type: 'warn',
         x: err,
       },
-      getSetting(store.getState(), SettingID.DEBUG_MODE) as boolean,
+      true,
     );
     return;
   }
   if (startupTabs.some((tab) => tab.url === 'about:sessionrestore')) return;
 
-  await store.dispatch<any>(
-    cookieCleanup({ startup: true, ignoreOpenTabs: false }),
-  );
+  try {
+    await store.dispatch<any>(
+      cookieCleanup({ startup: true, ignoreOpenTabs: false }),
+    );
+  } catch (err) {
+    // The caller (index.ts's onStartup listener) always runs
+    // checkIfProtected right after this to refresh the icon/badge — a
+    // rejection here must not propagate and skip that. The await above is
+    // kept regardless (it exists to keep the MV3 SW alive through cleanup).
+    cadLog(
+      {
+        msg: 'runStartupCleanup: cookieCleanup dispatch failed.',
+        type: 'warn',
+        x: err,
+      },
+      true,
+    );
+  }
 }
