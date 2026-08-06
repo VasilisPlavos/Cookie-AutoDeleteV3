@@ -1215,20 +1215,33 @@ describe('Library Functions', () => {
 
   describe('isFirstPartyIsolate()', () => {
     beforeEach(() => {
+      // Fully reset the memoisation cache AND the mock's registered
+      // jest-when handlers before every test, rather than relying on a
+      // shared mockResolvedValueOnce/mockRejectedValueOnce queue. That
+      // queue is keyed only by call args ({ domain: '' }), so it also
+      // accumulates whatever other describes in this file push onto the
+      // same matcher (e.g. getAllCookiesForDomain's FPI tests) -- an
+      // unconsumed leftover there previously shifted these three tests by
+      // one position. Each test below now owns its mock value outright.
       _resetFirstPartyIsolateCache();
-      when(global.browser.cookies.getAll)
-        .calledWith({ domain: '' })
-        .mockResolvedValueOnce([] as never)
-        .mockRejectedValueOnce(new Error('firstPartyDomain') as never)
-        .mockRejectedValueOnce(new Error('Error') as never);
+      (global.browser.cookies.getAll as jest.Mock).mockReset();
     });
     it('should return false if no error was caught', () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: '' })
+        .mockResolvedValueOnce([] as never);
       return expect(isFirstPartyIsolate()).resolves.toEqual(false);
     });
     it('should return true if error was caught and message contained "firstPartyDomain"', () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: '' })
+        .mockRejectedValueOnce(new Error('firstPartyDomain') as never);
       return expect(isFirstPartyIsolate()).resolves.toEqual(true);
     });
     it('should return false if error was caught and message did not contain "firstPartyIsolate"', () => {
+      when(global.browser.cookies.getAll)
+        .calledWith({ domain: '' })
+        .mockRejectedValueOnce(new Error('Error') as never);
       return expect(isFirstPartyIsolate()).resolves.toEqual(false);
     });
   });
