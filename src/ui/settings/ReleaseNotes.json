@@ -1,6 +1,14 @@
 {
   "releases": [
     {
+      "version": "1.3.1",
+      "notes": [
+        "Fixed the toolbar icon losing its per-site colour on background tabs after the extension's background worker restarted.",
+        "The extension now does less work when your browser starts with many tabs open.",
+        "Removed repeated internal checks that ran on every page load and on unrelated internal updates."
+      ]
+    },
+    {
       "version": "1.3.0",
       "notes": [
         "Redesigned interface — the popup and settings pages are rebuilt on a single design system, with a lighter sidebar, restyled buttons, tables and dropdowns, and consistent spacing throughout.",
