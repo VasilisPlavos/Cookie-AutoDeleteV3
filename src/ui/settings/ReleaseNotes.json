@@ -1,6 +1,13 @@
 {
   "releases": [
     {
+      "version": "1.3.1",
+      "notes": [
+        "Removed the 'Clean Cookies and other Site Data from Open Tabs on Startup' setting. Sites open in a tab are now never cleaned automatically — use 'Clean, include open tabs' from the popup or the right-click menu when you want that.",
+        "Startup cleanup now runs whenever automatic cleaning is on, instead of only when greylist cleanup on browser restart is enabled. Greylisted sites are still only cleared at startup if that setting is on."
+      ]
+    },
+    {
       "version": "1.3.0",
       "notes": [
         "Redesigned interface — the popup and settings pages are rebuilt on a single design system, with a lighter sidebar, restyled buttons, tables and dropdowns, and consistent spacing throughout.",
