@@ -9,6 +9,7 @@ import { when } from 'jest-when';
 // Mock heavy services so the test only focuses on lifecycle logic
 jest.mock('../../src/services/BrowserActionService', () => ({
   setGlobalIcon: jest.fn().mockResolvedValue(undefined),
+  resetAllTabIcons: jest.fn().mockResolvedValue(undefined),
   checkIfProtected: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('../../src/services/SettingService', () => {
@@ -137,6 +138,13 @@ describe('background/lifecycle', () => {
       global.browser.cookies.getAll = jest.fn();
       await ready();
       expect(global.browser.cookies.getAll).not.toHaveBeenCalled();
+    });
+
+    it('does not touch per-tab icons during init', async () => {
+      const bas = require('../../src/services/BrowserActionService');
+      await ready();
+      expect(bas.setGlobalIcon).toHaveBeenCalled();
+      expect(bas.resetAllTabIcons).not.toHaveBeenCalled();
     });
   });
 });

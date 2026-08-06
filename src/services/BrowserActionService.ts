@@ -179,11 +179,14 @@ const setIconColor = async (
   setBadgeColor(tab, color);
 };
 
+const globalIconPath = (enabled: boolean): string =>
+  `icons/icon_48${enabled ? '' : '_greyscale'}.png`;
+
 // Set background icon for browser.
 export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
   if (!browser.action.setIcon) return;
 
-  const iconPath = `icons/icon_48${enabled ? '' : '_greyscale'}.png`;
+  const iconPath = globalIconPath(enabled);
   const imageData = await loadIconData(iconPath);
   if (!imageData) return; // loadIconData already logged
 
@@ -192,6 +195,19 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
   } catch (err) {
     bacWarn(`[CAD] browser.action.setIcon (global) failed for ${iconPath}`, err);
   }
+};
+
+// Per-tab icon overrides set by setIconColor outlive a service-worker restart,
+// so clearing them is only correct when the global icon changes meaning — i.e.
+// the Active Mode toggle. Doing it on every wake would erase per-site colours
+// that the following checkIfProtected() only restores for the active tabs.
+export const resetAllTabIcons = async (enabled: boolean): Promise<void> => {
+  await setGlobalIcon(enabled);
+  if (!browser.action.setIcon) return;
+
+  const iconPath = globalIconPath(enabled);
+  const imageData = await loadIconData(iconPath);
+  if (!imageData) return;
 
   const tabAwait = await browser.tabs.query({ windowType: 'normal' });
   for (const tab of tabAwait) {

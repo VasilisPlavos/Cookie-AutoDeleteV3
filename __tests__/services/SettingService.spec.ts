@@ -166,16 +166,16 @@ describe('SettingService', () => {
     it('should enable global icon if active mode was recently enabled', async () => {
       TestStore.changeSetting(SettingID.ACTIVE_MODE, false);
       await SettingService.onSettingsChange();
-      spyBrowserActions.setGlobalIcon.mockClear();
+      spyBrowserActions.resetAllTabIcons.mockClear();
       TestStore.changeSetting(SettingID.ACTIVE_MODE, true);
       await SettingService.onSettingsChange();
-      expect(spyBrowserActions.setGlobalIcon).toHaveBeenCalledWith(true);
+      expect(spyBrowserActions.resetAllTabIcons).toHaveBeenCalledWith(true);
     });
     it('should make global icon greyscale and clear alarms if active mode was recently disabled', async () => {
       TestStore.changeSetting(SettingID.ACTIVE_MODE, false);
       await SettingService.onSettingsChange();
       expect(global.browser.alarms.clear).toHaveBeenCalledTimes(1);
-      expect(spyBrowserActions.setGlobalIcon).toHaveBeenCalledWith(false);
+      expect(spyBrowserActions.resetAllTabIcons).toHaveBeenCalledWith(false);
     });
     it('should clear contextMenus if recently disabled', async () => {
       TestStore.changeSetting(SettingID.CONTEXT_MENUS, false);
