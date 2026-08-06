@@ -599,9 +599,17 @@ export const isFirefoxNotAndroid = (cache: CacheMap): boolean => {
   );
 };
 
-// The answer is a browser capability that cannot change while this service
-// worker lives, and the caller runs on every completed page load. Cache the
-// promise rather than the value so concurrent callers share one probe.
+/**
+ * Test for FirstPartyIsolation (Firefox). Workaround for not needing Firefox
+ * 'Privacy' permission.
+ *
+ * `privacy.firstparty.isolate` is a live about:config pref a user can flip
+ * without restarting, so this isn't truly immutable — but nobody flips it
+ * mid-session, and a cold SW wake re-probes and self-corrects either way.
+ * The caller runs on every completed page load, so cache the promise rather
+ * than the value, both to avoid re-probing every call and so concurrent
+ * callers share one in-flight probe.
+ */
 let firstPartyIsolateProbe: Promise<boolean> | null = null;
 
 export const isFirstPartyIsolate = (): Promise<boolean> => {
@@ -616,7 +624,14 @@ export const isFirstPartyIsolate = (): Promise<boolean> => {
       })
       .catch((e) => {
         // Error usually if firstPartyIsolate is enabled as it requires firstPartyDomain Property.
-        return (e as Error).message.indexOf('firstPartyDomain') !== -1;
+        const isFPI = (e as Error).message.indexOf('firstPartyDomain') !== -1;
+        if (!isFPI) {
+          // Inconclusive (e.g. a transient error unrelated to FPI) — don't
+          // pin a possibly-wrong `false` for the rest of the service worker's
+          // life. Clear the cache so the next call re-probes.
+          firstPartyIsolateProbe = null;
+        }
+        return isFPI;
       });
   }
   return firstPartyIsolateProbe;

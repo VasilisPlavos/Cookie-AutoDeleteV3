@@ -276,6 +276,11 @@ describe('CAD hot-path measurements', () => {
     await drain();
 
     const N = 200;
+    // ready() + the warm-up above already dirtied state and armed lifecycle's
+    // 1 s save-debounce timer. If it fires inside the measured window below
+    // it adds two storage.*.set calls unrelated to what this asserts -- clear
+    // it so the loop gets a fresh ~1 s budget instead of whatever's left.
+    lifecycle._resetForTests();
     perf.resetCalls();
     let t0 = HR();
     for (let i = 0; i < N; i++) {

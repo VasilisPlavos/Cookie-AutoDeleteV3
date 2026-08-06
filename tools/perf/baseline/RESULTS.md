@@ -127,9 +127,11 @@ debounce ceiling of 1 per 750 ms sustained.
 
 Measured against commits `d83bb4e..6d1cacb` (icon split, slice-scoped
 subscriptions, memoised FPI probe), same machine, same Chromium revision
-(`chromium-1232`). Raw data: `tools/perf/runs/after/measured.json`,
-`tools/perf/runs/after/cad-sw.json`. `npm run test:perf` output captured
-separately (see Task 4 report).
+(`chromium-1232`). Raw data: `tools/perf/baseline/after-round-1/measured.json`,
+`tools/perf/baseline/after-round-1/cad-sw.json` (copied here because
+`tools/perf/runs/` is gitignored — ad-hoc run data isn't tracked, only
+`baseline/`). `npm run test:perf` output captured separately (see Task 4
+report).
 
 ### M1 — cold init, `npm run test:perf` (deterministic, the real signal)
 

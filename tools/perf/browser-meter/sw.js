@@ -37,8 +37,8 @@ function freshDelta() {
   };
 }
 
-function bump(obj, key) {
-  obj[key] = (obj[key] || 0) + 1;
+function bump(obj, key, by = 1) {
+  obj[key] = (obj[key] || 0) + by;
 }
 
 chrome.cookies.onChanged.addListener((ci) => {
@@ -57,8 +57,19 @@ chrome.tabs.onRemoved.addListener(() => {
   d.tabsRemoved++;
 });
 
+function addCounts(target, source) {
+  target.cookieEvents += source.cookieEvents;
+  target.cookieRemoved += source.cookieRemoved;
+  target.tabUpdatedEvents += source.tabUpdatedEvents;
+  target.tabUpdatedComplete += source.tabUpdatedComplete;
+  target.tabsRemoved += source.tabsRemoved;
+  for (const [k, v] of Object.entries(source.cookieByCause)) bump(target.cookieByCause, k, v);
+  for (const [k, v] of Object.entries(source.tabUpdatedByKey)) bump(target.tabUpdatedByKey, k, v);
+}
+
 async function flush(phase) {
   const payload = { kind: 'delta', phase, ...d };
+  const sent = d;
   d = freshDelta();
   try {
     await fetch(`${COLLECTOR}/report`, {
@@ -67,8 +78,10 @@ async function flush(phase) {
       body: JSON.stringify(payload),
     });
   } catch (e) {
-    // collector not up yet; counts roll into the next flush
-    Object.assign(d, payload, { kind: undefined, phase: undefined });
+    // collector not up yet; sum the unsent counts (plus anything counted by
+    // listeners since `d` was reset above) into the next flush instead of
+    // overwriting it, so events aren't silently lost.
+    addCounts(d, sent);
   }
 }
 

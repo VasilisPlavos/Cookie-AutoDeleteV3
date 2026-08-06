@@ -128,9 +128,12 @@ module.exports = {
   testMatch: ['**/__tests__/*/**.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
-  // testPathIgnorePatterns: [
-  //   "/node_modules/"
-  // ],
+  // Perf harness lives under __tests__/perf and is excluded from the default
+  // run (npm test / npm run test:coverage) — see `test:perf` for running it.
+  // Kept in config rather than a CLI flag so a positional path filter (e.g.
+  // `npm test -- __tests__/services/Libs.spec.ts`) isn't swallowed as another
+  // ignore pattern by Jest's array-typed --testPathIgnorePatterns.
+  testPathIgnorePatterns: ['/node_modules/', '__tests__/perf'],
 
   // The regexp pattern Jest uses to detect test files
   // testRegex: "",

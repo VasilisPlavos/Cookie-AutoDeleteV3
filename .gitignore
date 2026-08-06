@@ -60,3 +60,6 @@ extension/global_files/browser-polyfill.min.js*
 
 # Perf measurement run data (baseline/ is tracked, ad-hoc runs are not)
 /tools/perf/runs/
+
+# Subagent-driven-development scratch (ledger, briefs, review packages)
+/.superpowers/
