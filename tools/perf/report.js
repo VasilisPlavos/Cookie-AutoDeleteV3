@@ -45,6 +45,9 @@ const COUNTS = {
     'tabs.query({active:true})': 1,
     'storage.local.get()': 1,
     'storage.session.get()': 2,
+    // This is detectPartitionedCookieSupport (CHIPS) at lifecycle.ts:129, not the
+    // FPI probe. Priced with the FPI probe's latency as the nearest measured
+    // equivalent — both are a single cookies.getAll (0.150 vs 0.146 ms).
     'cookies.getAll({domain:""}) [FPI probe]': 1,
     'action.getTitle()': 1,
     'action.setTitle()': 1,

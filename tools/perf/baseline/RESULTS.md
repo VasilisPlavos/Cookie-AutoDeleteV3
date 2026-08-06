@@ -57,7 +57,12 @@ Breakdowns:
   `action.getTitle/setTitle/setIcon/setBadgeBackgroundColor/setBadgeText/setBadgeTextColor`
 - redux dispatch -> `tabs.query`, `action.getTitle/setTitle/setIcon/setBadgeBackgroundColor`
 - cold init -> `action.setIcon` x(2+N), `tabs.query` x2, `storage.local.get`,
-  `storage.session.get` x2, FPI probe, `action.getTitle/setTitle/setBadgeBackgroundColor`
+  `storage.session.get` x2, the CHIPS probe, `action.getTitle/setTitle/setBadgeBackgroundColor`
+
+The single `cookies.getAll` during cold init is `detectPartitionedCookieSupport`
+(CHIPS) at `lifecycle.ts:129` — **not** the first-party-isolation probe. The cost
+model prices it with the FPI probe's measured latency because both are one
+`cookies.getAll` (0.150 vs 0.146 ms); only the label was wrong.
 
 ## Real CAD service worker
 
