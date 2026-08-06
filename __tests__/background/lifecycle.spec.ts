@@ -205,5 +205,25 @@ describe('background/lifecycle', () => {
 
       expect(bas.checkIfProtected.mock.calls.length).toBe(before + 1);
     });
+
+    // The raw-dispatch test above cannot see a double call: the UI reaches these
+    // actions through the Actions.ts thunks, which used to run their own
+    // checkIfProtected on top of this subscription.
+    it('runs checkIfProtected exactly once for a list edit made through the thunk', async () => {
+      await ready();
+      const bas = require('../../src/services/BrowserActionService');
+      const { addExpression } = require('../../src/redux/Actions');
+      const before = bas.checkIfProtected.mock.calls.length;
+
+      getStore().dispatch(
+        addExpression({
+          expression: '*.thunk-path.com',
+          listType: ListType.WHITE,
+          storeId: 'default',
+        }),
+      );
+
+      expect(bas.checkIfProtected.mock.calls.length).toBe(before + 1);
+    });
   });
 });
