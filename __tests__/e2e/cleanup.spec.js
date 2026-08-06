@@ -2,6 +2,7 @@ const { test } = require('@playwright/test');
 const { launchWithExtension, closeContext } = require('../../tools/e2e/extension');
 const {
   CLEANED_SITE,
+  OPEN_TAB_SITE,
   WHITELISTED_SITE,
   seedState,
 } = require('../../tools/e2e/seed');
@@ -51,4 +52,28 @@ test('an unlisted site is cleaned while a whitelisted site survives', async () =
   // cleanup never happened at all.
   await expectCookiesGone(context, CLEANED_SITE);
   await expectCookiesStillPresent(context, WHITELISTED_SITE);
+});
+
+test('a domain with a tab still open is not cleaned', async () => {
+  const firstTab = await context.newPage();
+  await firstTab.goto(`https://${OPEN_TAB_SITE}/`);
+  const secondTab = await context.newPage();
+  await secondTab.goto(`https://${OPEN_TAB_SITE}/`);
+  // Sacrificial: an unprotected domain whose deletion proves a sweep completed.
+  const sacrificial = await context.newPage();
+  await sacrificial.goto(`https://${CLEANED_SITE}/`);
+
+  await expectCookiesPresent(context, OPEN_TAB_SITE);
+  await expectCookiesPresent(context, CLEANED_SITE);
+
+  await firstTab.close();
+  await sacrificial.close();
+
+  // cleanCookiesOperation sweeps every domain, filtered by open tabs — so the
+  // sacrificial domain disappearing proves this domain was evaluated and kept.
+  await expectCookiesGone(context, CLEANED_SITE);
+  await expectCookiesStillPresent(context, OPEN_TAB_SITE);
+
+  await secondTab.close();
+  await expectCookiesGone(context, OPEN_TAB_SITE);
 });
