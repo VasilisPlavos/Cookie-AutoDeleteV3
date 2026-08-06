@@ -39,6 +39,11 @@ browser.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
   TabEvents.cleanFromTabEvents();
 });
 
+browser.tabs.onActivated.addListener(async (activeInfo) => {
+  await ready();
+  TabEvents.onTabActivated(activeInfo);
+});
+
 // --- Cookies ---
 
 browser.cookies.onChanged.addListener(async (changeInfo) => {
