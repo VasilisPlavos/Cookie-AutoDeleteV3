@@ -38,6 +38,7 @@ import {
   isFirefoxAndroid,
   isFirefoxNotAndroid,
   isFirstPartyIsolate,
+  _resetFirstPartyIsolateCache,
   localFileToRegex,
   matchIPInExpression,
   PARTITION_PROBE_COOKIE_NAME,
@@ -1214,6 +1215,7 @@ describe('Library Functions', () => {
 
   describe('isFirstPartyIsolate()', () => {
     beforeEach(() => {
+      _resetFirstPartyIsolateCache();
       when(global.browser.cookies.getAll)
         .calledWith({ domain: '' })
         .mockResolvedValueOnce([] as never)
@@ -1228,6 +1230,23 @@ describe('Library Functions', () => {
     });
     it('should return false if error was caught and message did not contain "firstPartyIsolate"', () => {
       return expect(isFirstPartyIsolate()).resolves.toEqual(false);
+    });
+  });
+
+  describe('isFirstPartyIsolate() caching', () => {
+    it('probes once no matter how many times it is called', async () => {
+      _resetFirstPartyIsolateCache();
+      (global.browser.cookies.getAll as jest.Mock).mockReset();
+      (global.browser.cookies.getAll as jest.Mock).mockResolvedValue([]);
+
+      const results = await Promise.all([
+        isFirstPartyIsolate(),
+        isFirstPartyIsolate(),
+        isFirstPartyIsolate(),
+      ]);
+
+      expect(results).toEqual([false, false, false]);
+      expect(global.browser.cookies.getAll).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -599,23 +599,31 @@ export const isFirefoxNotAndroid = (cache: CacheMap): boolean => {
   );
 };
 
-/**
- * Test for FirstPartyIsolation (Firefox).
- * Workaround for not needing Firefox 'Privacy' permission.
- */
-export const isFirstPartyIsolate = async (): Promise<boolean> => {
-  return browser.cookies
-    .getAll({
-      domain: '',
-    })
-    .then(() => {
-      // No error = most likely not enabled.
-      return Promise.resolve(false);
-    })
-    .catch((e) => {
-      // Error usually if firstPartyIsolate is enabled as it requires firstPartyDomain Property.
-      return Promise.resolve(e.message.indexOf('firstPartyDomain') !== -1);
-    });
+// The answer is a browser capability that cannot change while this service
+// worker lives, and the caller runs on every completed page load. Cache the
+// promise rather than the value so concurrent callers share one probe.
+let firstPartyIsolateProbe: Promise<boolean> | null = null;
+
+export const isFirstPartyIsolate = (): Promise<boolean> => {
+  if (!firstPartyIsolateProbe) {
+    firstPartyIsolateProbe = browser.cookies
+      .getAll({
+        domain: '',
+      })
+      .then(() => {
+        // No error = most likely not enabled.
+        return false;
+      })
+      .catch((e) => {
+        // Error usually if firstPartyIsolate is enabled as it requires firstPartyDomain Property.
+        return (e as Error).message.indexOf('firstPartyDomain') !== -1;
+      });
+  }
+  return firstPartyIsolateProbe;
+};
+
+export const _resetFirstPartyIsolateCache = (): void => {
+  firstPartyIsolateProbe = null;
 };
 
 /*
