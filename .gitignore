@@ -63,3 +63,7 @@ extension/global_files/browser-polyfill.min.js*
 
 # Subagent-driven-development scratch (ledger, briefs, review packages)
 /.superpowers/
+
+# Playwright e2e harness output
+/playwright-report/
+/test-results/
