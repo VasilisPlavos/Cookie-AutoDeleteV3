@@ -250,7 +250,7 @@ describe('CAD hot-path measurements', () => {
     expect(perf.totalCalls()).toBeGreaterThan(0);
   });
 
-  it('M4 — store dispatch overhead (SettingService.onSettingsChange on EVERY dispatch)', async () => {
+  it('M4 — store dispatch overhead (subscribers are slice-scoped, Task 2)', async () => {
     jest.resetModules();
     const env = perf.install({ tabCount: 30 });
     env.storageLocal.data.state = SEED;
@@ -259,6 +259,13 @@ describe('CAD hot-path measurements', () => {
     await drain();
     const store = lifecycle.getStore();
 
+    out('\n' + '='.repeat(78));
+    out('M4  REDUX DISPATCH  (lifecycle.ts subscribes SettingService.onSettingsChange');
+    out('    to the `settings` slice only, and checkIfProtected to `lists` only —');
+    out('    via onSlicesChange — instead of running both on every dispatch)');
+    out('='.repeat(78));
+
+    // --- Part A: a slice neither subscriber reads (cache) ------------------
     // warm-up
     for (let i = 0; i < 30; i++) {
       store.dispatch({
@@ -270,30 +277,74 @@ describe('CAD hot-path measurements', () => {
 
     const N = 200;
     perf.resetCalls();
-    const t0 = HR();
+    let t0 = HR();
     for (let i = 0; i < N; i++) {
       store.dispatch({
         type: ReduxConstants.ADD_CACHE,
         payload: { key: `k${i}`, value: i },
       });
     }
-    const t1 = HR();
-    const syncMs = MS(t0, t1);
+    let t1 = HR();
+    const unrelatedSyncMs = MS(t0, t1);
     await drain();
     await drain();
-    const t2 = HR();
+    let t2 = HR();
 
-    out('\n' + '='.repeat(78));
-    out('M4  ONE redux dispatch  (any state change: cache, activity log, counters)');
-    out('='.repeat(78));
-    out(`sync CPU on the dispatch stack : ${fmt((syncMs * 1000) / N, 1)} us/dispatch`);
-    out(`total incl. async subscribers  : ${fmt((MS(t0, t2) * 1000) / N, 1)} us/dispatch`);
-    out(`ext API calls                  : ${fmt(perf.totalCalls() / N, 2)} per dispatch`);
-    out(`breakdown: ${callSummary(perf.calls)}`);
+    out(`ADD_CACHE (unrelated slice) x${N}:`);
+    out(
+      `  sync CPU on the dispatch stack : ${fmt((unrelatedSyncMs * 1000) / N, 1)} us/dispatch`,
+    );
+    out(
+      `  total incl. async subscribers  : ${fmt((MS(t0, t2) * 1000) / N, 1)} us/dispatch`,
+    );
+    out(`  ext API calls                  : ${perf.totalCalls()} total`);
+    out(
+      '  onSlicesChange filters this out before SettingService.onSettingsChange or',
+    );
+    out('  checkIfProtected ever run — this is Task 2\'s intended effect.');
+
+    expect(perf.totalCalls()).toBe(0);
+
+    // --- Part B: the settings slice, which onSettingsChange DOES read ------
+    for (let i = 0; i < 5; i++) {
+      store.dispatch({
+        type: ReduxConstants.UPDATE_SETTING,
+        payload: { name: SettingID.DEBUG_MODE, value: i % 2 === 0 },
+      });
+    }
+    await drain();
+
+    perf.resetCalls();
+    t0 = HR();
+    for (let i = 0; i < N; i++) {
+      store.dispatch({
+        type: ReduxConstants.UPDATE_SETTING,
+        payload: { name: SettingID.DEBUG_MODE, value: i % 2 === 0 },
+      });
+    }
+    t1 = HR();
+    const settingsSyncMs = MS(t0, t1);
+    await drain();
+    await drain();
+    t2 = HR();
+
     out('');
-    out('This is lifecycle.ts:141 -> SettingService.onSettingsChange, which ends in');
-    out('checkIfProtected() + validateSettings() on EVERY store change, not just');
-    out('on settings changes.');
+    out(`UPDATE_SETTING (settings slice) x${N}:`);
+    out(
+      `  sync CPU on the dispatch stack : ${fmt((settingsSyncMs * 1000) / N, 1)} us/dispatch`,
+    );
+    out(
+      `  total incl. async subscribers  : ${fmt((MS(t0, t2) * 1000) / N, 1)} us/dispatch`,
+    );
+    out(
+      `  ext API calls                  : ${fmt(perf.totalCalls() / N, 2)} per dispatch`,
+    );
+    out(`  breakdown: ${callSummary(perf.calls)}`);
+    out(
+      '  This is SettingService.onSettingsChange -> checkIfProtected(), which now',
+    );
+    out('  only runs when the settings slice actually changed identity.');
+
     expect(perf.totalCalls()).toBeGreaterThan(0);
   });
 });

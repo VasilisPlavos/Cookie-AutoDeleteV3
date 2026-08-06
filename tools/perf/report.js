@@ -30,6 +30,32 @@ try {
 }
 console.log(`# data: ${DATA}\n`);
 
+// COUNTS below models the code as of branch base d43ee51 (pre Tasks 1-3). Warn
+// loudly whenever this is pointed anywhere except the recorded baseline, since
+// the printed per-event costs and "what each option saves" section are only
+// meaningful against that pre-change code.
+if (path.basename(DATA) !== 'baseline') {
+  console.log('!'.repeat(76));
+  console.log(
+    "WARNING: COUNTS in this file models the PRE-CHANGE code (branch base d43ee51).",
+  );
+  console.log(
+    `It has not been updated for whatever produced ${path.relative(process.cwd(), DATA)}/,`,
+  );
+  console.log(
+    'so every API-call-derived number below (per-event cost, cold-init totals,',
+  );
+  console.log(
+    '"what each option saves") is baseline-only and does NOT reflect that run\'s',
+  );
+  console.log(
+    'actual code. For authoritative post-change call counts, run `npm run test:perf`',
+  );
+  console.log('instead — it counts calls from the real code, not this hand-maintained model.');
+  console.log('!'.repeat(76));
+  console.log('');
+}
+
 const L = {};
 for (const r of m.ipc) L[r.name] = r.mean;
 L['action.setBadgeTextColor()'] = L['action.setBadgeText()']; // not benched separately
@@ -38,6 +64,14 @@ const f = (n, d = 2) => (n === null || n === undefined ? 'n/a' : Number(n).toFix
 const line = (c = '=') => console.log(c.repeat(76));
 
 // --- exact API-call counts from the harness --------------------------------
+// This is a hand-maintained model of the PRE-CHANGE code at branch base
+// d43ee51 (before Tasks 1-3: the per-tab icon loop on init, the unfiltered
+// store subscriber, the unmemoised FPI probe). It was never updated alongside
+// those tasks and no longer matches HEAD. The authoritative, code-derived
+// post-change call counts come from `npm run test:perf`
+// (__tests__/perf/hotpaths.test.ts), not from this constant — treat anything
+// below that's computed FROM these counts (per-event cost, cold-init totals,
+// "what each option saves") as baseline-only.
 const COUNTS = {
   coldInit: (tabs) => ({
     'action.setIcon(imageData)': 2 + tabs,

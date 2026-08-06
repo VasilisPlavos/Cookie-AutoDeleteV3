@@ -17,6 +17,13 @@ not shipped in the extension bundle.
 **Measurement 1 is the honest A/B signal.** API call counts come from the code
 alone, so a before/after diff is exact and reproducible.
 
+`report.js`'s `COUNTS` constant is a hand-maintained model of the code at
+branch base (currently `d43ee51`) — it is not re-derived per change, so its
+API-call-derived output (per-event cost, cold-init totals, "what each option
+saves") only reflects that pre-change code; `report.js` warns when pointed at
+a data directory other than `baseline/` for this reason. For authoritative
+post-change call counts, read `npm run test:perf`'s output directly.
+
 **Measurement 2's event rates are an environmental input, not a result.** How many
 `cookies.onChanged` events fire per page load depends on what the sites served
 that day, not on CAD. Do not read a change in that number as an effect of your
