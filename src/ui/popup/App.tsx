@@ -246,7 +246,7 @@ class App extends Component<PopupAppComponentProps, InitialState> {
               type="button"
               onClick={() => {
                 onCookieCleanup({
-                  greyCleanup: false,
+                  startup: false,
                   ignoreOpenTabs: false,
                 });
                 animateFlash(

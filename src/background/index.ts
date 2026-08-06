@@ -5,7 +5,7 @@
  */
 import 'webextension-polyfill';
 
-import { cookieCleanup, validateSettings } from '../redux/Actions';
+import { validateSettings } from '../redux/Actions';
 import { reduxWebextActions } from '../redux/Store';
 import { checkIfProtected } from '../services/BrowserActionService';
 import AlarmScheduler from '../services/AlarmScheduler';
@@ -21,6 +21,7 @@ import {
 } from '../services/Libs';
 import { ReduxConstants } from '../typings/ReduxConstants';
 import { flushSave, getStore, ready } from './lifecycle';
+import { runStartupCleanup } from './startupCleanup';
 import { openWhatsNewOnUpdate } from './whatsNew';
 
 // --- Tabs ---
@@ -63,26 +64,7 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
 browser.runtime.onStartup.addListener(async () => {
   await ready();
   const store = getStore();
-  if (getSetting(store.getState(), SettingID.ACTIVE_MODE) === true) {
-    if (getSetting(store.getState(), SettingID.ENABLE_GREYLIST) === true) {
-      let isFFSessionRestore = false;
-      const startupTabs = await browser.tabs.query({ windowType: 'normal' });
-      startupTabs.forEach((tab) => {
-        if (tab.url === 'about:sessionrestore') isFFSessionRestore = true;
-      });
-      if (!isFFSessionRestore) {
-        store.dispatch<any>(
-          cookieCleanup({
-            greyCleanup: true,
-            ignoreOpenTabs: getSetting(
-              store.getState(),
-              SettingID.CLEAN_OPEN_TABS_STARTUP,
-            ),
-          }),
-        );
-      }
-    }
-  }
+  await runStartupCleanup(store);
   await checkIfProtected(store.getState());
 });
 

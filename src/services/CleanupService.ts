@@ -134,7 +134,17 @@ export const isSafeToClean = (
     firstPartyDomain,
     session,
   };
-  const { greyCleanup, openTabDomains, ignoreOpenTabs } = cleanupProperties;
+  const { startup, openTabDomains, ignoreOpenTabs } = cleanupProperties;
+  // "Is this the startup run" is the caller's fact; whether greylisted entries
+  // are cleaned is policy, and policy lives in the setting. Keeping them apart
+  // is what lets the startup run happen with greylist cleanup switched off.
+  // filterSiteData reads the *Restart reasons below (CADSiteDataCookieRestart,
+  // ExpiredCookieRestart) as policy — it treats them as overriding a
+  // greylisted expression's cleanSiteData opt-in — so those reasons must key
+  // on cleanGreylist, not startup, or a startup run with greylist cleanup off
+  // would be wrongly treated as a restart cleanup for that expression.
+  const cleanGreylist =
+    startup && (getSetting(state, SettingID.ENABLE_GREYLIST) as boolean);
   const openTabStatus = ignoreOpenTabs
     ? OpenTabStatus.TabsWereIgnored
     : OpenTabStatus.TabsWasNotIgnored;
@@ -187,7 +197,7 @@ export const isSafeToClean = (
     cookieProperties.name === CADCOOKIENAME &&
     (matchedExpression.listType === ListType.WHITE ||
       (matchedExpression.listType === ListType.GREY &&
-        (greyCleanup ||
+        (cleanGreylist ||
           (matchedExpression.cleanSiteData &&
             matchedExpression.cleanSiteData.length !== 0))))
   ) {
@@ -207,7 +217,7 @@ export const isSafeToClean = (
       cookie: cookieProperties,
       expression: matchedExpression,
       openTabStatus,
-      reason: greyCleanup
+      reason: cleanGreylist
         ? ReasonClean.CADSiteDataCookieRestart
         : ReasonClean.CADSiteDataCookie,
     };
@@ -233,7 +243,7 @@ export const isSafeToClean = (
         cookie: cookieProperties,
         expression: matchedExpression,
         openTabStatus,
-        reason: greyCleanup
+        reason: cleanGreylist
           ? ReasonClean.ExpiredCookieRestart
           : ReasonClean.ExpiredCookie,
       };
@@ -241,7 +251,7 @@ export const isSafeToClean = (
   }
 
   // Evaluate the keep/clean verdict for a single site through the shared list
-  // rules: startup (greyCleanup) cleanup, whitelist/greylist matching, and the
+  // rules: startup cleanup, whitelist/greylist matching, and the
   // cleanAllCookies/cookieNames name filter. Open-tab grace and expiry are
   // decided once for the whole cookie above, so they are not repeated here.
   // Running this for both the partition top-level site AND the cookie's own host
@@ -257,17 +267,22 @@ export const isSafeToClean = (
     // Unmatched by any list: clean. Startup and normal cleanup differ only in
     // the reason reported. Returning here also narrows `matched` to defined for
     // the remaining checks.
+    // Deliberately keyed on raw `startup`, not `cleanGreylist`, unlike the
+    // *Restart reasons above: filterSiteData's no-match reason list treats
+    // StartupNoMatchedExpression identically to NoMatchedExpression, so this
+    // label is descriptive only and carries no policy — do not "fix" it to
+    // track cleanGreylist, and do not give it policy meaning later.
     if (!matched) {
       return {
         clean: true,
-        reason: greyCleanup
+        reason: startup
           ? ReasonClean.StartupNoMatchedExpression
           : ReasonClean.NoMatchedExpression,
       };
     }
     // Startup cleanup of a greylisted match whose cookie name is not kept.
     if (
-      greyCleanup &&
+      cleanGreylist &&
       matched.listType === ListType.GREY &&
       // Tests the cleanAllCookies flag and if it doesn't include that name or if there is no cookieNames
       (undefinedIsTrue(matched.cleanAllCookies) ||
@@ -792,6 +807,28 @@ export const parseCleanSiteData = (bool?: boolean): boolean => {
   return bool === undefined ? false : bool;
 };
 
+// Reason membership as sets rather than `obj.reason === X || obj.reason === Y`
+// chains. That chain shape is what hid a bug here for two years: drop one
+// `obj.reason ===` and the operand becomes a bare enum member, which is truthy,
+// so the condition silently reads as always-true with no type or runtime error.
+type CleanupReason = ReasonKeep | ReasonClean;
+
+const NO_MATCHED_EXPRESSION_REASONS: ReadonlyArray<CleanupReason> = [
+  ReasonClean.NoMatchedExpression,
+  ReasonClean.StartupNoMatchedExpression,
+];
+
+const CAD_SITE_DATA_REASONS: ReadonlyArray<CleanupReason> = [
+  ReasonClean.CADSiteDataCookie,
+  ReasonClean.CADSiteDataCookieRestart,
+];
+
+// Restart reasons that only clean when the matched expression is greylisted.
+const GREY_ONLY_RESTART_REASONS: ReadonlyArray<CleanupReason> = [
+  ReasonClean.ExpiredCookieRestart,
+  ReasonClean.CADSiteDataCookieRestart,
+];
+
 /** Filter the deleted cookies from site data type */
 export const filterSiteData = (
   obj: CleanReasonObject,
@@ -799,24 +836,18 @@ export const filterSiteData = (
   debug = false,
 ): boolean => {
   const notProtectedByOpenTab = obj.reason !== ReasonKeep.OpenTabs;
-  const notInAnyLists =
-    obj.reason === ReasonClean.NoMatchedExpression ||
-    obj.reason === ReasonClean.StartupNoMatchedExpression;
-  const isExpiredNotRestart = obj.reason === ReasonClean.ExpiredCookie;
+  const notInAnyLists = NO_MATCHED_EXPRESSION_REASONS.includes(obj.reason);
   const isExpiredRestart = obj.reason === ReasonClean.ExpiredCookieRestart;
   const isCADCookieNoExpression =
-    (obj.reason === ReasonClean.CADSiteDataCookie ||
-      ReasonClean.CADSiteDataCookieRestart) &&
-    obj.expression === undefined;
+    CAD_SITE_DATA_REASONS.includes(obj.reason) && obj.expression === undefined;
   const nonBlankCookieHostName = obj.cookie.hostname.trim() !== '';
   const cleanSiteDataInExpression = parseCleanSiteData(
     obj.expression?.cleanSiteData?.includes(siteData),
   );
   const isRestartCleanup =
-    (isExpiredRestart && obj.expression?.listType === ListType.GREY) ||
-    (obj.reason === ReasonClean.CADSiteDataCookieRestart &&
-      obj.expression?.listType === ListType.GREY) ||
-    obj.reason === ReasonClean.StartupCleanupAndGreyList;
+    obj.reason === ReasonClean.StartupCleanupAndGreyList ||
+    (GREY_ONLY_RESTART_REASONS.includes(obj.reason) &&
+      obj.expression?.listType === ListType.GREY);
   const canCleanSiteData =
     isCADCookieNoExpression || cleanSiteDataInExpression || isRestartCleanup;
   const cro: CleanReasonObject = {
@@ -833,7 +864,7 @@ export const filterSiteData = (
         notProtectedByOpenTab,
         notInAnyLists,
         siteData,
-        isExpiredNotRestart,
+        isExpiredNotRestart: obj.reason === ReasonClean.ExpiredCookie,
         isExpiredRestart,
         isCADCookieNoExpression,
         cleanSiteDataInExpression,
@@ -900,7 +931,7 @@ export const returnContainersOfOpenTabDomains = async (
 export const cleanCookiesOperation = async (
   state: State,
   cleanupProperties: CleanupProperties = {
-    greyCleanup: false,
+    startup: false,
     ignoreOpenTabs: false,
   },
 ): Promise<Record<string, any>> => {

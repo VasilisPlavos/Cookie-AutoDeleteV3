@@ -15,7 +15,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 import { resetSettings, updateSetting } from '../../../redux/Actions';
-import { initialState } from '../../../redux/State';
+import { knownSettingKeys } from '../../../redux/State';
 import {
   cadLog,
   isChrome,
@@ -26,7 +26,11 @@ import { ReduxAction } from '../../../typings/ReduxConstants';
 import CheckboxSetting from '../../common_components/CheckboxSetting';
 import IconButton from '../../common_components/IconButton';
 import SelectInput from '../../common_components/SelectInput';
-import { downloadObjectAsJSON } from '../../UILibs';
+import {
+  decideCoreSettingsImport,
+  downloadObjectAsJSON,
+  partitionSettingsByKnownKeys,
+} from '../../UILibs';
 import SettingsTooltip from './SettingsTooltip';
 
 const styles = {
@@ -92,7 +96,6 @@ class Settings extends React.Component<SettingProps> {
       return;
     }
     const { onUpdateSetting } = this.props;
-    const initialSettingKeys = Object.keys(initialState.settings);
     const reader = new FileReader();
     reader.onload = (file) => {
       try {
@@ -128,40 +131,50 @@ class Settings extends React.Component<SettingProps> {
           );
           return;
         }
-        // from { name, value } to name:{ name, value }
-        const newSettings: MapToSettingObject = (
-          jsonImport.settings as unknown as Setting[]
-        ).reduce((a: { [k: string]: Setting }, c: Setting) => {
-          a[c.name] = c;
-          return a;
-        }, {});
-        const settingKeys = Object.keys(newSettings);
-        const unknownKeys = settingKeys.filter(
-          (key) => !initialSettingKeys.includes(key),
+        // A setting removed after this file was exported (e.g. an older
+        // version's backup) is dropped rather than failing the whole import.
+        const { toApply, dropped, isError } = decideCoreSettingsImport(
+          jsonImport.settings as unknown as Setting[],
+          knownSettingKeys,
         );
-        if (unknownKeys.length > 0) {
+        if (dropped.length > 0) {
+          cadLog(
+            {
+              msg: 'importCoreSettings: Dropped settings no longer supported by this version.',
+              x: dropped,
+            },
+            debug,
+          );
+        }
+        if (isError) {
+          // Two distinct causes share one message: a file with no settings
+          // at all (dropped is also empty — name the file instead of
+          // appending nothing) vs. a file whose settings were all
+          // unrecognized (dropped lists which ones).
+          const detail = dropped.length > 0 ? dropped.join(', ') : importFile.name;
           this.setError(
             new Error(
               `${browser.i18n.getMessage(
                 'importCoreSettingsFailed',
-              )}:  ${unknownKeys.join(', ')}`,
+              )}:  ${detail}`,
             ),
           );
           return;
         }
-        settingKeys.forEach((setting) => {
-          if (settings[setting].value !== newSettings[setting].value) {
+        toApply.forEach((newSetting) => {
+          const settingName = newSetting.name;
+          if (settings[settingName].value !== newSetting.value) {
             cadLog(
               {
-                msg: `Setting updated:  ${setting} (${settings[setting].value} => ${newSettings[setting].value})`,
+                msg: `Setting updated:  ${settingName} (${settings[settingName].value} => ${newSetting.value})`,
               },
               debug,
             );
-            onUpdateSetting(newSettings[setting]);
+            onUpdateSetting(newSetting);
           } else {
             cadLog(
               {
-                msg: `Setting remains unchanged:  ${setting} (${settings[setting].value})`,
+                msg: `Setting remains unchanged:  ${settingName} (${settings[settingName].value})`,
               },
               debug,
             );
@@ -169,7 +182,17 @@ class Settings extends React.Component<SettingProps> {
         });
         this.setState({
           error: '',
-          success: browser.i18n.getMessage('importCoreSettingsText'),
+          // A partial import (some names unrecognized) still surfaces those
+          // names here, not just to the DEBUG_MODE-gated cadLog above — a
+          // plain success would otherwise tell the user everything imported.
+          success:
+            dropped.length > 0
+              ? `${browser.i18n.getMessage(
+                  'importCoreSettingsText',
+                )} ${browser.i18n.getMessage(
+                  'importCoreSettingsFailed',
+                )}:  ${dropped.join(', ')}`
+              : browser.i18n.getMessage('importCoreSettingsText'),
         });
       } catch (error: unknown) {
         if (error instanceof Error) {
@@ -186,8 +209,14 @@ class Settings extends React.Component<SettingProps> {
 
   public exportCoreSettings() {
     const { settings } = this.props;
-    // Convert from name:{name, value} to {name, value}
-    const exportSettings: Setting[] = Object.values(settings);
+    // Convert from name:{name, value} to {name, value}, dropping any setting
+    // that used to exist but has since been removed — this install's stored
+    // state can still carry the stale key even though initialState no longer
+    // does, and re-exporting it would make the file fail re-import.
+    const { known: exportSettings } = partitionSettingsByKnownKeys(
+      Object.values(settings),
+      knownSettingKeys,
+    );
     const r = downloadObjectAsJSON(
       { settings: exportSettings },
       'CoreSettings',
@@ -348,17 +377,6 @@ class Settings extends React.Component<SettingProps> {
             />
             <SettingsTooltip
               hrefURL={'#enable-greylist-cleanup-on-browser-restart'}
-            />
-          </div>
-          <div className="form-group">
-            <CheckboxSetting
-              text={browser.i18n.getMessage('cookieCleanUpOnStartText')}
-              settingObject={settings[SettingID.CLEAN_OPEN_TABS_STARTUP]}
-              inline={true}
-              updateSetting={(payload) => onUpdateSetting(payload)}
-            />
-            <SettingsTooltip
-              hrefURL={'#clean-cookies-from-open-tabs-on-startup'}
             />
           </div>
           <div className="form-group">

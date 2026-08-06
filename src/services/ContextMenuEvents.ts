@@ -464,7 +464,7 @@ export default class ContextMenuEvents extends StoreUser {
         );
         StoreUser.store.dispatch<any>(
           cookieCleanup({
-            greyCleanup: false,
+            startup: false,
             ignoreOpenTabs: false,
           }),
         );
@@ -478,7 +478,7 @@ export default class ContextMenuEvents extends StoreUser {
         );
         StoreUser.store.dispatch<any>(
           cookieCleanup({
-            greyCleanup: false,
+            startup: false,
             ignoreOpenTabs: true,
           }),
         );
