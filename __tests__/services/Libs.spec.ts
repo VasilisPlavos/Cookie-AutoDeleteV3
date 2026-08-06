@@ -1231,7 +1231,6 @@ describe('Library Functions', () => {
       // same matcher (e.g. getAllCookiesForDomain's FPI tests) -- an
       // unconsumed leftover there previously shifted these three tests by
       // one position. Each test below now owns its mock value outright.
-      _resetFirstPartyIsolateCache();
       (global.browser.cookies.getAll as jest.Mock).mockReset();
     });
     it('should return false if no error was caught', () => {
@@ -1256,7 +1255,6 @@ describe('Library Functions', () => {
 
   describe('isFirstPartyIsolate() caching', () => {
     it('probes once no matter how many times it is called', async () => {
-      _resetFirstPartyIsolateCache();
       (global.browser.cookies.getAll as jest.Mock).mockReset();
       (global.browser.cookies.getAll as jest.Mock).mockResolvedValue([]);
 
@@ -1271,7 +1269,6 @@ describe('Library Functions', () => {
     });
 
     it('does not cache an inconclusive error, and re-probes on the next call', async () => {
-      _resetFirstPartyIsolateCache();
       (global.browser.cookies.getAll as jest.Mock).mockReset();
       when(global.browser.cookies.getAll)
         .calledWith({ domain: '' })

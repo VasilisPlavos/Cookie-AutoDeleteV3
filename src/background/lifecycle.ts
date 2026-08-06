@@ -65,21 +65,21 @@ export function _resetForTests(): void {
 const browserSessionStorage: any = (browser.storage as any).session;
 
 /**
- * Subscriber wrapper that invokes `fn` only when one of the selected slices
- * changes identity. Subscribing a listener to the whole store makes it react to
+ * Subscriber wrapper that invokes `fn` only when the selected slice changes
+ * identity. Subscribing a listener to the whole store makes it react to
  * every dispatch: SettingService ran its full settings diff, and a
  * checkIfProtected() costing five extension-API calls, on each cache write,
  * activity-log entry and counter bump.
  */
-function onSlicesChange(
+function onSliceChange(
   store: Store<State, ReduxAction>,
-  selects: Array<(s: State) => unknown>,
+  select: (s: State) => unknown,
   fn: () => void,
 ): () => void {
-  let prev = selects.map((select) => select(store.getState()));
+  let prev = select(store.getState());
   return () => {
-    const next = selects.map((select) => select(store.getState()));
-    if (next.every((value, i) => value === prev[i])) return;
+    const next = select(store.getState());
+    if (next === prev) return;
     prev = next;
     fn();
   };
@@ -160,12 +160,12 @@ async function init(): Promise<void> {
   StoreUser.init(store);
   SettingService.init();
   store.subscribe(
-    onSlicesChange(store, [(s) => s.settings], SettingService.onSettingsChange),
+    onSliceChange(store, (s) => s.settings, SettingService.onSettingsChange),
   );
   // The action icon reflects list membership too, and onSettingsChange no longer
   // sees list-only changes.
   store.subscribe(
-    onSlicesChange(store, [(s) => s.lists], () => {
+    onSliceChange(store, (s) => s.lists, () => {
       void checkIfProtected(store.getState());
     }),
   );

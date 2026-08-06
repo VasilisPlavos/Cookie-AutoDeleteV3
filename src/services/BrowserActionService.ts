@@ -189,19 +189,29 @@ async function getGlobalIconImageData(enabled: boolean): Promise<ImageData | nul
   return loadIconData(globalIconPath(enabled));
 }
 
+async function writeIcon(
+  imageData: ImageData,
+  iconPath: string,
+  tabId?: number,
+): Promise<void> {
+  const scope = tabId === undefined ? 'global' : 'tab';
+  try {
+    await browser.action.setIcon(
+      tabId === undefined
+        ? { imageData: { 48: imageData } }
+        : { imageData: { 48: imageData }, tabId },
+    );
+  } catch (err) {
+    bacWarn(`[CAD] browser.action.setIcon (${scope}) failed for ${iconPath}`, err);
+  }
+}
+
 // Set background icon for browser.
 export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
   const imageData = await getGlobalIconImageData(enabled);
   if (!imageData) return; // loadIconData already logged, or setIcon unsupported
 
-  try {
-    await browser.action.setIcon({ imageData: { 48: imageData } });
-  } catch (err) {
-    bacWarn(
-      `[CAD] browser.action.setIcon (global) failed for ${globalIconPath(enabled)}`,
-      err,
-    );
-  }
+  await writeIcon(imageData, globalIconPath(enabled));
 };
 
 // Per-tab icon overrides set by setIconColor outlive a service-worker restart,
@@ -209,20 +219,16 @@ export const setGlobalIcon = async (enabled: boolean): Promise<void> => {
 // the Active Mode toggle. Doing it on every wake would erase per-site colours
 // that the following checkIfProtected() only restores for the active tabs.
 export const resetAllTabIcons = async (enabled: boolean): Promise<void> => {
-  await setGlobalIcon(enabled);
-
   const imageData = await getGlobalIconImageData(enabled);
   if (!imageData) return; // loadIconData already logged, or setIcon unsupported
 
   const iconPath = globalIconPath(enabled);
+  await writeIcon(imageData, iconPath);
+
   const tabAwait = await browser.tabs.query({ windowType: 'normal' });
   for (const tab of tabAwait) {
     if (tab.id !== browser.tabs.TAB_ID_NONE) {
-      try {
-        await browser.action.setIcon({ imageData: { 48: imageData }, tabId: tab.id });
-      } catch (err) {
-        bacWarn(`[CAD] browser.action.setIcon (tab) failed for ${iconPath}`, err);
-      }
+      await writeIcon(imageData, iconPath, tab.id);
     }
   }
 };
