@@ -7,19 +7,17 @@ const {
   seedState,
 } = require('../../tools/e2e/seed');
 const {
-  CleanupError,
-  PreconditionError,
   cookiesFor,
   expectCookieSetStillPresent,
   expectCookiesGone,
   expectCookiesPresent,
   expectCookiesStillPresent,
-  gotoOrPrecondition,
 } = require('../../tools/e2e/cookies');
+const { CleanupError, PreconditionError } = require('../../tools/e2e/errors');
+const { openSite } = require('../../tools/e2e/navigation');
 
 let context;
 let userDataDir;
-let keeperPage;
 
 test.beforeAll(async () => {
   const launched = await launchWithExtension();
@@ -28,8 +26,7 @@ test.beforeAll(async () => {
   await seedState(context, launched.extensionId);
   // A persistent context closes with its last page, so one page always stays
   // open. about:blank has no hostname, so it protects no domain.
-  keeperPage = await context.newPage();
-  await keeperPage.goto('about:blank');
+  await (await context.newPage()).goto('about:blank');
 });
 
 test.afterAll(async () => {
@@ -41,10 +38,8 @@ test.beforeEach(async () => {
 });
 
 test('an unlisted site is cleaned while a whitelisted site survives', async () => {
-  const whitelisted = await context.newPage();
-  await gotoOrPrecondition(whitelisted, `https://${WHITELISTED_SITE}/`);
-  const unlisted = await context.newPage();
-  await gotoOrPrecondition(unlisted, `https://${CLEANED_SITE}/`);
+  const whitelisted = await openSite(context, WHITELISTED_SITE);
+  const unlisted = await openSite(context, CLEANED_SITE);
 
   await expectCookiesPresent(context, WHITELISTED_SITE);
   await expectCookiesPresent(context, CLEANED_SITE);
@@ -64,13 +59,10 @@ test('an unlisted site is cleaned while a whitelisted site survives', async () =
 });
 
 test('a domain with a tab still open is not cleaned', async () => {
-  const firstTab = await context.newPage();
-  await gotoOrPrecondition(firstTab, `https://${OPEN_TAB_SITE}/`);
-  const secondTab = await context.newPage();
-  await gotoOrPrecondition(secondTab, `https://${OPEN_TAB_SITE}/`);
+  const firstTab = await openSite(context, OPEN_TAB_SITE);
+  const secondTab = await openSite(context, OPEN_TAB_SITE);
   // Sacrificial: an unprotected domain whose deletion proves a sweep completed.
-  const sacrificial = await context.newPage();
-  await gotoOrPrecondition(sacrificial, `https://${CLEANED_SITE}/`);
+  const sacrificial = await openSite(context, CLEANED_SITE);
 
   await expectCookiesPresent(context, OPEN_TAB_SITE);
   await expectCookiesPresent(context, CLEANED_SITE);
@@ -127,8 +119,7 @@ async function readSiteData(page) {
 }
 
 test('site data is cleaned for an unlisted domain', async () => {
-  const page = await context.newPage();
-  await gotoOrPrecondition(page, `https://${CLEANED_SITE}/`);
+  const page = await openSite(context, CLEANED_SITE);
   await writeSiteData(page);
 
   const before = await readSiteData(page);
@@ -145,8 +136,7 @@ test('site data is cleaned for an unlisted domain', async () => {
 
   // Re-navigating lets the site set fresh cookies again; harmless, because the
   // cookie assertion already completed and this step only reads site data.
-  const verify = await context.newPage();
-  await gotoOrPrecondition(verify, `https://${CLEANED_SITE}/`);
+  const verify = await openSite(context, CLEANED_SITE);
   const after = await readSiteData(verify);
   await verify.close();
 

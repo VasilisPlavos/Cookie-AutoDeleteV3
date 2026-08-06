@@ -2,18 +2,11 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { chromium } = require('@playwright/test');
+const { SetupError } = require('./errors');
 
-const REPO_ROOT = path.join(__dirname, '..', '..');
-const EXTENSION_DIR = path.join(REPO_ROOT, 'extension');
+const EXTENSION_DIR = path.join(__dirname, '..', '..', 'extension');
 
 const SERVICE_WORKER_TIMEOUT_MS = 30_000;
-
-class SetupError extends Error {
-  constructor(message) {
-    super(`SETUP FAILED: ${message}`);
-    this.name = 'SetupError';
-  }
-}
 
 async function launchWithExtension() {
   if (!fs.existsSync(path.join(EXTENSION_DIR, 'bundles'))) {
@@ -84,9 +77,6 @@ async function closeContext(context, userDataDir) {
 }
 
 module.exports = {
-  EXTENSION_DIR,
-  REPO_ROOT,
-  SetupError,
   closeContext,
   launchWithExtension,
 };

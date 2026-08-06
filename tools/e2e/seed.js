@@ -1,4 +1,4 @@
-const { SetupError } = require('./extension');
+const { SetupError } = require('./errors');
 
 // The registrable domain used for assertions (cookie identity is matched by
 // domain suffix — see cookies.js:belongsTo).

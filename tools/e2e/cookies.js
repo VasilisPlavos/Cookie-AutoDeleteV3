@@ -1,30 +1,7 @@
+const { CleanupError, PreconditionError } = require('./errors');
+
 const CLEANUP_POLL_TIMEOUT_MS = 15_000;
 const CLEANUP_POLL_INTERVAL_MS = 250;
-
-class PreconditionError extends Error {
-  constructor(message) {
-    super(`PRECONDITION FAILED: ${message}`);
-    this.name = 'PreconditionError';
-  }
-}
-
-class CleanupError extends Error {
-  constructor(message) {
-    super(`CLEANUP FAILED: ${message}`);
-    this.name = 'CleanupError';
-  }
-}
-
-// A navigation failure (DNS, timeout, refused connection) is a site or network
-// problem, not a CAD regression — route it into the taxonomy instead of
-// letting a raw Playwright TimeoutError escape unprefixed.
-async function gotoOrPrecondition(page, url) {
-  try {
-    await page.goto(url);
-  } catch (error) {
-    throw new PreconditionError(`navigation to ${url} failed: ${error.message}`);
-  }
-}
 
 // Match on the registrable domain rather than a cookie name: sites rename their
 // cookies, and that must not read as a CAD regression.
@@ -98,12 +75,9 @@ async function expectCookieSetStillPresent(context, site, before) {
 }
 
 module.exports = {
-  CleanupError,
-  PreconditionError,
   cookiesFor,
   expectCookieSetStillPresent,
   expectCookiesGone,
   expectCookiesPresent,
   expectCookiesStillPresent,
-  gotoOrPrecondition,
 };
