@@ -7,8 +7,10 @@ import { when } from 'jest-when';
 import { runStartupCleanup } from '../../src/background/startupCleanup';
 import * as Actions from '../../src/redux/Actions';
 import { initialState } from '../../src/redux/State';
+import * as Libs from '../../src/services/Libs';
 
 const spyCookieCleanup = jest.spyOn(Actions, 'cookieCleanup');
+const spyCadLog = jest.spyOn(Libs, 'cadLog');
 
 const storeWith = (activeMode: boolean, enableGreylist: boolean) => {
   const state: State = {
@@ -91,6 +93,43 @@ describe('runStartupCleanup', () => {
 
     expect(spyCookieCleanup).toHaveBeenCalledWith(
       expect.objectContaining({ ignoreOpenTabs: false }),
+    );
+  });
+
+  it('awaits the dispatched cleanup before resolving', async () => {
+    const store = storeWith(true, false);
+    let dispatchSettled = false;
+    store.dispatch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          // A macrotask: if runStartupCleanup did not await the dispatch,
+          // its returned promise would already have settled by the time
+          // this fires, since only microtasks run before a macrotask.
+          setTimeout(() => {
+            dispatchSettled = true;
+            resolve(undefined);
+          }, 0);
+        }),
+    );
+
+    await runStartupCleanup(store as never);
+
+    expect(dispatchSettled).toBe(true);
+  });
+
+  it('skips the cleanup and does not throw when tabs.query rejects', async () => {
+    const store = storeWith(true, true);
+    when(global.browser.tabs.query)
+      .calledWith(expect.any(Object))
+      .mockRejectedValue(new Error('tabs.query unavailable') as never);
+
+    await expect(runStartupCleanup(store as never)).resolves.toBeUndefined();
+
+    expect(spyCookieCleanup).not.toHaveBeenCalled();
+    expect(store.dispatch).not.toHaveBeenCalled();
+    expect(spyCadLog).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'warn' }),
+      false,
     );
   });
 });

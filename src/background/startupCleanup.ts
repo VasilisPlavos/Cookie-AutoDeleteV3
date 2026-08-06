@@ -5,7 +5,7 @@
 import { Store } from 'redux';
 
 import { cookieCleanup } from '../redux/Actions';
-import { getSetting } from '../services/Libs';
+import { cadLog, getSetting } from '../services/Libs';
 import { ReduxAction } from '../typings/ReduxConstants';
 
 /**
@@ -14,8 +14,10 @@ import { ReduxAction } from '../typings/ReduxConstants';
  * greylist feature — ENABLE_GREYLIST only decides whether greylisted entries
  * are included, which isSafeToClean reads for itself.
  *
- * Open tabs are always protected here. Only the explicit "include open tabs"
- * actions in the popup and context menu bypass that.
+ * Automatic cleanup never suspends open-tab protection here; only the
+ * explicit "include open tabs" actions in the popup and context menu bypass
+ * it. Discarded/unloaded tabs still follow CLEAN_DISCARDED, same as
+ * everywhere else protection is evaluated.
  */
 export async function runStartupCleanup(
   store: Store<State, ReduxAction>,
@@ -24,10 +26,25 @@ export async function runStartupCleanup(
 
   // Firefox restores tabs behind about:sessionrestore, where those tabs do not
   // exist yet. Cleaning now would delete cookies for tabs about to reappear.
-  const startupTabs = await browser.tabs.query({ windowType: 'normal' });
+  let startupTabs: browser.tabs.Tab[];
+  try {
+    startupTabs = await browser.tabs.query({ windowType: 'normal' });
+  } catch (err) {
+    // Without a reliable tab list, open-tab protection can't be trusted —
+    // skip this startup's cleanup rather than risk cleaning an open tab.
+    cadLog(
+      {
+        msg: 'runStartupCleanup: tabs.query failed; skipping startup cleanup.',
+        type: 'warn',
+        x: err,
+      },
+      getSetting(store.getState(), SettingID.DEBUG_MODE) as boolean,
+    );
+    return;
+  }
   if (startupTabs.some((tab) => tab.url === 'about:sessionrestore')) return;
 
-  store.dispatch<any>(
+  await store.dispatch<any>(
     cookieCleanup({ startup: true, ignoreOpenTabs: false }),
   );
 }
