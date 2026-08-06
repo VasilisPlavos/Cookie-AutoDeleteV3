@@ -77,3 +77,69 @@ test('a domain with a tab still open is not cleaned', async () => {
   await secondTab.close();
   await expectCookiesGone(context, OPEN_TAB_SITE);
 });
+
+const SITE_DATA_KEY = 'cad-e2e-marker';
+const SITE_DATA_DB = 'cad-e2e-db';
+
+async function writeSiteData(page) {
+  await page.evaluate(
+    ({ key, db }) =>
+      new Promise((resolve, reject) => {
+        localStorage.setItem(key, 'present');
+        const request = indexedDB.open(db, 1);
+        request.onupgradeneeded = () => request.result.createObjectStore('items');
+        request.onsuccess = () => {
+          request.result.close();
+          resolve();
+        };
+        request.onerror = () => reject(request.error);
+      }),
+    { key: SITE_DATA_KEY, db: SITE_DATA_DB },
+  );
+}
+
+async function readSiteData(page) {
+  return page.evaluate(
+    async ({ key, db }) => ({
+      localStorageValue: localStorage.getItem(key),
+      databases: (await indexedDB.databases()).map((entry) => entry.name),
+    }),
+    { key: SITE_DATA_KEY, db: SITE_DATA_DB },
+  );
+}
+
+test('site data is cleaned for an unlisted domain', async () => {
+  const page = await context.newPage();
+  await page.goto(`https://${CLEANED_SITE}/`);
+  await writeSiteData(page);
+
+  const before = await readSiteData(page);
+  if (before.localStorageValue !== 'present' || !before.databases.includes(SITE_DATA_DB)) {
+    throw new Error(
+      `PRECONDITION FAILED: could not write site data on ${CLEANED_SITE}. ` +
+        'This is a site or browser problem, not a CAD regression.',
+    );
+  }
+  await expectCookiesPresent(context, CLEANED_SITE);
+
+  await page.close();
+  await expectCookiesGone(context, CLEANED_SITE);
+
+  // Re-navigating lets the site set fresh cookies again; harmless, because the
+  // cookie assertion already completed and this step only reads site data.
+  const verify = await context.newPage();
+  await verify.goto(`https://${CLEANED_SITE}/`);
+  const after = await readSiteData(verify);
+  await verify.close();
+
+  if (after.localStorageValue !== null) {
+    throw new Error(
+      `CLEANUP FAILED: localStorage key "${SITE_DATA_KEY}" survived on ${CLEANED_SITE}`,
+    );
+  }
+  if (after.databases.includes(SITE_DATA_DB)) {
+    throw new Error(
+      `CLEANUP FAILED: IndexedDB database "${SITE_DATA_DB}" survived on ${CLEANED_SITE}`,
+    );
+  }
+});
