@@ -64,6 +64,27 @@ export function _resetForTests(): void {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const browserSessionStorage: any = (browser.storage as any).session;
 
+/**
+ * Subscriber wrapper that invokes `fn` only when one of the selected slices
+ * changes identity. Subscribing a listener to the whole store makes it react to
+ * every dispatch: SettingService ran its full settings diff, and a
+ * checkIfProtected() costing five extension-API calls, on each cache write,
+ * activity-log entry and counter bump.
+ */
+function onSlicesChange(
+  store: Store<State, ReduxAction>,
+  selects: Array<(s: State) => unknown>,
+  fn: () => void,
+): () => void {
+  let prev = selects.map((select) => select(store.getState()));
+  return () => {
+    const next = selects.map((select) => select(store.getState()));
+    if (next.every((value, i) => value === prev[i])) return;
+    prev = next;
+    fn();
+  };
+}
+
 async function init(): Promise<void> {
   const local = await browser.storage.local.get();
   let stateFromStorage: Partial<State> = {};
@@ -138,7 +159,16 @@ async function init(): Promise<void> {
 
   StoreUser.init(store);
   SettingService.init();
-  store.subscribe(SettingService.onSettingsChange);
+  store.subscribe(
+    onSlicesChange(store, [(s) => s.settings], SettingService.onSettingsChange),
+  );
+  // The action icon reflects list membership too, and onSettingsChange no longer
+  // sees list-only changes.
+  store.subscribe(
+    onSlicesChange(store, [(s) => s.lists], () => {
+      void checkIfProtected(store.getState());
+    }),
+  );
   store.subscribe(saveSubscriber);
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call

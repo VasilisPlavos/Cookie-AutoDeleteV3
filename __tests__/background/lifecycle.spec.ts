@@ -32,8 +32,9 @@ jest.mock('../../src/services/ContextualIdentitiesEvents', () => {
   };
 });
 
-import { ready, _resetForTests } from '../../src/background/lifecycle';
+import { getStore, ready, _resetForTests } from '../../src/background/lifecycle';
 import { PARTITION_PROBE_COOKIE_NAME } from '../../src/services/Libs';
+import { ReduxConstants } from '../../src/typings/ReduxConstants';
 
 describe('background/lifecycle', () => {
   beforeEach(() => {
@@ -145,6 +146,51 @@ describe('background/lifecycle', () => {
       await ready();
       expect(bas.setGlobalIcon).toHaveBeenCalled();
       expect(bas.resetAllTabIcons).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('store subscriptions', () => {
+    it('does not run SettingService.onSettingsChange for an unrelated slice', async () => {
+      await ready();
+      const SettingService = require('../../src/services/SettingService').default;
+      const before = SettingService.onSettingsChange.mock.calls.length;
+
+      getStore().dispatch({
+        type: ReduxConstants.ADD_CACHE,
+        payload: { key: 'probe', value: 1 },
+      });
+
+      expect(SettingService.onSettingsChange.mock.calls.length).toBe(before);
+    });
+
+    it('runs SettingService.onSettingsChange when settings change', async () => {
+      await ready();
+      const SettingService = require('../../src/services/SettingService').default;
+      const before = SettingService.onSettingsChange.mock.calls.length;
+
+      getStore().dispatch({
+        type: ReduxConstants.UPDATE_SETTING,
+        payload: { name: SettingID.DEBUG_MODE, value: true },
+      });
+
+      expect(SettingService.onSettingsChange.mock.calls.length).toBe(before + 1);
+    });
+
+    it('refreshes the action icon when the expression lists change', async () => {
+      await ready();
+      const bas = require('../../src/services/BrowserActionService');
+      const before = bas.checkIfProtected.mock.calls.length;
+
+      getStore().dispatch({
+        type: ReduxConstants.ADD_EXPRESSION,
+        payload: {
+          expression: '*.example.com',
+          listType: ListType.WHITE,
+          storeId: 'default',
+        },
+      });
+
+      expect(bas.checkIfProtected.mock.calls.length).toBe(before + 1);
     });
   });
 });
