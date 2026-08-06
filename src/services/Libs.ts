@@ -357,11 +357,11 @@ export const getContainerExpressionDefault = (
   const getExpression = (list: string): Expression | undefined => {
     return state.lists[list]
       ? state.lists[list].find((exp) => {
-        return (
-          exp.listType === listType &&
-          exp.expression === `_Default:${listType}`
-        );
-      })
+          return (
+            exp.listType === listType &&
+            exp.expression === `_Default:${listType}`
+          );
+        })
       : undefined;
   };
   const exp: Expression = {
@@ -612,24 +612,27 @@ export const isFirefoxNotAndroid = (cache: CacheMap): boolean => {
  */
 let firstPartyIsolateProbe: Promise<boolean> | null = null;
 
-/**
- * Test for FirstPartyIsolation (Firefox).
- * Workaround for not needing Firefox 'Privacy' permission.
- */
-export const isFirstPartyIsolate = async (): Promise<boolean> => {
-  try {
-    if (!firstPartyIsolateProbe) {
-      await browser.cookies.getAll({ domain: '' });
-      firstPartyIsolateProbe = Promise.resolve(false);
-    }
-
-  } catch (e) {
-    const isFPI = (e as Error).message.indexOf('firstPartyDomain') !== -1;
-    // Inconclusive (e.g. a transient error unrelated to FPI) — don't
-    // pin a possibly-wrong `false` for the rest of the service worker's
-    // life. Clear the cache so the next call re-probes.
-    if (!isFPI) firstPartyIsolateProbe = null;
-    return isFPI;
+export const isFirstPartyIsolate = (): Promise<boolean> => {
+  if (!firstPartyIsolateProbe) {
+    firstPartyIsolateProbe = browser.cookies
+      .getAll({
+        domain: '',
+      })
+      .then(() => {
+        // No error = most likely not enabled.
+        return false;
+      })
+      .catch((e) => {
+        // Error usually if firstPartyIsolate is enabled as it requires firstPartyDomain Property.
+        const isFPI = (e as Error).message.indexOf('firstPartyDomain') !== -1;
+        if (!isFPI) {
+          // Inconclusive (e.g. a transient error unrelated to FPI) — don't
+          // pin a possibly-wrong `false` for the rest of the service worker's
+          // life. Clear the cache so the next call re-probes.
+          firstPartyIsolateProbe = null;
+        }
+        return isFPI;
+      });
   }
   return firstPartyIsolateProbe;
 };
@@ -775,7 +778,9 @@ export const prepareCookieDomain = (
 
   const sDot = cookieDomain.startsWith('.') ? 1 : 0;
 
-  return `http${cookie.secure ? 's' : ''}://${cookieDomain.slice(sDot)}${cookie.path}`;
+  return `http${cookie.secure ? 's' : ''}://${cookieDomain.slice(sDot)}${
+    cookie.path
+  }`;
 };
 
 /**
@@ -903,7 +908,9 @@ export const showNotification = (
   browser.notifications.create(sid, {
     iconUrl: browser.runtime.getURL('icons/icon_48.png'),
     message: x.msg,
-    title: `CAD ${browser.runtime.getManifest().version} - ${x.title ? x.title : browser.i18n.getMessage('manualActionNotification')}`,
+    title: `CAD ${browser.runtime.getManifest().version} - ${
+      x.title ? x.title : browser.i18n.getMessage('manualActionNotification')
+    }`,
     type: 'basic',
   });
   setTimeout(() => {
