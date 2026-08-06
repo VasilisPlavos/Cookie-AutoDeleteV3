@@ -57,11 +57,7 @@ async function launchWithExtension() {
     // failure while closing an already-broken context or removing an
     // already-gone directory.
     try {
-      if (context) {
-        await closeContext(context, userDataDir);
-      } else {
-        fs.rmSync(userDataDir, { recursive: true, force: true });
-      }
+      await closeContext(context, userDataDir);
     } catch {
       // ignore; rethrow the original error below
     }
@@ -69,8 +65,13 @@ async function launchWithExtension() {
   }
 }
 
+// Tolerates a missing context so a teardown hook can call this unconditionally.
+// When launchWithExtension throws, the caller's `context` was never assigned —
+// and a TypeError from teardown would bury the SETUP FAILED that explains why.
 async function closeContext(context, userDataDir) {
-  await context.close();
+  if (context) {
+    await context.close();
+  }
   if (userDataDir) {
     fs.rmSync(userDataDir, { recursive: true, force: true });
   }

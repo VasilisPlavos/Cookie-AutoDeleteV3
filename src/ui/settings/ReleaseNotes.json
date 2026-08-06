@@ -5,7 +5,8 @@
       "notes": [
         "Removed the 'Clean Cookies and other Site Data from Open Tabs on Startup' setting. Open tabs stay protected from automatic cleaning — unloaded tabs still follow 'Enable Cleanup for Discarded/Unloaded Tabs' — use 'Clean, include open tabs' from the popup or the right-click menu when you want to clean them anyway.",
         "Startup cleanup now runs whenever automatic cleaning is on, instead of only when greylist cleanup on browser restart is enabled. Greylisted sites are still only cleared at startup if that setting is on.",
-        "Importing a settings backup made by an older version no longer fails outright when it mentions a setting that has since been removed; an import that matches nothing at all is still reported as an error."
+        "Importing a settings backup made by an older version no longer fails outright when it mentions a setting that has since been removed; an import that matches nothing at all is still reported as an error.",
+        "Added an automated pre-release check that loads the extension into a real browser and confirms cookies and site data are genuinely deleted."
       ]
     },
     {
