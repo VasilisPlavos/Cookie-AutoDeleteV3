@@ -176,6 +176,19 @@ describe('background/lifecycle', () => {
       expect(SettingService.onSettingsChange.mock.calls.length).toBe(before + 1);
     });
 
+    it('does not run checkIfProtected for an unrelated slice', async () => {
+      await ready();
+      const bas = require('../../src/services/BrowserActionService');
+      const before = bas.checkIfProtected.mock.calls.length;
+
+      getStore().dispatch({
+        type: ReduxConstants.ADD_CACHE,
+        payload: { key: 'probe', value: 1 },
+      });
+
+      expect(bas.checkIfProtected.mock.calls.length).toBe(before);
+    });
+
     it('refreshes the action icon when the expression lists change', async () => {
       await ready();
       const bas = require('../../src/services/BrowserActionService');
