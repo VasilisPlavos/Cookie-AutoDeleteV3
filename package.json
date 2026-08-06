@@ -19,6 +19,7 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:perf": "jest --testPathIgnorePatterns=/node_modules/ --runInBand -- __tests__/perf",
+    "test:e2e": "npm run compile && playwright test",
     "test-all": "npm run test && npm run lint"
   },
   "engines": {
@@ -42,6 +43,7 @@
     "webextension-polyfill": "^0.8.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/firefox-webext-browser": "^143.0.0",
     "@types/jest": "^30.0.0",
     "@types/jest-when": "^3.5.2",

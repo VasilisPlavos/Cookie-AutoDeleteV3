@@ -133,7 +133,7 @@ module.exports = {
   // Kept in config rather than a CLI flag so a positional path filter (e.g.
   // `npm test -- __tests__/services/Libs.spec.ts`) isn't swallowed as another
   // ignore pattern by Jest's array-typed --testPathIgnorePatterns.
-  testPathIgnorePatterns: ['/node_modules/', '__tests__/perf'],
+  testPathIgnorePatterns: ['/node_modules/', '__tests__/perf', '__tests__/e2e'],
 
   // The regexp pattern Jest uses to detect test files
   // testRegex: "",
