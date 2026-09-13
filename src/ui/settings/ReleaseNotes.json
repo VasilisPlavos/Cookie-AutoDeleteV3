@@ -1,6 +1,12 @@
 {
   "releases": [
     {
+      "version": "1.3.3",
+      "notes": [
+        "Fixed a startup cleanup wiping its entire site-data tracking list, discarding cookieless sites that were merely open in a tab rather than actually cleaned — their cache, storage and service workers could then never get cleaned even after the tab closed."
+      ]
+    },
+    {
       "version": "1.3.2",
       "notes": [
         "Removed the 'Clean Cookies and other Site Data from Open Tabs on Startup' setting. Open tabs stay protected from automatic cleaning — unloaded tabs still follow 'Enable Cleanup for Discarded/Unloaded Tabs' — use 'Clean, include open tabs' from the popup or the right-click menu when you want to clean them anyway.",

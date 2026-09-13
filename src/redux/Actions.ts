@@ -29,7 +29,6 @@ import {
   ADD_DOMAIN_TO_CLEAN,
   ADD_EXPRESSION,
   CLEAR_ACTIVITY_LOG,
-  CLEAR_DOMAINS_TO_CLEAN,
   CLEAR_EXPRESSIONS,
   COOKIE_CLEANUP,
   INCREMENT_COOKIE_DELETED_COUNTER,
@@ -333,10 +332,6 @@ export const addDomainToCleanUI = (payload: string): ADD_DOMAIN_TO_CLEAN => ({
   type: ReduxConstants.ADD_DOMAIN_TO_CLEAN,
 });
 
-export const clearDomainsToCleanUI = (): CLEAR_DOMAINS_TO_CLEAN => ({
-  type: ReduxConstants.CLEAR_DOMAINS_TO_CLEAN,
-});
-
 export const removeDomainsToCleanUI = (
   payload: ReadonlyArray<string>,
 ): REMOVE_DOMAINS_TO_CLEAN => ({
@@ -356,7 +351,11 @@ export const cookieCleanup: ActionCreator<ThunkAction<
   const cleanupDoneObject = await cleanCookiesOperation(getState(), options);
   if (!cleanupDoneObject) return;
 
-  const { setOfDeletedDomainCookies, cachedResults } = cleanupDoneObject;
+  const {
+    setOfDeletedDomainCookies,
+    cachedResults,
+    registryDomainsToRemove,
+  } = cleanupDoneObject;
   const {
     browsingDataCleanup,
     recentlyCleaned,
@@ -364,27 +363,13 @@ export const cookieCleanup: ActionCreator<ThunkAction<
   } = cachedResults as ActivityLog;
 
   // Consume the site-data registry (state.domainsToClean) now that this run
-  // has evaluated it, reached only after cleanCookiesOperation returned
-  // successfully. A startup run processes the whole registry, so drop all of
-  // it; it repopulates as the user browses. An active/manual run only
-  // cleaned the domains that were not open-tab or whitelist protected, so
-  // drop exactly those and keep the rest for a later run (they reset on the
-  // next startup anyway).
-  if (options.startup) {
-    dispatch(clearDomainsToCleanUI());
-  } else if ((getState().domainsToClean || []).length > 0) {
-    const cleanedSiteDataDomains = new Set<string>();
-    if (browsingDataCleanup) {
-      Object.values(browsingDataCleanup).forEach((domains) => {
-        (domains || []).forEach((d) => cleanedSiteDataDomains.add(d));
-      });
-    }
-    const processed = getState().domainsToClean.filter((hostname) =>
-      cleanedSiteDataDomains.has(hostname),
-    );
-    if (processed.length > 0) {
-      dispatch(removeDomainsToCleanUI(processed));
-    }
+  // has evaluated it. CleanupService already applied whitelist/greylist and
+  // open-tab protection per hostname, so drop exactly the ones it reports as
+  // safe to remove (cleaned, or permanently protected by a list match) and
+  // keep the rest (still protected by an open tab) for a later run — the same
+  // rule for startup and active/manual runs.
+  if ((registryDomainsToRemove || []).length > 0) {
+    dispatch(removeDomainsToCleanUI(registryDomainsToRemove));
   }
 
   // Increment the count

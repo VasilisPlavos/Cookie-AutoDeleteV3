@@ -927,6 +927,50 @@ describe('CleanupService', () => {
       );
       expect(cleanedHostnames).not.toContain('registry-only.com');
     });
+
+    it('reports an unprotected registry hostname as safe to drop from the registry', async () => {
+      const result = await cleanCookiesOperation(firefoxRegistryState, {
+        startup: false,
+        ignoreOpenTabs: false,
+      });
+      expect(result.registryDomainsToRemove).toContain('registry-only.com');
+    });
+
+    it('does NOT report a registry hostname open in a tab as safe to drop', async () => {
+      when(global.browser.tabs.query)
+        .calledWith(expect.any(Object))
+        .mockResolvedValue([
+          {
+            cookieStoreId: 'firefox-default',
+            url: 'https://registry-only.com/page',
+          },
+        ] as never);
+      const result = await cleanCookiesOperation(firefoxRegistryState, {
+        startup: false,
+        ignoreOpenTabs: false,
+      });
+      expect(result.registryDomainsToRemove).not.toContain('registry-only.com');
+    });
+
+    it('reports a whitelisted registry hostname as safe to drop from the registry', async () => {
+      const whitelistedState = {
+        ...firefoxRegistryState,
+        lists: {
+          default: [
+            {
+              expression: 'registry-only.com',
+              listType: ListType.WHITE,
+              storeId: 'default',
+            },
+          ],
+        },
+      };
+      const result = await cleanCookiesOperation(whitelistedState, {
+        startup: true,
+        ignoreOpenTabs: false,
+      });
+      expect(result.registryDomainsToRemove).toContain('registry-only.com');
+    });
   });
 
   describe('cleanSiteData()', () => {

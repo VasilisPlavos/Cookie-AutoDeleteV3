@@ -540,13 +540,6 @@ describe('Reducer', () => {
       expect(result).toEqual([]);
     });
 
-    it('should clear on CLEAR_DOMAINS_TO_CLEAN', () => {
-      const result = domainsToClean(['a.com', 'b.com'], {
-        type: ReduxConstants.CLEAR_DOMAINS_TO_CLEAN,
-      });
-      expect(result).toEqual([]);
-    });
-
     it('should remove only the listed hostnames on REMOVE_DOMAINS_TO_CLEAN', () => {
       const result = domainsToClean(['a.com', 'b.com', 'c.com'], {
         payload: ['a.com', 'c.com'],
