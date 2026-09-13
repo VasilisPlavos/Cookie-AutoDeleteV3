@@ -258,7 +258,6 @@ export const domainsToClean = (
     }
 
     case ReduxConstants.RESET_ALL:
-    case ReduxConstants.CLEAR_DOMAINS_TO_CLEAN:
       return [];
 
     default:

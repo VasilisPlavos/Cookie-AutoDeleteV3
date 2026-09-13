@@ -1146,6 +1146,7 @@ export const cleanCookiesOperation = async (
   // startup. Registry entries are global, so this runs once, outside the
   // per-store loop. isSafeToClean still applies whitelist/greylist and open-tab
   // protection, so only unprotected domains are cleaned.
+  let registryDomainsToRemove: string[] = [];
   if ((state.domainsToClean || []).length > 0) {
     const registryObjects = buildRegistrySiteDataObjects(
       state,
@@ -1165,6 +1166,14 @@ export const cleanCookiesOperation = async (
         }
       }
     }
+    // A registry hostname only needs to stay queued while it is protected by an
+    // open tab — that protection can lapse on its own as tabs close. Every other
+    // verdict (cleaned, or kept permanently by a list match) is final, so drop
+    // it; it repopulates from TabEvents/CookieEvents if it ever needs cleaning
+    // again.
+    registryDomainsToRemove = registryObjects
+      .filter((obj) => obj.reason !== ReasonKeep.OpenTabs)
+      .map((obj) => trimDot(obj.cookie.hostname));
   }
 
   for (const sd of SITEDATATYPES) {
@@ -1179,6 +1188,7 @@ export const cleanCookiesOperation = async (
 
   return {
     cachedResults,
+    registryDomainsToRemove,
     setOfDeletedDomainCookies: Array.from(setOfDeletedDomainCookies),
   };
 };

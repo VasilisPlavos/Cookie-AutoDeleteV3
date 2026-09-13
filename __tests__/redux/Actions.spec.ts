@@ -52,25 +52,32 @@ describe('validateSettings', () => {
 });
 
 describe('cookieCleanup', () => {
+  const mockCleanupResult = (registryDomainsToRemove: string[]) =>
+    ({
+      setOfDeletedDomainCookies: [],
+      cachedResults: {
+        dateTime: 'now',
+        recentlyCleaned: 0,
+        storeIds: {},
+        browsingDataCleanup: {},
+        siteDataCleaned: false,
+      },
+      registryDomainsToRemove,
+    } as never);
+
   beforeEach(() => {
     when(spyCleanupService.cleanCookiesOperation)
       .calledWith(expect.any(Object), expect.any(Object))
-      .mockResolvedValue({
-        setOfDeletedDomainCookies: [],
-        cachedResults: {
-          dateTime: 'now',
-          recentlyCleaned: 0,
-          storeIds: {},
-          browsingDataCleanup: {},
-          siteDataCleaned: false,
-        },
-      } as never);
+      .mockResolvedValue(mockCleanupResult([]));
   });
 
-  it('clears domainsToClean after a successful startup cleanup', async () => {
+  it('drops registry domains CleanupService reports as safe to remove, on startup', async () => {
+    when(spyCleanupService.cleanCookiesOperation)
+      .calledWith(expect.any(Object), expect.any(Object))
+      .mockResolvedValue(mockCleanupResult(['a.com', 'protected.com']));
     const store: Store<State, ReduxAction> = createStore({
       ...initialState,
-      domainsToClean: ['a.com', 'b.com'],
+      domainsToClean: ['a.com', 'protected.com'],
     });
 
     await store.dispatch<any>(
@@ -80,33 +87,30 @@ describe('cookieCleanup', () => {
     expect(store.getState().domainsToClean).toEqual([]);
   });
 
-  it('clears domainsToClean on a startup cleanup even when greylist cleanup is off', async () => {
+  it('keeps a registry domain CleanupService did not report as safe to remove, on startup', async () => {
+    when(spyCleanupService.cleanCookiesOperation)
+      .calledWith(expect.any(Object), expect.any(Object))
+      .mockResolvedValue(mockCleanupResult(['a.com']));
     const store: Store<State, ReduxAction> = createStore({
       ...initialState,
-      settings: {
-        ...initialState.settings,
-        [SettingID.ENABLE_GREYLIST]: {
-          name: SettingID.ENABLE_GREYLIST,
-          value: false,
-        },
-      },
-      domainsToClean: ['a.com', 'b.com'],
+      domainsToClean: ['a.com', 'protected.com'],
     });
 
     await store.dispatch<any>(
       Actions.cookieCleanup({ startup: true, ignoreOpenTabs: false }),
     );
 
-    expect(store.getState().domainsToClean).toEqual([]);
+    // 'protected.com' (e.g. still open in a tab) was not reported as safe to
+    // remove, so it stays queued for a later run.
+    expect(store.getState().domainsToClean).toEqual(['protected.com']);
   });
 
-  it('keeps registry domains that were not cleaned on a non-startup cleanup', async () => {
+  it('keeps registry domains untouched on a non-startup cleanup when nothing is safe to remove', async () => {
     const store: Store<State, ReduxAction> = createStore({
       ...initialState,
       domainsToClean: ['a.com'],
     });
 
-    // browsingDataCleanup is empty (nothing cleaned), so nothing is dropped.
     await store.dispatch<any>(
       Actions.cookieCleanup({ startup: false, ignoreOpenTabs: false }),
     );
@@ -114,21 +118,10 @@ describe('cookieCleanup', () => {
     expect(store.getState().domainsToClean).toEqual(['a.com']);
   });
 
-  it('on a non-startup cleanup, drops only the registry domains that were actually cleaned', async () => {
+  it('drops only the registry domains reported as safe to remove, on a non-startup cleanup', async () => {
     when(spyCleanupService.cleanCookiesOperation)
       .calledWith(expect.any(Object), expect.any(Object))
-      .mockResolvedValue({
-        setOfDeletedDomainCookies: [],
-        cachedResults: {
-          dateTime: 'now',
-          recentlyCleaned: 0,
-          storeIds: {},
-          browsingDataCleanup: {
-            [SiteDataType.LOCALSTORAGE]: ['a.com'],
-          },
-          siteDataCleaned: true,
-        },
-      } as never);
+      .mockResolvedValue(mockCleanupResult(['a.com']));
     const store: Store<State, ReduxAction> = createStore({
       ...initialState,
       settings: {
@@ -145,8 +138,8 @@ describe('cookieCleanup', () => {
       Actions.cookieCleanup({ startup: false, ignoreOpenTabs: false }),
     );
 
-    // 'a.com' was cleaned so it is dropped; 'protected.com' (e.g. open tab or
-    // whitelisted, hence not cleaned) is kept for a later run.
+    // 'a.com' was reported safe to remove; 'protected.com' (e.g. open tab) was
+    // not, so it is kept for a later run.
     expect(store.getState().domainsToClean).toEqual(['protected.com']);
   });
 });
