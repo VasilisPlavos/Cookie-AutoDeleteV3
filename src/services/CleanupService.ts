@@ -902,16 +902,23 @@ export const filterSiteData = (
 export const returnContainersOfOpenTabDomains = async (
   ignoreOpenTabs: boolean,
   cleanDiscardedTabs: boolean,
+  startup = false,
 ): Promise<Record<string, string[]>> => {
   if (ignoreOpenTabs) {
     return {};
   }
-  const tabs = await browser.tabs.query({
-    windowType: 'normal',
-  });
+  // Chromium restores background tabs already marked `discarded`, so during
+  // the startup pass CLEAN_DISCARDED would strip open-tab protection from
+  // last session's tabs rather than just genuinely idle ones. Ignore the
+  // setting for this one pass; it still applies to discards observed later.
+  const effectiveCleanDiscardedTabs = cleanDiscardedTabs && !startup;
+  const tabs = await browser.tabs.query({ windowType: 'normal' });
   const openTabs: { [k: string]: Set<string> } = {};
   for (const tab of tabs) {
-    if (isAWebpage(tab.url) && (!cleanDiscardedTabs || !tab.discarded)) {
+    if (
+      isAWebpage(tab.url) &&
+      (!effectiveCleanDiscardedTabs || !tab.discarded)
+    ) {
       // Chrome doesn't have tab.cookieStoreId, so rely on tab.incognito
       const cookieStoreId = tab.cookieStoreId || (tab.incognito ? '1' : '0');
       if (!openTabs[cookieStoreId]) {
@@ -950,6 +957,7 @@ export const cleanCookiesOperation = async (
   const openTabDomains = await returnContainersOfOpenTabDomains(
     cleanupProperties.ignoreOpenTabs,
     getSetting(state, SettingID.CLEAN_DISCARDED) as boolean,
+    cleanupProperties.startup,
   );
   const newCleanupProperties: CleanupPropertiesInternal = {
     ...cleanupProperties,
