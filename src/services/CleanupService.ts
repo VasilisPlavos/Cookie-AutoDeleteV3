@@ -895,9 +895,11 @@ export const filterSiteData = (
 };
 
 /**
- * Store all tabs' host domains to prevent cookie deletion from those domains
- * returns empty object if we ignore all open Tabs
- * Tabs now grouped by container e.g. 'default', 'firefox-container-1', '0'
+ * Store all tabs' host domains to prevent cookie deletion from those domains.
+ *
+ * Returns an empty object if open-tab protection is disabled.
+ * Tabs are grouped by cookie store/container, e.g.:
+ * 'default', 'firefox-container-1', '0'
  */
 export const returnContainersOfOpenTabDomains = async (
   ignoreOpenTabs: boolean,
@@ -907,29 +909,23 @@ export const returnContainersOfOpenTabDomains = async (
   if (ignoreOpenTabs) {
     return {};
   }
-  // Chromium restores background tabs already marked `discarded`, so during
-  // the startup pass CLEAN_DISCARDED would strip open-tab protection from
-  // last session's tabs rather than just genuinely idle ones. Ignore the
-  // setting for this one pass; it still applies to discards observed later.
-  const effectiveCleanDiscardedTabs = cleanDiscardedTabs && !startup;
+  // On startup, Chromium may restore background tabs as discarded.
+  // Treat those tabs as open for protection purposes during the startup pass.
+  const shouldCleanDiscardedTabs = cleanDiscardedTabs && !startup;
   const tabs = await browser.tabs.query({ windowType: 'normal' });
-  const openTabs: { [k: string]: Set<string> } = {};
+  const openTabs = new Map<string, Set<string>>();
   for (const tab of tabs) {
-    if (
-      isAWebpage(tab.url) &&
-      (!effectiveCleanDiscardedTabs || !tab.discarded)
-    ) {
-      // Chrome doesn't have tab.cookieStoreId, so rely on tab.incognito
-      const cookieStoreId = tab.cookieStoreId || (tab.incognito ? '1' : '0');
-      if (!openTabs[cookieStoreId]) {
-        openTabs[cookieStoreId] = new Set<string>();
-      }
-      openTabs[cookieStoreId].add(extractMainDomain(getHostname(tab.url)));
-    }
+    if (!isAWebpage(tab.url)) continue;
+    if (shouldCleanDiscardedTabs && tab.discarded) continue;
+    const cookieStoreId = tab.cookieStoreId || (tab.incognito ? '1' : '0');
+    const domains = openTabs.get(cookieStoreId) ?? new Set<string>();
+    domains.add(extractMainDomain(getHostname(tab.url)));
+    openTabs.set(cookieStoreId, domains);
   }
+
   const openTabsArray: { [k: string]: string[] } = {};
-  for (const id of Object.keys(openTabs)) {
-    openTabsArray[id] = Array.from(openTabs[id]);
+  for (const [id, domains] of openTabs) {
+    openTabsArray[id] = Array.from(domains);
   }
   return openTabsArray;
 };
