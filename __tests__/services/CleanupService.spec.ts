@@ -2994,5 +2994,14 @@ describe('CleanupService', () => {
         return Promise.resolve();
       });
     });
+
+    it('should keep discarded.net in firefox-container-1/Personal when cleanDiscardedTabs is true but startup is true', () => {
+      return returnContainersOfOpenTabDomains(false, true, true).then(
+        (results) => {
+          expect(results['firefox-container-1']).toContain('discarded.net');
+          return Promise.resolve();
+        },
+      );
+    });
   });
 });

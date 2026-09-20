@@ -895,34 +895,37 @@ export const filterSiteData = (
 };
 
 /**
- * Store all tabs' host domains to prevent cookie deletion from those domains
- * returns empty object if we ignore all open Tabs
- * Tabs now grouped by container e.g. 'default', 'firefox-container-1', '0'
+ * Store all tabs' host domains to prevent cookie deletion from those domains.
+ *
+ * Returns an empty object if open-tab protection is disabled.
+ * Tabs are grouped by cookie store/container, e.g.:
+ * 'default', 'firefox-container-1', '0'
  */
 export const returnContainersOfOpenTabDomains = async (
   ignoreOpenTabs: boolean,
   cleanDiscardedTabs: boolean,
+  startup = false,
 ): Promise<Record<string, string[]>> => {
   if (ignoreOpenTabs) {
     return {};
   }
-  const tabs = await browser.tabs.query({
-    windowType: 'normal',
-  });
-  const openTabs: { [k: string]: Set<string> } = {};
+  // On startup, Chromium may restore background tabs as discarded.
+  // Treat those tabs as open for protection purposes during the startup pass.
+  const shouldCleanDiscardedTabs = cleanDiscardedTabs && !startup;
+  const tabs = await browser.tabs.query({ windowType: 'normal' });
+  const openTabs = new Map<string, Set<string>>();
   for (const tab of tabs) {
-    if (isAWebpage(tab.url) && (!cleanDiscardedTabs || !tab.discarded)) {
-      // Chrome doesn't have tab.cookieStoreId, so rely on tab.incognito
-      const cookieStoreId = tab.cookieStoreId || (tab.incognito ? '1' : '0');
-      if (!openTabs[cookieStoreId]) {
-        openTabs[cookieStoreId] = new Set<string>();
-      }
-      openTabs[cookieStoreId].add(extractMainDomain(getHostname(tab.url)));
-    }
+    if (!isAWebpage(tab.url)) continue;
+    if (shouldCleanDiscardedTabs && tab.discarded) continue;
+    const cookieStoreId = tab.cookieStoreId || (tab.incognito ? '1' : '0');
+    const domains = openTabs.get(cookieStoreId) ?? new Set<string>();
+    domains.add(extractMainDomain(getHostname(tab.url)));
+    openTabs.set(cookieStoreId, domains);
   }
+
   const openTabsArray: { [k: string]: string[] } = {};
-  for (const id of Object.keys(openTabs)) {
-    openTabsArray[id] = Array.from(openTabs[id]);
+  for (const [id, domains] of openTabs) {
+    openTabsArray[id] = Array.from(domains);
   }
   return openTabsArray;
 };
@@ -950,6 +953,7 @@ export const cleanCookiesOperation = async (
   const openTabDomains = await returnContainersOfOpenTabDomains(
     cleanupProperties.ignoreOpenTabs,
     getSetting(state, SettingID.CLEAN_DISCARDED) as boolean,
+    cleanupProperties.startup,
   );
   const newCleanupProperties: CleanupPropertiesInternal = {
     ...cleanupProperties,

@@ -16,8 +16,11 @@ import { ReduxAction } from '../typings/ReduxConstants';
  *
  * Automatic cleanup never suspends open-tab protection here; only the
  * explicit "include open tabs" actions in the popup and context menu bypass
- * it. Discarded/unloaded tabs still follow CLEAN_DISCARDED, same as
- * everywhere else protection is evaluated.
+ * it. CLEAN_DISCARDED is ignored for this one pass — Chromium restores
+ * session tabs already marked `discarded`, so honouring it here would strip
+ * protection from last session's tabs rather than genuinely idle ones (see
+ * returnContainersOfOpenTabDomains). It still applies to discards observed
+ * later in the session.
  */
 export async function runStartupCleanup(
   store: Store<State, ReduxAction>,
