@@ -10,8 +10,8 @@
  *   bumpVersion('minor')   -> X.Y.Z -> X.(Y+1).0
  *   bumpVersion('major')   -> X.Y.Z -> (X+1).0.0
  *
- * The resulting version is written to package.json, extension/manifest.json
- * and package-lock.json, keeping them in sync. Only the version string is
+ * The resulting version is written to BOTH package.json and
+ * extension/manifest.json, keeping them in sync. Only the version string is
  * rewritten; the rest of each file (formatting, key order) is left untouched.
  *
  * Exposed as a function (used by tools/buildChrome.js) and runnable directly:
@@ -23,7 +23,6 @@ const path = require('path');
 const ROOT = process.cwd();
 const PACKAGE_JSON = path.join(ROOT, 'package.json');
 const MANIFEST_JSON = path.join(ROOT, 'extension', 'manifest.json');
-const PACKAGE_LOCK_JSON = path.join(ROOT, 'package-lock.json');
 const VERSION_RE = /("version"\s*:\s*")(\d+)\.(\d+)\.(\d+)(")/;
 const RELEASE_TYPES = ['patch', 'minor', 'major'];
 
@@ -57,17 +56,6 @@ function writeVersion(fp, version) {
   fs.writeFileSync(fp, txt.replace(VERSION_RE, `$1${version}$5`));
 }
 
-// The lockfile carries the version twice (root and packages[""]), so it is
-// rewritten as JSON in npm's own 2-space format rather than via VERSION_RE.
-function writeLockVersion(fp, version) {
-  if (!fs.existsSync(fp)) return;
-  const lock = JSON.parse(fs.readFileSync(fp, 'utf8'));
-  lock.version = version;
-  if (lock.packages && lock.packages['']) lock.packages[''].version = version;
-  fs.writeFileSync(fp, `${JSON.stringify(lock, null, 2)}
-`);
-}
-
 /**
  * @param {string|undefined} releaseType 'patch' | 'minor' | 'major' | undefined
  * @returns {string} the resulting version
@@ -94,11 +82,10 @@ function bumpVersion(releaseType) {
 
   writeVersion(PACKAGE_JSON, next);
   writeVersion(MANIFEST_JSON, next);
-  writeLockVersion(PACKAGE_LOCK_JSON, next);
 
   if (next === current) {
     console.log(
-      `Version unchanged at ${next} (manifest.json and package-lock.json synced to package.json).`,
+      `Version unchanged at ${next} (manifest.json synced to package.json).`,
     );
   } else {
     console.log(`Version bumped ${current} -> ${next} (${releaseType}).`);

@@ -45,7 +45,7 @@ npx jest __tests__/tools/resolveBuildVersion.test.js
 npx jest -t "partitioned"
 ```
 
-Version bump (writes `package.json`, `extension/manifest.json` **and** `package-lock.json`):
+Version bump (writes both `package.json` **and** `extension/manifest.json`):
 
 ```bash
 npm run build:chrome patch   # or minor | major; no arg = no bump
