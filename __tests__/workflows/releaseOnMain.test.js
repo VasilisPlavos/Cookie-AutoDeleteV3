@@ -4,7 +4,7 @@ const yaml = require('js-yaml');
 
 function loadWorkflow(name) {
   const p = path.join(__dirname, '..', '..', '.github', 'workflows', name);
-  return yaml.safeLoad(fs.readFileSync(p, 'utf8'));
+  return yaml.load(fs.readFileSync(p, 'utf8'));
 }
 function stepById(doc, jobKey, id) {
   return doc.jobs[jobKey].steps.find((s) => s.id === id);
