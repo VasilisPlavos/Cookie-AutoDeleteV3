@@ -1,6 +1,6 @@
 {
   "name": "cookie-autodelete-v3",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "Chrome browser extension that auto-deletes unwanted cookies and site data",
   "keywords": [
     "cookie",
