@@ -3,7 +3,7 @@
     {
       "version": "1.3.5",
       "notes": [
-        "Updated the development and test tooling to clear high-severity security advisories. The extension itself is unchanged."
+        "Updated the development and test tooling to clear high-severity security advisories."
       ]
     },
     {

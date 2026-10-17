@@ -26,7 +26,7 @@ export const animateFlash = (
     setTimeout(() => {
       domNode.classList.remove(cssFlash);
     }, 1500);
-  } catch (e) {
+  } catch {
     // Ignore, we just won't animate anything.
   }
 };
