@@ -3,7 +3,7 @@
     {
       "version": "1.3.6",
       "notes": [
-        "Moved the code-quality tooling to a supported version. No change to how the extension behaves."
+        "Updated the code-quality tooling. No change to how the extension behaves."
       ]
     },
     {

@@ -23,7 +23,7 @@
     "test-all": "npm run test && npm run lint"
   },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=22.13.0",
     "npm": ">=8.5.0"
   },
   "private": true,

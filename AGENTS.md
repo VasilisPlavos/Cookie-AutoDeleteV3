@@ -52,7 +52,7 @@ npm run build:chrome patch   # or minor | major; no arg = no bump
 node ./tools/bumpVersion.js minor
 ```
 
-Requires Node ≥ 22.
+Requires Node ≥ 22.13.
 
 ## Architecture
 
