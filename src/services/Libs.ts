@@ -404,7 +404,7 @@ export const getHostname = (urlToGetHostName: string | undefined): string => {
       return hostname.slice(1, -1);
     }
     return hostname;
-  } catch (e) {
+  } catch {
     return '';
   }
 };
@@ -477,7 +477,7 @@ export const getSearchResults = (
       exp1.endsWith(input) ||
       exp1.includes(ixp1)
     );
-  } catch (e) {
+  } catch {
     return false;
   }
 };
@@ -693,7 +693,7 @@ export const matchIPInExpression = (
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore Needed otherwise TS complains about no compatibility in union signatures.
         return iip.match(ipaddr.parseCIDR(exp));
-      } catch (e) {
+      } catch {
         // Most likely an attempt to match IPv4 and IPv6 together,
         // or CIDR is invalid.
         return false;
