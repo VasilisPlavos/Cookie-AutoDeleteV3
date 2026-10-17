@@ -61,7 +61,6 @@ export function _resetForTests(): void {
   _saveDirty = false;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const browserSessionStorage: any = (browser.storage as any).session;
 
 /**
@@ -97,7 +96,6 @@ async function init(): Promise<void> {
     stateFromStorage = {};
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const store: any = createStore(stateFromStorage);
   _store = store as Store<State, ReduxAction>;
 
@@ -171,7 +169,6 @@ async function init(): Promise<void> {
   );
   store.subscribe(saveSubscriber);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   store.dispatch(validateSettings());
 
   await setGlobalIcon(

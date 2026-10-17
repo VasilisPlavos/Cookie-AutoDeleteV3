@@ -34,7 +34,7 @@ const createSummary = (cleanupObj: ActivityLog) => {
   });
   if (cleanupObj.browsingDataCleanup) {
     Object.values(cleanupObj.browsingDataCleanup).forEach((sd) => {
-      sd && sd.forEach((domain) => domainSet.add(domain));
+      sd?.forEach((domain) => domainSet.add(domain));
     });
   }
 

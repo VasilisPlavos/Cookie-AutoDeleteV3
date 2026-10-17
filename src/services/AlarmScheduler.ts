@@ -8,7 +8,6 @@ import { cookieCleanup } from '../redux/Actions';
 
 export const CLEANUP_ALARM_NAME = 'cad_cleanup';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const browserSessionStorage: browser.storage.StorageArea = (browser.storage as any).session;
 
 /**
